@@ -79,3 +79,32 @@ export async function getBoard(id: string): Promise<Board | undefined> {
     }
     return boards.find(b => b.id === id);
 }
+
+export async function updateBoard(updatedBoard: Board): Promise<void> {
+    let boards: Board[] = [];
+    try {
+        const data = await fs.readFile(BOARDS_FILE, 'utf-8');
+        boards = JSON.parse(data);
+    } catch (e) {
+        return;
+    }
+
+    const index = boards.findIndex(b => b.id === updatedBoard.id);
+    if (index !== -1) {
+        boards[index] = updatedBoard;
+        await saveBoards(boards);
+    }
+}
+
+export async function deleteBoard(id: string): Promise<void> {
+    let boards: Board[] = [];
+    try {
+        const data = await fs.readFile(BOARDS_FILE, 'utf-8');
+        boards = JSON.parse(data);
+    } catch (e) {
+        return;
+    }
+
+    const newBoards = boards.filter(b => b.id !== id);
+    await saveBoards(newBoards);
+}
