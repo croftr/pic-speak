@@ -79,21 +79,21 @@ export default function MyBoardsPage() {
 
 
     return (
-        <main className="min-h-screen bg-gray-50 dark:bg-slate-950 p-6 md:p-12">
+        <main className="min-h-screen bg-gray-50 dark:bg-slate-950 p-3 sm:p-6 md:p-12">
             <div className="max-w-5xl mx-auto">
-                <header className="mb-12 flex items-center justify-between">
-                    <div>
-                        <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tight mb-2">
+                <header className="mb-6 sm:mb-8 md:mb-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex-1">
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tight mb-1 sm:mb-2">
                             My Boards
                         </h1>
-                        <p className="text-gray-500">Manage your communication boards</p>
+                        <p className="text-sm sm:text-base text-gray-500">Manage your communication boards</p>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
                         <button
                             onClick={() => setShowCreateForm(true)}
-                            className="bg-primary text-white px-6 py-3 rounded-full font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center gap-2"
+                            className="flex-1 sm:flex-none bg-primary text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-full font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center justify-center gap-2 text-sm sm:text-base"
                         >
-                            <Plus className="w-5 h-5" />
+                            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                             New Board
                         </button>
                         <UserButton />
@@ -155,7 +155,7 @@ export default function MyBoardsPage() {
 
 
                 {/* Boards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {isLoading ? (
                         [1, 2, 3].map(i => (
                             <div key={i} className="h-48 rounded-3xl bg-gray-200 dark:bg-slate-800 animate-pulse" />
@@ -181,33 +181,33 @@ export default function MyBoardsPage() {
                             <Link
                                 key={board.id}
                                 href={`/board/${board.id}`}
-                                className="group relative block p-8 bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                                className="group relative block p-5 sm:p-6 md:p-8 bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                             >
-                                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
+                                <div className="absolute top-3 right-3 sm:top-4 sm:right-4 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 sm:gap-2">
                                     <button
                                         onClick={(e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
                                             router.push(`/board/${board.id}?edit=true`);
                                         }}
-                                        className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-md text-gray-500 hover:text-primary transition-colors hover:scale-110 flex items-center justify-center"
+                                        className="p-1.5 sm:p-2 bg-white dark:bg-slate-800 rounded-full shadow-md text-gray-500 hover:text-primary transition-colors hover:scale-110 flex items-center justify-center"
                                         title="Edit Board"
                                     >
-                                        <Pencil className="w-4 h-4" />
+                                        <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                     </button>
                                     <button
                                         onClick={(e) => handleDeleteBoard(e, board.id)}
-                                        className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-md text-gray-500 hover:text-red-500 transition-colors hover:scale-110"
+                                        className="p-1.5 sm:p-2 bg-white dark:bg-slate-800 rounded-full shadow-md text-gray-500 hover:text-red-500 transition-colors hover:scale-110"
                                         title="Delete Board"
                                     >
-                                        <Trash2 className="w-4 h-4" />
+                                        <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                     </button>
                                 </div>
 
-                                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 pr-16 group-hover:text-primary transition-colors">
+                                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3 pr-12 sm:pr-16 group-hover:text-primary transition-colors">
                                     {board.name}
                                 </h3>
-                                <p className="text-gray-500 line-clamp-3 text-sm leading-relaxed mb-4 min-h-[4.5em]">
+                                <p className="text-gray-500 line-clamp-2 sm:line-clamp-3 text-xs sm:text-sm leading-relaxed mb-3 sm:mb-4 min-h-[3em] sm:min-h-[4.5em]">
                                     {board.description || 'No description provided.'}
                                 </p>
                                 <div className="flex items-center text-xs font-bold text-gray-400 uppercase tracking-wider">

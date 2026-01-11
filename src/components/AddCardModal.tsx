@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X, Image as ImageIcon, Check, Loader2, Mic, Upload, Music, Sparkles } from 'lucide-react';
 import AudioRecorder from './AudioRecorder';
 import { clsx } from 'clsx';
@@ -10,10 +10,12 @@ interface AddCardModalProps {
     isOpen: boolean;
     onClose: () => void;
     onCardAdded: (card: Card) => void;
+    onCardUpdated?: (card: Card) => void;
     boardId: string;
+    editCard?: Card | null;
 }
 
-export default function AddCardModal({ isOpen, onClose, onCardAdded, boardId }: AddCardModalProps) {
+export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdated, boardId, editCard }: AddCardModalProps) {
     const [label, setLabel] = useState('');
 
     // Image State
@@ -32,6 +34,29 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, boardId }: 
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const audioInputRef = useRef<HTMLInputElement>(null);
+
+    // Populate form when editing
+    useEffect(() => {
+        if (editCard && isOpen) {
+            setLabel(editCard.label);
+            setImagePreview(editCard.imageUrl);
+            // Mark that we already have image/audio (existing URLs)
+        } else if (!isOpen) {
+            // Reset form when modal closes
+            resetForm();
+        }
+    }, [editCard, isOpen]);
+
+    const resetForm = () => {
+        setLabel('');
+        setImageFile(null);
+        setImagePreview(null);
+        setGenerationPrompt('');
+        setImageType('upload');
+        setAudioBlob(null);
+        setAudioFile(null);
+        setAudioType('record');
+    };
 
     if (!isOpen) return null;
 
@@ -100,17 +125,23 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, boardId }: 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Check validation based on active tab
+        // Check validation - for edit mode, we can keep existing image/audio
         const hasAudio = audioType === 'record' ? !!audioBlob : !!audioFile;
-        if (!label || !imageFile || !hasAudio) return;
+        const hasImage = !!imageFile || (editCard && !!imagePreview);
+        const hasAudioOrExisting = hasAudio || (editCard && !audioBlob && !audioFile);
+
+        if (!label || !hasImage || !hasAudioOrExisting) return;
 
         setIsSubmitting(true);
         try {
-            // 1. Upload Image
-            const imageUrl = await uploadFile(imageFile, imageFile.name);
+            // 1. Upload Image (only if new file selected)
+            let imageUrl = editCard?.imageUrl || '';
+            if (imageFile) {
+                imageUrl = await uploadFile(imageFile, imageFile.name);
+            }
 
-            // 2. Upload Audio
-            let audioUrl = '';
+            // 2. Upload Audio (only if new audio provided)
+            let audioUrl = editCard?.audioUrl || '';
             if (audioType === 'record' && audioBlob) {
                 const audioExtension = audioBlob.type.includes('webm') ? 'webm' : 'wav';
                 audioUrl = await uploadFile(audioBlob, `audio-${Date.now()}.${audioExtension}`);
@@ -118,37 +149,48 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, boardId }: 
                 audioUrl = await uploadFile(audioFile, audioFile.name);
             }
 
-            // 3. Create Card
-            const res = await fetch('/api/cards', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    label,
-                    imageUrl,
-                    audioUrl,
-                    boardId,
-                    color: '#6366f1' // Default primary color for now
-                })
-            });
+            if (editCard) {
+                // 3a. Update existing card
+                const res = await fetch(`/api/cards/${editCard.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        label,
+                        imageUrl,
+                        audioUrl,
+                        color: editCard.color || '#6366f1'
+                    })
+                });
 
-            if (!res.ok) throw new Error('Failed to create card');
+                if (!res.ok) throw new Error('Failed to update card');
 
-            const newCard = await res.json();
-            onCardAdded(newCard);
+                const updatedCard = await res.json();
+                onCardUpdated?.(updatedCard);
+            } else {
+                // 3b. Create new card
+                const res = await fetch('/api/cards', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        label,
+                        imageUrl,
+                        audioUrl,
+                        boardId,
+                        color: '#6366f1'
+                    })
+                });
+
+                if (!res.ok) throw new Error('Failed to create card');
+
+                const newCard = await res.json();
+                onCardAdded(newCard);
+            }
+
             onClose();
-
-            // Reset form
-            setLabel('');
-            setImageFile(null);
-            setImagePreview(null);
-            setGenerationPrompt('');
-            setImageType('upload');
-            setAudioBlob(null);
-            setAudioFile(null);
-            setAudioType('record');
+            resetForm();
         } catch (error) {
             console.error(error);
-            alert('Error creating card');
+            alert(editCard ? 'Error updating card' : 'Error creating card');
         } finally {
             setIsSubmitting(false);
         }
@@ -160,7 +202,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, boardId }: 
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
                     <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
-                        New Pic Speak
+                        {editCard ? 'Edit Pic Speak' : 'New Pic Speak'}
                     </h2>
                     <button
                         onClick={onClose}
@@ -362,16 +404,16 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, boardId }: 
                         </button>
                         <button
                             type="submit"
-                            disabled={isSubmitting || !label || !imageFile || (audioType === 'record' ? !audioBlob : !audioFile)}
+                            disabled={isSubmitting || !label || (!imageFile && !editCard) || (!editCard && (audioType === 'record' ? !audioBlob : !audioFile))}
                             className={clsx(
                                 "px-8 py-3 rounded-xl font-bold text-white shadow-lg transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2",
-                                (isSubmitting || !label || !imageFile || (audioType === 'record' ? !audioBlob : !audioFile))
+                                (isSubmitting || !label || (!imageFile && !editCard) || (!editCard && (audioType === 'record' ? !audioBlob : !audioFile)))
                                     ? "bg-gray-400 cursor-not-allowed"
                                     : "bg-gradient-to-r from-primary to-accent hover:shadow-primary/25"
                             )}
                         >
                             {isSubmitting ? <Loader2 className="animate-spin w-5 h-5" /> : <Check className="w-5 h-5" />}
-                            Save Card
+                            {editCard ? 'Update Card' : 'Save Card'}
                         </button>
                     </div>
                 </form>

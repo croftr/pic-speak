@@ -1,6 +1,54 @@
 import { NextResponse } from 'next/server';
-import { getCards, deleteCard, getBoard } from '@/lib/storage';
+import { getCards, deleteCard, updateCard, getBoard } from '@/lib/storage';
 import { auth } from '@clerk/nextjs/server';
+
+export async function PUT(
+    request: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    const { userId } = await auth();
+    if (!userId) {
+        return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const { id } = await params;
+
+    try {
+        // Verification step: Ensure user owns the board that this card belongs to
+        const allCards = await getCards();
+        const existingCard = allCards.find(c => c.id === id);
+
+        if (!existingCard) {
+            return new NextResponse("Card not found", { status: 404 });
+        }
+
+        const board = await getBoard(existingCard.boardId);
+        if (!board || board.userId !== userId) {
+            return new NextResponse("Unauthorized Access to Board", { status: 403 });
+        }
+
+        const body = await request.json();
+        const { label, imageUrl, audioUrl, color } = body;
+
+        const updatedCard = {
+            ...existingCard,
+            label: label !== undefined ? label : existingCard.label,
+            imageUrl: imageUrl !== undefined ? imageUrl : existingCard.imageUrl,
+            audioUrl: audioUrl !== undefined ? audioUrl : existingCard.audioUrl,
+            color: color !== undefined ? color : existingCard.color,
+        };
+
+        await updateCard(updatedCard);
+
+        return NextResponse.json(updatedCard);
+    } catch (error) {
+        console.error('Error updating card:', error);
+        return NextResponse.json(
+            { error: 'Failed to update card' },
+            { status: 500 }
+        );
+    }
+}
 
 export async function DELETE(
     request: Request,

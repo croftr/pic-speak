@@ -18,6 +18,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     const [board, setBoard] = useState<Board | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [editingCard, setEditingCard] = useState<Card | null>(null);
 
     // Edit states
     const [editName, setEditName] = useState('');
@@ -62,6 +63,17 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         setCards(prev => [...prev, newCard]);
     };
 
+    const handleCardUpdated = (updatedCard: Card) => {
+        setCards(prev => prev.map(c => c.id === updatedCard.id ? updatedCard : c));
+        setEditingCard(null);
+        setIsModalOpen(false);
+    };
+
+    const handleEditCard = (card: Card) => {
+        setEditingCard(card);
+        setIsModalOpen(true);
+    };
+
     const handleDeleteCard = async (cardId: string) => {
         try {
             const res = await fetch(`/api/cards/${cardId}`, { method: 'DELETE' });
@@ -71,6 +83,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         } catch (error) {
             console.error("Failed to delete card", error);
         }
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setEditingCard(null);
     };
 
     const handleSaveBoard = async () => {
@@ -100,39 +117,38 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     };
 
     return (
-        <main className="min-h-screen p-4 md:p-8 relative pb-32">
+        <main className="min-h-screen p-2 sm:p-4 md:p-8 relative pb-32">
             {/* Header */}
-            {/* Header */}
-            <header className="max-w-7xl mx-auto mb-12 flex justify-between items-center glass p-6 rounded-3xl sticky top-4 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm">
-                <div className="flex items-center gap-4 flex-1">
-                    <Link href="/my-boards" className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors">
-                        <ArrowLeft className="w-6 h-6" />
+            <header className="max-w-7xl mx-auto mb-6 md:mb-12 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 glass p-4 sm:p-6 rounded-2xl md:rounded-3xl sticky top-2 sm:top-4 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm">
+                <div className="flex items-center gap-2 sm:gap-4 flex-1 w-full sm:w-auto">
+                    <Link href="/my-boards" className="p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors flex-shrink-0">
+                        <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
                     </Link>
-                    <div className="bg-gradient-to-br from-primary to-secondary p-3 rounded-2xl shadow-lg transform rotate-3 hidden md:block">
-                        <LayoutGrid className="w-8 h-8 text-white" />
+                    <div className="bg-gradient-to-br from-primary to-secondary p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-lg transform rotate-3 hidden sm:block flex-shrink-0">
+                        <LayoutGrid className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                     </div>
                     {isEditing ? (
                         <div className="flex-1 max-w-lg space-y-2">
                             <input
                                 value={editName}
                                 onChange={(e) => setEditName(e.target.value)}
-                                className="w-full text-3xl font-bold bg-transparent border-b-2 border-primary/50 focus:border-primary outline-none text-gray-900 dark:text-white placeholder-gray-400"
+                                className="w-full text-xl sm:text-2xl md:text-3xl font-bold bg-transparent border-b-2 border-primary/50 focus:border-primary outline-none text-gray-900 dark:text-white placeholder-gray-400"
                                 placeholder="Board Name"
                             />
                             <input
                                 value={editDesc}
                                 onChange={(e) => setEditDesc(e.target.value)}
-                                className="w-full text-sm text-gray-500 bg-transparent border-b border-gray-200 focus:border-primary outline-none"
+                                className="w-full text-xs sm:text-sm text-gray-500 bg-transparent border-b border-gray-200 focus:border-primary outline-none"
                                 placeholder="Description (optional)"
                             />
                         </div>
                     ) : (
-                        <div>
-                            <h1 className="text-3xl md:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent tracking-tight">
+                        <div className="flex-1 min-w-0">
+                            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent tracking-tight truncate">
                                 {board?.name || 'Loading...'}
                             </h1>
                             {board?.description && (
-                                <p className="text-gray-500 text-sm mt-1">{board.description}</p>
+                                <p className="text-gray-500 text-xs sm:text-sm mt-1 line-clamp-1 sm:line-clamp-2">{board.description}</p>
                             )}
                         </div>
                     )}
@@ -142,7 +158,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     <button
                         onClick={handleSaveBoard}
                         disabled={isSaving}
-                        className="bg-primary text-white px-6 py-2 rounded-full font-bold shadow-lg hover:bg-primary/90 transition-all flex items-center gap-2 disabled:opacity-50"
+                        className="bg-primary text-white px-4 sm:px-6 py-2 rounded-full font-bold shadow-lg hover:bg-primary/90 transition-all flex items-center gap-2 disabled:opacity-50 text-sm sm:text-base w-full sm:w-auto justify-center"
                     >
                         {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                         Save
@@ -169,13 +185,14 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                         </p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
                         {cards.map((card) => (
                             <PecsCard
                                 key={card.id}
                                 card={card}
                                 isEditing={isEditing}
                                 onDelete={handleDeleteCard}
+                                onEdit={handleEditCard}
                             />
                         ))}
                     </div>
@@ -186,20 +203,21 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             {isEditing && (
                 <button
                     onClick={() => setIsModalOpen(true)}
-                    className="fixed bottom-8 right-8 z-40 p-5 bg-gradient-to-r from-primary to-accent text-white rounded-full shadow-2xl hover:shadow-primary/50 transition-all transform hover:scale-110 active:scale-95 group"
+                    className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 z-40 p-4 sm:p-5 bg-gradient-to-r from-primary to-accent text-white rounded-full shadow-2xl hover:shadow-primary/50 transition-all transform hover:scale-110 active:scale-95 group"
                     aria-label="Add New Card"
                 >
-                    <Plus className="w-8 h-8 group-hover:rotate-90 transition-transform duration-300" />
+                    <Plus className="w-7 h-7 sm:w-8 sm:h-8 group-hover:rotate-90 transition-transform duration-300" />
                 </button>
             )}
 
             {/* Modal */}
-            {/* I need to modify AddCardModal to accept boardId */}
             <AddCardModal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                onClose={handleCloseModal}
                 onCardAdded={handleCardAdded}
+                onCardUpdated={handleCardUpdated}
                 boardId={unwrappedParams.id}
+                editCard={editingCard}
             />
         </main>
     );

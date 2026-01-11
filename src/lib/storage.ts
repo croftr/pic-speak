@@ -38,6 +38,22 @@ export async function addCard(card: Card): Promise<void> {
     await saveCards(cards);
 }
 
+export async function updateCard(updatedCard: Card): Promise<void> {
+    let cards: Card[] = [];
+    try {
+        const data = await fs.readFile(CARDS_FILE, 'utf-8');
+        cards = JSON.parse(data);
+    } catch (e) {
+        return;
+    }
+
+    const index = cards.findIndex(c => c.id === updatedCard.id);
+    if (index !== -1) {
+        cards[index] = updatedCard;
+        await saveCards(cards);
+    }
+}
+
 export async function deleteCard(id: string): Promise<void> {
     let cards: Card[] = [];
     try {
