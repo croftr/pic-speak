@@ -56,12 +56,7 @@ export default function GlobalHeader() {
                     {/* User Menu */}
                     <div className="flex items-center gap-3">
                         <SignedIn>
-                            <Link
-                                href="/my-boards"
-                                className="hidden sm:inline-block px-4 py-2 font-semibold text-sm text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                            >
-                                My Boards
-                            </Link>
+
                             <UserButton
                                 appearance={{
                                     elements: {

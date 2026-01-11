@@ -29,13 +29,24 @@ export default function LandingPage() {
       <main className="max-w-7xl mx-auto px-6 pt-4 md:pt-12 lg:pt-20 pb-20">
         <div className="flex flex-col lg:flex-row items-center gap-16">
           <div className="flex-1 text-center lg:text-left z-10">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary font-bold text-sm mb-8 animate-in fade-in slide-in-from-bottom-4">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
-              </span>
-              Now with Audio Upload
-            </div>
+            <SignedIn>
+              <Link
+                href="/my-boards"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-white font-bold text-lg mb-8 hover:bg-primary/90 transition-all shadow-lg hover:shadow-primary/40 group active:scale-95"
+              >
+                Go to My Boards
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </SignedIn>
+            <SignedOut>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary font-bold text-sm mb-8">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                </span>
+                Now with AI Image Generation
+              </div>
+            </SignedOut>
 
             <h1 className="text-5xl md:text-7xl font-black tracking-tight text-gray-900 dark:text-white mb-8 leading-[1.1]">
               Give a Voice to <br />
