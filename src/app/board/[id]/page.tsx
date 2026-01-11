@@ -50,6 +50,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     // Keyboard navigation state
     const [focusedCardIndex, setFocusedCardIndex] = useState<number>(-1);
 
+    // Header visibility state
+    const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+    const [lastScrollY, setLastScrollY] = useState(0);
+
     // Drag and drop sensors
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -212,6 +216,25 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         }
     };
 
+    // Header scroll visibility
+    useEffect(() => {
+        const handleScroll = () => {
+            const currentScrollY = window.scrollY;
+
+            // Show header when scrolling up, hide when scrolling down
+            if (currentScrollY < lastScrollY || currentScrollY < 10) {
+                setIsHeaderVisible(true);
+            } else if (currentScrollY > lastScrollY && currentScrollY > 80) {
+                setIsHeaderVisible(false);
+            }
+
+            setLastScrollY(currentScrollY);
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [lastScrollY]);
+
     // Keyboard navigation
     useEffect(() => {
         if (isEditing || filteredCards.length === 0) return;
@@ -299,40 +322,42 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     return (
         <main className="min-h-screen p-2 sm:p-4 md:p-8 relative pb-32">
             {/* Header */}
-            <header className="max-w-7xl mx-auto mb-6 md:mb-12 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 glass p-4 sm:p-6 rounded-2xl md:rounded-3xl sticky top-2 sm:top-4 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm">
-                <div className="flex items-center gap-2 sm:gap-4 flex-1 w-full sm:w-auto">
-                    <Link href="/my-boards" className="p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors flex-shrink-0">
-                        <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+            <header className={`max-w-7xl mx-auto mb-4 md:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 glass p-3 sm:p-4 rounded-xl md:rounded-2xl sticky top-16 sm:top-[4.5rem] z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-sm transition-transform duration-300 ${
+                isHeaderVisible ? 'translate-y-0' : '-translate-y-[150%]'
+            }`}>
+                <div className="flex items-center gap-2 sm:gap-3 flex-1 w-full sm:w-auto">
+                    <Link href="/my-boards" className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors flex-shrink-0">
+                        <ArrowLeft className="w-5 h-5" />
                     </Link>
-                    <div className="bg-gradient-to-br from-primary to-secondary p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-lg transform rotate-3 hidden sm:block flex-shrink-0">
-                        <LayoutGrid className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                    <div className="bg-gradient-to-br from-primary to-secondary p-1.5 sm:p-2 rounded-lg shadow-md transform rotate-3 hidden sm:block flex-shrink-0">
+                        <LayoutGrid className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
                     {isEditing ? (
-                        <div className="flex-1 max-w-lg space-y-2">
+                        <div className="flex-1 max-w-lg space-y-1.5">
                             <input
                                 value={editName}
                                 onChange={(e) => setEditName(e.target.value)}
-                                className="w-full text-xl sm:text-2xl md:text-3xl font-bold bg-transparent border-b-2 border-primary/50 focus:border-primary outline-none text-gray-900 dark:text-white placeholder-gray-400"
+                                className="w-full text-lg sm:text-xl md:text-2xl font-bold bg-transparent border-b-2 border-primary/50 focus:border-primary outline-none text-gray-900 dark:text-white placeholder-gray-400"
                                 placeholder="Board Name"
                             />
                             <input
                                 value={editDesc}
                                 onChange={(e) => setEditDesc(e.target.value)}
-                                className="w-full text-gray-500 bg-transparent border-b border-gray-200 focus:border-primary outline-none"
+                                className="w-full text-sm text-gray-500 bg-transparent border-b border-gray-200 focus:border-primary outline-none"
                                 placeholder="Description (optional)"
                             />
                         </div>
                     ) : (
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 justify-between">
-                                <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent tracking-tight truncate">
+                                <h1 className="text-lg sm:text-xl md:text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent tracking-tight truncate">
                                     {board?.name || 'Loading...'}
                                 </h1>
                                 {!isEditing && <SettingsMenu />}
                             </div>
 
                             {board?.description && (
-                                <p className="text-gray-500 mt-1 line-clamp-1 sm:line-clamp-2">{board.description}</p>
+                                <p className="text-gray-500 text-xs sm:text-sm mt-0.5 line-clamp-1">{board.description}</p>
                             )}
                         </div>
                     )}
@@ -343,7 +368,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                         <button
                             onClick={handleSaveBoard}
                             disabled={isSaving}
-                            className="bg-primary text-white px-4 sm:px-6 py-2 rounded-full font-bold shadow-lg hover:bg-primary/90 transition-all flex items-center gap-2 disabled:opacity-50 text-sm sm:text-base w-full sm:w-auto justify-center"
+                            className="bg-primary text-white px-4 sm:px-5 py-1.5 sm:py-2 rounded-full font-bold shadow-lg hover:bg-primary/90 transition-all flex items-center gap-2 disabled:opacity-50 text-sm w-full sm:w-auto justify-center"
                         >
                             {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                             Save

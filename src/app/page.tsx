@@ -7,44 +7,8 @@ import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from '@cl
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 overflow-hidden">
-      {/* Navbar */}
-      <nav className="max-w-7xl mx-auto p-6 md:p-8 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <div className="bg-primary p-2 rounded-xl">
-            <MessageSquare className="w-6 h-6 text-white" />
-          </div>
-          <span className="text-2xl font-black tracking-tighter text-gray-900 dark:text-white">
-            Pic Speak
-          </span>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <SignedOut>
-            <SignInButton mode="modal">
-              <button className="px-6 py-2.5 font-bold text-gray-900 dark:text-white hover:opacity-80 transition-opacity">
-                Login
-              </button>
-            </SignInButton>
-            <SignUpButton mode="modal">
-              <button className="px-6 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold rounded-full hover:opacity-90 transition-opacity">
-                Sign Up
-              </button>
-            </SignUpButton>
-          </SignedOut>
-          <SignedIn>
-            <Link
-              href="/my-boards"
-              className="mr-4 font-bold text-primary hover:underline"
-            >
-              My Boards
-            </Link>
-            <UserButton />
-          </SignedIn>
-        </div>
-      </nav>
-
       {/* Hero */}
-      <main className="max-w-7xl mx-auto px-6 pt-12 md:pt-24 lg:pt-32 pb-20">
+      <main className="max-w-7xl mx-auto px-6 pt-4 md:pt-12 lg:pt-20 pb-20">
         <div className="flex flex-col lg:flex-row items-center gap-16">
           <div className="flex-1 text-center lg:text-left z-10">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary font-bold text-sm mb-8 animate-in fade-in slide-in-from-bottom-4">

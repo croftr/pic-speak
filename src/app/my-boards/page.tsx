@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { UserButton } from '@clerk/nextjs';
-import { MoreVertical, Pencil, Trash2, X, Plus } from 'lucide-react';
+import { Pencil, Trash2, X, Plus } from 'lucide-react';
 import { Board } from '@/types';
 import { toast } from 'sonner';
 
@@ -105,7 +104,6 @@ export default function MyBoardsPage() {
                             <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                             New Board
                         </button>
-                        <UserButton />
                     </div>
                 </header>
 

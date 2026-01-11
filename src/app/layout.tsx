@@ -39,6 +39,7 @@ export const metadata: Metadata = {
 import { ClerkProvider } from '@clerk/nextjs'
 import { Toaster } from 'sonner'
 import { SettingsProvider } from '@/contexts/SettingsContext'
+import GlobalHeader from '@/components/GlobalHeader'
 
 export default function RootLayout({
   children,
@@ -52,7 +53,10 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
           <SettingsProvider>
-            {children}
+            <GlobalHeader />
+            <div className="pt-14 sm:pt-16">
+              {children}
+            </div>
             <Toaster position="top-center" richColors />
           </SettingsProvider>
         </body>
