@@ -47,19 +47,6 @@ export default function LandingPage() {
               Create personalized PECS boards in seconds. Upload photos, record sounds, and help non-verbal children communicate with confidence.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
-              <Link
-                href="/my-boards"
-                className="w-full sm:w-auto px-8 py-4 bg-primary text-white text-lg font-bold rounded-full hover:bg-primary/90 transition-all shadow-xl shadow-primary/25 flex items-center justify-center gap-2 group"
-              >
-                Get Started Free
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <button className="w-full sm:w-auto px-8 py-4 bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-white text-lg font-bold rounded-full hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors">
-                View Demo
-              </button>
-            </div>
-
             <div className="mt-12 flex items-center justify-center lg:justify-start gap-8 opacity-60 grayscale hover:grayscale-0 transition-all">
               {/* Trust badges placeholders */}
               <span className="font-bold text-xl flex items-center gap-2"><Smile className="w-6 h-6" /> Trusted by Parents</span>
