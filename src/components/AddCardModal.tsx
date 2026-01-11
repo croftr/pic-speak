@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { X, Image as ImageIcon, Check, Loader2, Mic, Upload, Music } from 'lucide-react';
+import { X, Image as ImageIcon, Check, Loader2, Mic, Upload, Music, Sparkles } from 'lucide-react';
 import AudioRecorder from './AudioRecorder';
 import { clsx } from 'clsx';
 import { Card } from '@/types';
@@ -15,7 +15,13 @@ interface AddCardModalProps {
 
 export default function AddCardModal({ isOpen, onClose, onCardAdded, boardId }: AddCardModalProps) {
     const [label, setLabel] = useState('');
+
+    // Image State
+    const [imageType, setImageType] = useState<'upload' | 'generate'>('upload');
     const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [generationPrompt, setGenerationPrompt] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
 
     // Audio State
     const [audioType, setAudioType] = useState<'record' | 'upload'>('record');
@@ -23,9 +29,6 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, boardId }: 
     const [audioFile, setAudioFile] = useState<File | null>(null);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    // Preview
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const audioInputRef = useRef<HTMLInputElement>(null);
@@ -45,6 +48,37 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, boardId }: 
         const file = e.target.files?.[0];
         if (file) {
             setAudioFile(file);
+        }
+    };
+
+    const handleGenerateImage = async () => {
+        if (!generationPrompt.trim()) return;
+
+        setIsGenerating(true);
+        try {
+            const res = await fetch('/api/generate-image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: generationPrompt })
+            });
+
+            if (!res.ok) throw new Error('Generation failed');
+
+            const data = await res.json();
+            const imageUrl = data.image; // data:image/png;base64,...
+
+            // Convert data URL to File object
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+            const file = new File([blob], "generated-image.png", { type: "image/png" });
+
+            setImageFile(file);
+            setImagePreview(imageUrl);
+        } catch (error) {
+            console.error(error);
+            alert('Failed to generate image. Please try again.');
+        } finally {
+            setIsGenerating(false);
         }
     };
 
@@ -107,6 +141,8 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, boardId }: 
             setLabel('');
             setImageFile(null);
             setImagePreview(null);
+            setGenerationPrompt('');
+            setImageType('upload');
             setAudioBlob(null);
             setAudioFile(null);
             setAudioType('record');
@@ -151,34 +187,96 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, boardId }: 
                     </div>
 
                     {/* Image Upload */}
-                    <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Picture
-                        </label>
-                        <div
-                            onClick={() => fileInputRef.current?.click()}
-                            className={clsx(
-                                "relative w-full h-48 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors overflow-hidden bg-gray-50 dark:bg-slate-800",
-                                imagePreview ? "border-solid border-primary" : ""
-                            )}
-                        >
-                            {imagePreview ? (
-                                <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="text-center p-4">
-                                    <ImageIcon className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-                                    <p className="text-sm text-gray-500">Tap to upload image</p>
-                                </div>
-                            )}
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={handleImageChange}
-                                required
-                            />
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Picture
+                            </label>
+
+                            {/* Image Toggle Switch */}
+                            <div className="flex bg-gray-100 dark:bg-slate-800 rounded-lg p-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setImageType('upload')}
+                                    className={clsx(
+                                        "px-3 py-1 rounded-md text-sm font-medium transition-all",
+                                        imageType === 'upload'
+                                            ? "bg-white dark:bg-slate-700 shadow-sm text-primary"
+                                            : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                                    )}
+                                >
+                                    Upload
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setImageType('generate')}
+                                    className={clsx(
+                                        "px-3 py-1 rounded-md text-sm font-medium transition-all",
+                                        imageType === 'generate'
+                                            ? "bg-white dark:bg-slate-700 shadow-sm text-primary"
+                                            : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                                    )}
+                                >
+                                    Generate AI
+                                </button>
+                            </div>
                         </div>
+
+                        {imageType === 'upload' ? (
+                            <div
+                                onClick={() => fileInputRef.current?.click()}
+                                className={clsx(
+                                    "relative w-full h-48 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors overflow-hidden bg-gray-50 dark:bg-slate-800",
+                                    imagePreview ? "border-solid border-primary" : ""
+                                )}
+                            >
+                                {imagePreview ? (
+                                    <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="text-center p-4">
+                                        <ImageIcon className="w-10 h-10 text-gray-400 mx-auto mb-2" />
+                                        <p className="text-sm text-gray-500">Tap to upload image</p>
+                                    </div>
+                                )}
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={handleImageChange}
+                                />
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={generationPrompt}
+                                        onChange={(e) => setGenerationPrompt(e.target.value)}
+                                        placeholder="Describe image (e.g. 'cartoon red apple')"
+                                        className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleGenerateImage}
+                                        disabled={isGenerating || !generationPrompt.trim()}
+                                        className="px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                                    >
+                                        {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+                                    </button>
+                                </div>
+                                <div className="relative w-full h-48 rounded-2xl border border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-slate-800">
+                                    {imagePreview ? (
+                                        <img src={imagePreview} alt="Generated Preview" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="text-center p-4 text-gray-400">
+                                            <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                                            <p className="text-xs">Preview will appear here</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Audio Input Section */}
