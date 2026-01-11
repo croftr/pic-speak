@@ -318,7 +318,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                             <input
                                 value={editDesc}
                                 onChange={(e) => setEditDesc(e.target.value)}
-                                className="w-full text-xs sm:text-sm text-gray-500 bg-transparent border-b border-gray-200 focus:border-primary outline-none"
+                                className="w-full text-gray-500 bg-transparent border-b border-gray-200 focus:border-primary outline-none"
                                 placeholder="Description (optional)"
                             />
                         </div>
@@ -328,14 +328,14 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                                 {board?.name || 'Loading...'}
                             </h1>
                             {board?.description && (
-                                <p className="text-gray-500 text-xs sm:text-sm mt-1 line-clamp-1 sm:line-clamp-2">{board.description}</p>
+                                <p className="text-gray-500 mt-1 line-clamp-1 sm:line-clamp-2">{board.description}</p>
                             )}
                         </div>
                     )}
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <SettingsMenu />
+                    {!isEditing && <SettingsMenu />}
                     {isEditing && (
                         <button
                             onClick={handleSaveBoard}
@@ -419,13 +419,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                             items={filteredCards.map(c => c.id)}
                             strategy={rectSortingStrategy}
                         >
-                            <div className={`grid gap-3 sm:gap-4 md:gap-6 ${
-                                cardSize === 'small'
-                                    ? 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8'
-                                    : cardSize === 'large'
+                            <div className={`grid gap-3 sm:gap-4 md:gap-6 ${cardSize === 'small'
+                                ? 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8'
+                                : cardSize === 'large'
                                     ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
                                     : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
-                            }`}>
+                                }`}>
                                 {filteredCards.map((card, index) => (
                                     <PecsCard
                                         key={card.id}

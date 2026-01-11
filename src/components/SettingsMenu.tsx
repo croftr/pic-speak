@@ -19,8 +19,8 @@ export default function SettingsMenu() {
             </button>
 
             {isOpen && (
-                <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl relative" style={{ margin: 'auto' }}>
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 backdrop-blur-sm" style={{ zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl relative" style={{ margin: 'auto', zIndex: 10000 }}>
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h2>
                             <button
@@ -64,11 +64,10 @@ export default function SettingsMenu() {
                                         <button
                                             key={size}
                                             onClick={() => setCardSize(size)}
-                                            className={`py-3 px-4 rounded-xl font-bold transition-all ${
-                                                cardSize === size
+                                            className={`py-3 px-4 rounded-xl font-bold transition-all ${cardSize === size
                                                     ? 'bg-primary text-white'
                                                     : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
-                                            }`}
+                                                }`}
                                         >
                                             {size.charAt(0).toUpperCase() + size.slice(1)}
                                         </button>
