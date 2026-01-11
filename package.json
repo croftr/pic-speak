@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "init-db": "tsx scripts/init-db.ts",
+    "migrate": "tsx scripts/migrate-data.ts",
+    "test:db": "tsx scripts/test-postgres.ts",
+    "test:blob": "tsx scripts/test-blob.ts",
+    "test:api": "tsx scripts/test-api-e2e.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.36.7",
@@ -14,10 +19,14 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@google/genai": "^1.35.0",
+    "@vercel/blob": "^2.0.0",
+    "@vercel/postgres": "^0.10.0",
     "clsx": "^2.1.1",
+    "dotenv": "^17.2.3",
     "lucide-react": "^0.562.0",
     "next": "16.1.1",
     "next-navigation": "^1.0.6",
+    "pg": "^8.16.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-easy-crop": "^5.5.6",
@@ -27,11 +36,13 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.16.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

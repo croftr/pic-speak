@@ -1,162 +1,229 @@
-import fs from 'fs/promises';
-import path from 'path';
+import { Client } from 'pg';
 import { Card, Board } from '@/types';
 
-const CARDS_FILE = path.join(process.cwd(), 'data', 'cards.json');
-const BOARDS_FILE = path.join(process.cwd(), 'data', 'boards.json');
+// Database row types (snake_case from DB)
+type CardRow = {
+    id: string;
+    board_id: string;
+    label: string;
+    image_url: string;
+    audio_url: string;
+    color?: string;
+    order?: number;
+    created_at?: string;
+    updated_at?: string;
+};
+
+type BoardRow = {
+    id: string;
+    user_id: string;
+    name: string;
+    description?: string;
+    created_at: string;
+    updated_at?: string;
+};
+
+// Helper function to get a database client
+async function getDbClient() {
+    const client = new Client({
+        connectionString: process.env.POSTGRES_URL,
+        ssl: {
+            rejectUnauthorized: false
+        }
+    });
+    await client.connect();
+    return client;
+}
 
 // --- Cards ---
 
 export async function getCards(boardId?: string): Promise<Card[]> {
+    const client = await getDbClient();
     try {
-        const data = await fs.readFile(CARDS_FILE, 'utf-8');
-        const cards: Card[] = JSON.parse(data);
+        let result;
         if (boardId) {
-            return cards.filter(card => card.boardId === boardId);
+            result = await client.query<CardRow>(
+                'SELECT * FROM cards WHERE board_id = $1 ORDER BY "order" ASC, created_at ASC',
+                [boardId]
+            );
+        } else {
+            result = await client.query<CardRow>(
+                'SELECT * FROM cards ORDER BY created_at ASC'
+            );
         }
-        return cards;
-    } catch (error) {
-        return [];
-    }
-}
 
-export async function saveCards(cards: Card[]): Promise<void> {
-    await fs.writeFile(CARDS_FILE, JSON.stringify(cards, null, 2), 'utf-8');
+        return result.rows.map(row => ({
+            id: row.id,
+            boardId: row.board_id,
+            label: row.label,
+            imageUrl: row.image_url,
+            audioUrl: row.audio_url,
+            color: row.color,
+            order: row.order
+        }));
+    } catch (error) {
+        console.error('Error getting cards:', error);
+        return [];
+    } finally {
+        await client.end();
+    }
 }
 
 export async function addCard(card: Card): Promise<void> {
-    // Read all cards first (not just filtered ones) to append correctly
-    let cards: Card[] = [];
+    const client = await getDbClient();
     try {
-        const data = await fs.readFile(CARDS_FILE, 'utf-8');
-        cards = JSON.parse(data);
-    } catch (e) {
-        cards = [];
+        await client.query(
+            'INSERT INTO cards (id, board_id, label, image_url, audio_url, color, "order") VALUES ($1, $2, $3, $4, $5, $6, $7)',
+            [card.id, card.boardId, card.label, card.imageUrl, card.audioUrl, card.color || '#6366f1', card.order || 0]
+        );
+    } catch (error) {
+        console.error('Error adding card:', error);
+        throw error;
+    } finally {
+        await client.end();
     }
-
-    cards.push(card);
-    await saveCards(cards);
 }
 
 export async function updateCard(updatedCard: Card): Promise<void> {
-    let cards: Card[] = [];
+    const client = await getDbClient();
     try {
-        const data = await fs.readFile(CARDS_FILE, 'utf-8');
-        cards = JSON.parse(data);
-    } catch (e) {
-        return;
-    }
-
-    const index = cards.findIndex(c => c.id === updatedCard.id);
-    if (index !== -1) {
-        cards[index] = updatedCard;
-        await saveCards(cards);
+        await client.query(
+            'UPDATE cards SET label = $1, image_url = $2, audio_url = $3, color = $4, updated_at = CURRENT_TIMESTAMP WHERE id = $5',
+            [updatedCard.label, updatedCard.imageUrl, updatedCard.audioUrl, updatedCard.color || '#6366f1', updatedCard.id]
+        );
+    } catch (error) {
+        console.error('Error updating card:', error);
+        throw error;
+    } finally {
+        await client.end();
     }
 }
 
 export async function deleteCard(id: string): Promise<void> {
-    let cards: Card[] = [];
+    const client = await getDbClient();
     try {
-        const data = await fs.readFile(CARDS_FILE, 'utf-8');
-        cards = JSON.parse(data);
-    } catch (e) {
-        return;
+        await client.query('DELETE FROM cards WHERE id = $1', [id]);
+    } catch (error) {
+        console.error('Error deleting card:', error);
+        throw error;
+    } finally {
+        await client.end();
     }
-
-    const newCards = cards.filter(c => c.id !== id);
-    await saveCards(newCards);
 }
 
 export async function updateCardOrders(boardId: string, cardOrders: { id: string; order: number }[]): Promise<void> {
-    let cards: Card[] = [];
+    const client = await getDbClient();
     try {
-        const data = await fs.readFile(CARDS_FILE, 'utf-8');
-        cards = JSON.parse(data);
-    } catch (e) {
-        return;
-    }
+        // Use a transaction to update all orders atomically
+        await client.query('BEGIN');
 
-    // Update order for cards in this board
-    cards = cards.map(card => {
-        if (card.boardId === boardId) {
-            const orderUpdate = cardOrders.find(co => co.id === card.id);
-            if (orderUpdate) {
-                return { ...card, order: orderUpdate.order };
-            }
+        for (const { id, order } of cardOrders) {
+            await client.query(
+                'UPDATE cards SET "order" = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND board_id = $3',
+                [order, id, boardId]
+            );
         }
-        return card;
-    });
 
-    await saveCards(cards);
+        await client.query('COMMIT');
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error updating card orders:', error);
+        throw error;
+    } finally {
+        await client.end();
+    }
 }
 
 // --- Boards ---
 
 export async function getBoards(userId: string): Promise<Board[]> {
+    const client = await getDbClient();
     try {
-        const data = await fs.readFile(BOARDS_FILE, 'utf-8');
-        const boards: Board[] = JSON.parse(data);
-        return boards.filter(b => b.userId === userId);
-    } catch (error) {
-        return [];
-    }
-}
+        const result = await client.query<BoardRow>(
+            'SELECT * FROM boards WHERE user_id = $1 ORDER BY created_at DESC',
+            [userId]
+        );
 
-export async function saveBoards(boards: Board[]): Promise<void> {
-    await fs.writeFile(BOARDS_FILE, JSON.stringify(boards, null, 2), 'utf-8');
+        return result.rows.map(row => ({
+            id: row.id,
+            userId: row.user_id,
+            name: row.name,
+            description: row.description,
+            createdAt: row.created_at
+        }));
+    } catch (error) {
+        console.error('Error getting boards:', error);
+        return [];
+    } finally {
+        await client.end();
+    }
 }
 
 export async function addBoard(board: Board): Promise<void> {
-    // Read all boards to append correctly (we don't want to overwrite other users' data)
-    let boards: Board[] = [];
+    const client = await getDbClient();
     try {
-        const data = await fs.readFile(BOARDS_FILE, 'utf-8');
-        boards = JSON.parse(data);
-    } catch (e) {
-        boards = [];
+        await client.query(
+            'INSERT INTO boards (id, user_id, name, description, created_at) VALUES ($1, $2, $3, $4, $5)',
+            [board.id, board.userId, board.name, board.description || '', board.createdAt]
+        );
+    } catch (error) {
+        console.error('Error adding board:', error);
+        throw error;
+    } finally {
+        await client.end();
     }
-
-    boards.push(board);
-    await saveBoards(boards);
 }
 
 export async function getBoard(id: string): Promise<Board | undefined> {
-    // Helper to get board, caller must verify ownership if needed
-    let boards: Board[] = [];
+    const client = await getDbClient();
     try {
-        const data = await fs.readFile(BOARDS_FILE, 'utf-8');
-        boards = JSON.parse(data);
-    } catch (e) {
+        const result = await client.query<BoardRow>(
+            'SELECT * FROM boards WHERE id = $1 LIMIT 1',
+            [id]
+        );
+
+        if (result.rows.length === 0) return undefined;
+
+        const row = result.rows[0];
+        return {
+            id: row.id,
+            userId: row.user_id,
+            name: row.name,
+            description: row.description,
+            createdAt: row.created_at
+        };
+    } catch (error) {
+        console.error('Error getting board:', error);
         return undefined;
+    } finally {
+        await client.end();
     }
-    return boards.find(b => b.id === id);
 }
 
 export async function updateBoard(updatedBoard: Board): Promise<void> {
-    let boards: Board[] = [];
+    const client = await getDbClient();
     try {
-        const data = await fs.readFile(BOARDS_FILE, 'utf-8');
-        boards = JSON.parse(data);
-    } catch (e) {
-        return;
-    }
-
-    const index = boards.findIndex(b => b.id === updatedBoard.id);
-    if (index !== -1) {
-        boards[index] = updatedBoard;
-        await saveBoards(boards);
+        await client.query(
+            'UPDATE boards SET name = $1, description = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3',
+            [updatedBoard.name, updatedBoard.description || '', updatedBoard.id]
+        );
+    } catch (error) {
+        console.error('Error updating board:', error);
+        throw error;
+    } finally {
+        await client.end();
     }
 }
 
 export async function deleteBoard(id: string): Promise<void> {
-    let boards: Board[] = [];
+    const client = await getDbClient();
     try {
-        const data = await fs.readFile(BOARDS_FILE, 'utf-8');
-        boards = JSON.parse(data);
-    } catch (e) {
-        return;
+        // Cards will be automatically deleted due to CASCADE
+        await client.query('DELETE FROM boards WHERE id = $1', [id]);
+    } catch (error) {
+        console.error('Error deleting board:', error);
+        throw error;
+    } finally {
+        await client.end();
     }
-
-    const newBoards = boards.filter(b => b.id !== id);
-    await saveBoards(newBoards);
 }

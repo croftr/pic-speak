@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(npm run init-db:*)",
+      "Bash(npx tsx:*)",
+      "Bash(npm run test:db:*)",
+      "Bash(npm run test:blob:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)"
     ]
   }
 }

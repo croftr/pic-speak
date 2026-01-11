@@ -42,3 +42,10 @@ next-env.d.ts
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# old file-based storage (replaced by Vercel storage)
+/data/
+*.backup
+
+.vercel
+.env*.local
