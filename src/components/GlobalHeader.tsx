@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { UserButton, SignedIn, SignedOut, SignInButton } from '@clerk/nextjs';
-import { MessageSquare } from 'lucide-react';
 import Image from 'next/image';
 
 export default function GlobalHeader() {
@@ -30,9 +29,8 @@ export default function GlobalHeader() {
 
     return (
         <header
-            className={`fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${
-                isVisible ? 'translate-y-0' : '-translate-y-full'
-            }`}
+            className={`fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'
+                }`}
         >
             <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
@@ -45,9 +43,9 @@ export default function GlobalHeader() {
                             <Image
                                 src="/logo.png"
                                 alt="Pic Speak Logo"
-                                width={40}
-                                height={40}
-                                className="object-contain"
+                                width={100}
+                                height={100}
+                                className="object-contain rounded-full"
                             />
                         </div>
                         <span className="text-lg sm:text-xl font-black tracking-tighter text-gray-900 dark:text-white">
