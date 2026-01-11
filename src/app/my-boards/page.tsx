@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
 import { MoreVertical, Pencil, Trash2, X, Plus } from 'lucide-react';
 import { Board } from '@/types';
@@ -10,15 +11,13 @@ export default function MyBoardsPage() {
     const [boards, setBoards] = useState<Board[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    const router = useRouter();
+
     // Create Mode State
     const [isCreating, setIsCreating] = useState(false);
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [newBoardName, setNewBoardName] = useState('');
     const [newBoardDesc, setNewBoardDesc] = useState('');
-
-    // Edit Mode State
-    const [editingBoard, setEditingBoard] = useState<Board | null>(null);
-    const [isUpdating, setIsUpdating] = useState(false);
 
     // Load boards
     useEffect(() => {
@@ -77,32 +76,7 @@ export default function MyBoardsPage() {
         }
     };
 
-    const handleUpdateBoard = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!editingBoard) return;
 
-        setIsUpdating(true);
-        try {
-            const res = await fetch(`/api/boards/${editingBoard.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: editingBoard.name,
-                    description: editingBoard.description
-                })
-            });
-
-            if (res.ok) {
-                const updated = await res.json();
-                setBoards(boards.map(b => b.id === updated.id ? updated : b));
-                setEditingBoard(null);
-            }
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setIsUpdating(false);
-        }
-    };
 
     return (
         <main className="min-h-screen bg-gray-50 dark:bg-slate-950 p-6 md:p-12">
@@ -178,55 +152,7 @@ export default function MyBoardsPage() {
                     </div>
                 )}
 
-                {/* Edit Board Modal */}
-                {editingBoard && (
-                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-                        <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl p-8 shadow-2xl animate-in fade-in zoom-in-95">
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-bold">Edit Board</h2>
-                                <button onClick={() => setEditingBoard(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
-                                    <X className="w-6 h-6" />
-                                </button>
-                            </div>
-                            <form onSubmit={handleUpdateBoard} className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Board Name</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={editingBoard.name}
-                                        onChange={(e) => setEditingBoard({ ...editingBoard, name: e.target.value })}
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800 focus:ring-2 focus:ring-primary/50 outline-none"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Description</label>
-                                    <textarea
-                                        value={editingBoard.description || ''}
-                                        onChange={(e) => setEditingBoard({ ...editingBoard, description: e.target.value })}
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800 focus:ring-2 focus:ring-primary/50 outline-none h-24 resize-none"
-                                    />
-                                </div>
-                                <div className="pt-4 flex justify-end gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setEditingBoard(null)}
-                                        className="px-6 py-3 font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={isUpdating || !editingBoard.name.trim()}
-                                        className="px-8 py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 disabled:opacity-50 transition-colors"
-                                    >
-                                        {isUpdating ? 'Saving...' : 'Save Changes'}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )}
+
 
                 {/* Boards Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -261,9 +187,10 @@ export default function MyBoardsPage() {
                                     <button
                                         onClick={(e) => {
                                             e.preventDefault();
-                                            setEditingBoard(board);
+                                            e.stopPropagation();
+                                            router.push(`/board/${board.id}?edit=true`);
                                         }}
-                                        className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-md text-gray-500 hover:text-primary transition-colors hover:scale-110"
+                                        className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-md text-gray-500 hover:text-primary transition-colors hover:scale-110 flex items-center justify-center"
                                         title="Edit Board"
                                     >
                                         <Pencil className="w-4 h-4" />
@@ -295,6 +222,6 @@ export default function MyBoardsPage() {
                     )}
                 </div>
             </div>
-        </main>
+        </main >
     );
 }
