@@ -1,10 +1,28 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowRight, MessageSquare, Mic, Image as ImageIcon, Smile, Plus } from 'lucide-react';
+import { ArrowRight, MessageSquare, Mic, Image as ImageIcon, Smile, Plus, Eye } from 'lucide-react';
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
+import { Board } from '@/types';
 
 export default function LandingPage() {
+  const [publicBoards, setPublicBoards] = useState<Board[]>([]);
+  const [isLoadingBoards, setIsLoadingBoards] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/boards/public')
+      .then(res => res.json())
+      .then(data => {
+        setPublicBoards(data);
+        setIsLoadingBoards(false);
+      })
+      .catch(err => {
+        console.error('Error loading public boards:', err);
+        setIsLoadingBoards(false);
+      });
+  }, []);
+
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 overflow-hidden">
       {/* Hero */}
@@ -105,6 +123,49 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Public Boards Section */}
+      {!isLoadingBoards && publicBoards.length > 0 && (
+        <section className="py-16 bg-white dark:bg-slate-950">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mb-4">
+                Explore Public Boards
+              </h2>
+              <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+                Check out these communication boards shared by our community
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {publicBoards.map((board) => (
+                <Link
+                  key={board.id}
+                  href={`/board/${board.id}`}
+                  className="group relative block p-6 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800 rounded-2xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl hover:scale-105 transition-all duration-300"
+                >
+                  <div className="absolute top-3 right-3 px-2 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold flex items-center gap-1">
+                    <Eye className="w-3 h-3" />
+                    Public
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 pr-16 group-hover:text-primary transition-colors">
+                    {board.name}
+                  </h3>
+                  <p className="text-gray-500 text-sm line-clamp-2 mb-4">
+                    {board.description || 'No description provided.'}
+                  </p>
+                  <div className="flex items-center justify-between text-xs text-gray-400">
+                    <span>
+                      {new Date(board.createdAt).toLocaleDateString()}
+                    </span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

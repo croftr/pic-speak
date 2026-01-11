@@ -8,7 +8,8 @@
       "Bash(npm run test:blob:*)",
       "Bash(npm run build:*)",
       "Bash(npm run dev:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(npm run tsx:*)"
     ]
   }
 }

@@ -14,6 +14,7 @@ export interface Board {
   name: string;
   description?: string;
   createdAt: string;
+  isPublic?: boolean;
 }
 
 export interface ApiResponse {

@@ -4,25 +4,22 @@ import { Card } from '@/types';
 import { auth } from '@clerk/nextjs/server';
 
 export async function GET(request: Request) {
-    const { userId } = await auth();
-    if (!userId) {
-        return new NextResponse("Unauthorized", { status: 401 });
-    }
-
     const { searchParams } = new URL(request.url);
     const boardId = searchParams.get('boardId');
 
-    // If no boardId, currently we returned all cards. 
-    // Now we must ensure we only return cards for boards owned by the user.
-    // However, the previous logic was just "getCards()". 
-    // To be safe/simple, let's require boardId for now or return empty.
     if (!boardId) {
         return NextResponse.json([]);
     }
 
-    // Check board ownership
+    // Check board access (public or owned)
     const board = await getBoard(boardId);
-    if (!board || board.userId !== userId) {
+    if (!board) {
+        return new NextResponse("Board not found", { status: 404 });
+    }
+
+    // Allow access if board is public or user is the owner
+    const { userId } = await auth();
+    if (!board.isPublic && board.userId !== userId) {
         return new NextResponse("Unauthorized Board Access", { status: 403 });
     }
 

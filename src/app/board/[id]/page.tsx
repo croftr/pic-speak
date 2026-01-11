@@ -29,12 +29,13 @@ import {
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const isEditing = searchParams.get('edit') === 'true';
+    const requestedEdit = searchParams.get('edit') === 'true';
     const { cardSize } = useSettings();
 
     const unwrappedParams = use(params);
     const [cards, setCards] = useState<Card[]>([]);
     const [board, setBoard] = useState<Board | null>(null);
+    const [isOwner, setIsOwner] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [editingCard, setEditingCard] = useState<Card | null>(null);
@@ -42,6 +43,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     // Edit states
     const [editName, setEditName] = useState('');
     const [editDesc, setEditDesc] = useState('');
+    const [isPublic, setIsPublic] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
     // Search/Filter state
@@ -53,6 +55,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     // Header visibility state
     const [isHeaderVisible, setIsHeaderVisible] = useState(true);
     const [lastScrollY, setLastScrollY] = useState(0);
+
+    // Computed: only allow editing if owner and requested
+    const isEditing = requestedEdit && isOwner;
 
     // Drag and drop sensors
     const sensors = useSensors(
@@ -66,6 +71,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         const loadData = async () => {
             setIsLoading(true);
             try {
+                // Fetch current user
+                const userRes = await fetch('/api/user');
+                const userData = await userRes.json();
+                const currentUserId = userData.userId;
+
                 // Fetch Cards
                 const cardsRes = await fetch(`/api/cards?boardId=${unwrappedParams.id}`);
                 if (cardsRes.ok) {
@@ -79,16 +89,15 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     setCards(fetchedCards);
                 }
 
-                // Fetch Board Info
-                const boardsRes = await fetch('/api/boards');
-                if (boardsRes.ok) {
-                    const boards = await boardsRes.json();
-                    const found = boards.find((b: Board) => b.id === unwrappedParams.id);
-                    if (found) {
-                        setBoard(found);
-                        setEditName(found.name);
-                        setEditDesc(found.description || '');
-                    }
+                // Fetch Board Info - try direct API first for public boards
+                const boardRes = await fetch(`/api/boards/${unwrappedParams.id}`);
+                if (boardRes.ok) {
+                    const found = await boardRes.json();
+                    setBoard(found);
+                    setEditName(found.name);
+                    setEditDesc(found.description || '');
+                    setIsPublic(found.isPublic || false);
+                    setIsOwner(found.userId === currentUserId);
                 }
             } catch (e) {
                 console.error(e);
@@ -144,7 +153,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name: editName,
-                    description: editDesc
+                    description: editDesc,
+                    isPublic: isPublic
                 })
             });
 
@@ -346,6 +356,17 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                                 className="w-full text-sm text-gray-500 bg-transparent border-b border-gray-200 focus:border-primary outline-none"
                                 placeholder="Description (optional)"
                             />
+                            <label className="flex items-center gap-2 pt-1 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={isPublic}
+                                    onChange={(e) => setIsPublic(e.target.checked)}
+                                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary focus:ring-2"
+                                />
+                                <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                                    Make this board public (anyone can view)
+                                </span>
+                            </label>
                         </div>
                     ) : (
                         <div className="flex-1 min-w-0">

@@ -9,6 +9,7 @@
     "lint": "eslint",
     "init-db": "tsx scripts/init-db.ts",
     "migrate": "tsx scripts/migrate-data.ts",
+    "migrate:public": "tsx scripts/add-public-boards.ts",
     "test:db": "tsx scripts/test-postgres.ts",
     "test:blob": "tsx scripts/test-blob.ts",
     "test:api": "tsx scripts/test-api-e2e.ts",
