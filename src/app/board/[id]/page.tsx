@@ -25,14 +25,15 @@ import {
     sortableKeyboardCoordinates,
     rectSortingStrategy,
 } from '@dnd-kit/sortable';
+import clsx from 'clsx';
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
+    const unwrappedParams = use(params);
     const router = useRouter();
     const searchParams = useSearchParams();
     const requestedEdit = searchParams.get('edit') === 'true';
     const { cardSize } = useSettings();
 
-    const unwrappedParams = use(params);
     const [cards, setCards] = useState<Card[]>([]);
     const [board, setBoard] = useState<Board | null>(null);
     const [isOwner, setIsOwner] = useState(false);
@@ -48,6 +49,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
     // Search/Filter state
     const [searchTerm, setSearchTerm] = useState('');
+    const [typeFilter, setTypeFilter] = useState<'All' | 'Thing' | 'Word'>('All');
 
     // Keyboard navigation state
     const [focusedCardIndex, setFocusedCardIndex] = useState<number>(-1);
@@ -175,10 +177,16 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         }
     };
 
-    // Filter cards based on search term
-    const filteredCards = cards.filter(card =>
-        card.label.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Filter cards based on search term and type
+    const hasThings = cards.some(c => c.type === 'Thing');
+    const hasWords = cards.some(c => c.type === 'Word');
+    const showTypeFilter = hasThings && hasWords;
+
+    const filteredCards = cards.filter(card => {
+        const matchesSearch = card.label.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesType = typeFilter === 'All' || card.type === typeFilter;
+        return matchesSearch && matchesType;
+    });
 
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
@@ -332,9 +340,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     return (
         <main className="min-h-screen p-2 sm:p-4 md:p-8 relative pb-32">
             {/* Header */}
-            <header className={`max-w-7xl mx-auto mb-4 md:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 glass p-3 sm:p-4 rounded-xl md:rounded-2xl sticky top-16 sm:top-[4.5rem] z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-sm transition-transform duration-300 ${
-                isHeaderVisible ? 'translate-y-0' : '-translate-y-[150%]'
-            }`}>
+            <header className={`max-w-7xl mx-auto mb-4 md:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 glass p-3 sm:p-4 rounded-xl md:rounded-2xl sticky top-16 sm:top-[4.5rem] z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-sm transition-transform duration-300 ${isHeaderVisible ? 'translate-y-0' : '-translate-y-[150%]'
+                }`}>
                 <div className="flex items-center gap-2 sm:gap-3 flex-1 w-full sm:w-auto">
                     <Link href="/my-boards" className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors flex-shrink-0">
                         <ArrowLeft className="w-5 h-5" />
@@ -398,7 +405,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 </div>
             </header>
 
-            {/* Search Bar - Only show when cards exist */}
+            {/* Search Bar - Only show when cards exist and in edit mode */}
             {isEditing && !isLoading && cards.length > 0 && (
                 <div className="max-w-7xl mx-auto mb-4 sm:mb-6">
                     <div className="relative">
@@ -420,13 +427,31 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                             </button>
                         )}
                     </div>
-                    {searchTerm && (
-                        <p className="mt-2 text-xs sm:text-sm text-gray-500 px-1">
-                            {filteredCards.length === 0
-                                ? 'No cards found'
-                                : `${filteredCards.length} card${filteredCards.length === 1 ? '' : 's'} found`}
-                        </p>
-                    )}
+                </div>
+            )}
+
+            {/* Type Filter - Only show if both types exist */}
+            {!isLoading && showTypeFilter && (
+                <div className="max-w-7xl mx-auto mb-6 flex justify-center">
+                    <div className="bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm p-1 rounded-2xl border border-gray-200 dark:border-gray-800 flex gap-1 shadow-sm overflow-x-auto max-w-full">
+                        {(['All', 'Thing', 'Word'] as const).map((type) => (
+                            <button
+                                key={type}
+                                onClick={() => setTypeFilter(type)}
+                                className={clsx(
+                                    "px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all transform active:scale-95 whitespace-nowrap",
+                                    typeFilter === type
+                                        ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105"
+                                        : "text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800"
+                                )}
+                            >
+                                {type === 'All' ? 'Everything' : type}
+                                <span className="ml-2 opacity-50 text-[10px]">
+                                    ({type === 'All' ? cards.length : cards.filter(c => c.type === type).length})
+                                </span>
+                            </button>
+                        ))}
+                    </div>
                 </div>
             )}
 

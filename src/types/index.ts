@@ -6,6 +6,7 @@ export interface Card {
   audioUrl: string;
   color?: string;
   order?: number;
+  type: 'Thing' | 'Word';
 }
 
 export interface Board {

@@ -35,7 +35,7 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json();
-        const { label, imageUrl, audioUrl, color, boardId } = body;
+        const { label, imageUrl, audioUrl, color, boardId, type } = body;
 
         // BoardID is mandatory now for new cards
         if (!imageUrl || !audioUrl || !boardId) {
@@ -58,6 +58,7 @@ export async function POST(request: Request) {
             imageUrl,
             audioUrl,
             color: color || 'var(--primary)',
+            type: type || 'Thing',
         };
 
         await addCard(newCard);

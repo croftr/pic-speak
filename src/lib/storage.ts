@@ -10,6 +10,7 @@ type CardRow = {
     audio_url: string;
     color?: string;
     order?: number;
+    type: 'Thing' | 'Word';
     created_at?: string;
     updated_at?: string;
 };
@@ -65,7 +66,8 @@ export async function getCards(boardId?: string): Promise<Card[]> {
             imageUrl: row.image_url,
             audioUrl: row.audio_url,
             color: row.color,
-            order: row.order
+            order: row.order,
+            type: row.type || 'Thing'
         }));
     } catch (error) {
         console.error('Error getting cards:', error);
@@ -79,8 +81,8 @@ export async function addCard(card: Card): Promise<void> {
     const client = await getDbClient();
     try {
         await client.query(
-            'INSERT INTO cards (id, board_id, label, image_url, audio_url, color, "order") VALUES ($1, $2, $3, $4, $5, $6, $7)',
-            [card.id, card.boardId, card.label, card.imageUrl, card.audioUrl, card.color || '#6366f1', card.order || 0]
+            'INSERT INTO cards (id, board_id, label, image_url, audio_url, color, "order", type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+            [card.id, card.boardId, card.label, card.imageUrl, card.audioUrl, card.color || '#6366f1', card.order || 0, card.type || 'Thing']
         );
     } catch (error) {
         console.error('Error adding card:', error);
@@ -94,8 +96,8 @@ export async function updateCard(updatedCard: Card): Promise<void> {
     const client = await getDbClient();
     try {
         await client.query(
-            'UPDATE cards SET label = $1, image_url = $2, audio_url = $3, color = $4, updated_at = CURRENT_TIMESTAMP WHERE id = $5',
-            [updatedCard.label, updatedCard.imageUrl, updatedCard.audioUrl, updatedCard.color || '#6366f1', updatedCard.id]
+            'UPDATE cards SET label = $1, image_url = $2, audio_url = $3, color = $4, type = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6',
+            [updatedCard.label, updatedCard.imageUrl, updatedCard.audioUrl, updatedCard.color || '#6366f1', updatedCard.type || 'Thing', updatedCard.id]
         );
     } catch (error) {
         console.error('Error updating card:', error);

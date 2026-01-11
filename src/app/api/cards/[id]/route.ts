@@ -28,7 +28,7 @@ export async function PUT(
         }
 
         const body = await request.json();
-        const { label, imageUrl, audioUrl, color } = body;
+        const { label, imageUrl, audioUrl, color, type } = body;
 
         const updatedCard = {
             ...existingCard,
@@ -36,6 +36,7 @@ export async function PUT(
             imageUrl: imageUrl !== undefined ? imageUrl : existingCard.imageUrl,
             audioUrl: audioUrl !== undefined ? audioUrl : existingCard.audioUrl,
             color: color !== undefined ? color : existingCard.color,
+            type: type !== undefined ? type : existingCard.type,
         };
 
         await updateCard(updatedCard);
