@@ -324,9 +324,13 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                         </div>
                     ) : (
                         <div className="flex-1 min-w-0">
-                            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent tracking-tight truncate">
-                                {board?.name || 'Loading...'}
-                            </h1>
+                            <div className="flex items-center gap-2 justify-between">
+                                <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent tracking-tight truncate">
+                                    {board?.name || 'Loading...'}
+                                </h1>
+                                {!isEditing && <SettingsMenu />}
+                            </div>
+
                             {board?.description && (
                                 <p className="text-gray-500 mt-1 line-clamp-1 sm:line-clamp-2">{board.description}</p>
                             )}
@@ -335,7 +339,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 </div>
 
                 <div className="flex items-center gap-2">
-                    {!isEditing && <SettingsMenu />}
                     {isEditing && (
                         <button
                             onClick={handleSaveBoard}
@@ -350,7 +353,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             </header>
 
             {/* Search Bar - Only show when cards exist */}
-            {!isLoading && cards.length > 0 && (
+            {isEditing && !isLoading && cards.length > 0 && (
                 <div className="max-w-7xl mx-auto mb-4 sm:mb-6">
                     <div className="relative">
                         <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
