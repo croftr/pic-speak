@@ -2,8 +2,9 @@
 
 import { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
-import { X, Check, RotateCw, ZoomIn, ZoomOut } from 'lucide-react';
+import { X, Check, RotateCw, ZoomIn, ZoomOut, Square, RectangleHorizontal, RectangleVertical } from 'lucide-react';
 import { Area, Point } from 'react-easy-crop';
+import { clsx } from 'clsx';
 
 interface ImageCropModalProps {
     imageSrc: string;
@@ -11,10 +12,23 @@ interface ImageCropModalProps {
     onCancel: () => void;
 }
 
+type AspectRatioOption = {
+    label: string;
+    value: number;
+    icon: React.ComponentType<{ className?: string }>;
+};
+
+const aspectRatios: AspectRatioOption[] = [
+    { label: 'Portrait', value: 3 / 4, icon: RectangleVertical },
+    { label: 'Square', value: 1, icon: Square },
+    { label: 'Landscape', value: 4 / 3, icon: RectangleHorizontal },
+];
+
 export default function ImageCropModal({ imageSrc, onCropComplete, onCancel }: ImageCropModalProps) {
     const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
     const [rotation, setRotation] = useState(0);
+    const [aspectRatio, setAspectRatio] = useState<number>(3 / 4); // Default to portrait
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
 
@@ -112,7 +126,7 @@ export default function ImageCropModal({ imageSrc, onCropComplete, onCancel }: I
                     crop={crop}
                     zoom={zoom}
                     rotation={rotation}
-                    aspect={4 / 3}
+                    aspect={aspectRatio}
                     onCropChange={onCropChange}
                     onCropComplete={onCropCompleteInternal}
                     onZoomChange={setZoom}
@@ -122,6 +136,32 @@ export default function ImageCropModal({ imageSrc, onCropComplete, onCancel }: I
 
             {/* Controls */}
             <div className="bg-gray-900 px-4 py-4 space-y-4">
+                {/* Aspect Ratio Selector */}
+                <div className="space-y-2">
+                    <label className="text-white text-sm font-medium">Aspect Ratio</label>
+                    <div className="flex gap-2">
+                        {aspectRatios.map((option) => {
+                            const Icon = option.icon;
+                            return (
+                                <button
+                                    key={option.label}
+                                    type="button"
+                                    onClick={() => setAspectRatio(option.value)}
+                                    className={clsx(
+                                        "flex-1 px-4 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2",
+                                        aspectRatio === option.value
+                                            ? "bg-primary text-white shadow-lg"
+                                            : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                                    )}
+                                >
+                                    <Icon className="w-5 h-5" />
+                                    <span className="text-sm">{option.label}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
                 {/* Zoom Control */}
                 <div className="flex items-center gap-3">
                     <ZoomOut className="w-5 h-5 text-white" />
