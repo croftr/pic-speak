@@ -192,7 +192,7 @@ export default function MyBoardsPage() {
                                 href={`/board/${board.id}`}
                                 className="group relative block p-5 sm:p-6 md:p-8 bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                             >
-                                <div className="absolute top-3 right-3 sm:top-4 sm:right-4 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 sm:gap-2">
+                                <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex items-center gap-1 sm:gap-2">
                                     <button
                                         onClick={(e) => {
                                             e.preventDefault();
@@ -201,6 +201,7 @@ export default function MyBoardsPage() {
                                         }}
                                         className="p-1.5 sm:p-2 bg-white dark:bg-slate-800 rounded-full shadow-md text-gray-500 hover:text-primary transition-colors hover:scale-110 flex items-center justify-center"
                                         title="Edit Board"
+                                        aria-label={`Edit ${board.name} board`}
                                     >
                                         <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                     </button>
@@ -208,6 +209,7 @@ export default function MyBoardsPage() {
                                         onClick={(e) => handleDeleteBoard(e, board.id)}
                                         className="p-1.5 sm:p-2 bg-white dark:bg-slate-800 rounded-full shadow-md text-gray-500 hover:text-red-500 transition-colors hover:scale-110"
                                         title="Delete Board"
+                                        aria-label={`Delete ${board.name} board`}
                                     >
                                         <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                     </button>
