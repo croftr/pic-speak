@@ -19,5 +19,21 @@
     "imageUrl": "/uploads/socks-1768133108190-419230341.jpg",
     "audioUrl": "/uploads/juice-1768133108204-71934421.mp3",
     "color": "#6366f1"
+  },
+  {
+    "id": "5b8c26d8-b827-40c2-ac4f-b7a4f79c5274",
+    "boardId": "ae7a23cf-3ced-4670-ae91-e213c081c25f",
+    "label": "guitar",
+    "imageUrl": "/uploads/guitar-1768133629336-993456659.jpg",
+    "audioUrl": "/uploads/tea-1768133629353-375228855.mp3",
+    "color": "#6366f1"
+  },
+  {
+    "id": "ff4ba26b-1489-4ef9-ace8-5f5d96ffc93c",
+    "boardId": "0f119671-4821-4028-ba95-e512169b1736",
+    "label": "seesoon",
+    "imageUrl": "/uploads/seesoon-1768133661228-856730732.jpg",
+    "audioUrl": "/uploads/seesoon-1768133661243-147815301.mp3",
+    "color": "#6366f1"
   }
 ]

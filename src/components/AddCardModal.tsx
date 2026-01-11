@@ -10,9 +10,10 @@ interface AddCardModalProps {
     isOpen: boolean;
     onClose: () => void;
     onCardAdded: (card: Card) => void;
+    boardId: string;
 }
 
-export default function AddCardModal({ isOpen, onClose, onCardAdded }: AddCardModalProps) {
+export default function AddCardModal({ isOpen, onClose, onCardAdded, boardId }: AddCardModalProps) {
     const [label, setLabel] = useState('');
     const [imageFile, setImageFile] = useState<File | null>(null);
 
@@ -91,6 +92,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded }: AddCardMo
                     label,
                     imageUrl,
                     audioUrl,
+                    boardId,
                     color: '#6366f1' // Default primary color for now
                 })
             });
