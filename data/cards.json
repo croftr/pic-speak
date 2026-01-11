@@ -1,0 +1,23 @@
+[
+  {
+    "id": "9c3d3f16-3628-43c1-9dbd-71de85d29929",
+    "label": "Dance!",
+    "imageUrl": "/uploads/dance-1768132814107-939716184.BMP",
+    "audioUrl": "/uploads/audio-1768132814116-1768132814132-20954456.webm",
+    "color": "#6366f1"
+  },
+  {
+    "id": "3bee08c5-9583-43c7-9c52-04cfda03f00a",
+    "label": "byebye",
+    "imageUrl": "/uploads/byemick-1768133021417-268255436.jpg",
+    "audioUrl": "/uploads/audio-1768133021419-1768133021437-816217967.webm",
+    "color": "#6366f1"
+  },
+  {
+    "id": "32d966d3-7552-4904-bfe6-748a2899e209",
+    "label": "Socks",
+    "imageUrl": "/uploads/socks-1768133108190-419230341.jpg",
+    "audioUrl": "/uploads/juice-1768133108204-71934421.mp3",
+    "color": "#6366f1"
+  }
+]
