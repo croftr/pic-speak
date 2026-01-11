@@ -37,6 +37,8 @@ export const metadata: Metadata = {
 };
 
 import { ClerkProvider } from '@clerk/nextjs'
+import { Toaster } from 'sonner'
+import { SettingsProvider } from '@/contexts/SettingsContext'
 
 export default function RootLayout({
   children,
@@ -49,7 +51,10 @@ export default function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
-          {children}
+          <SettingsProvider>
+            {children}
+            <Toaster position="top-center" richColors />
+          </SettingsProvider>
         </body>
       </html>
     </ClerkProvider>

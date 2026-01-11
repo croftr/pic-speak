@@ -103,3 +103,52 @@ body {
 .glass-card {
   @apply bg-white/10 dark:bg-slate-900/40 backdrop-blur-lg border border-white/20 dark:border-white/10 shadow-xl;
 }
+
+/* High Contrast Mode */
+.high-contrast {
+  --background: #000000;
+  --foreground: #ffffff;
+  --primary: #00ff00;
+  --primary-foreground: #000000;
+  --secondary: #ffff00;
+  --secondary-foreground: #000000;
+  --accent: #00ffff;
+  --accent-foreground: #000000;
+  --muted: #333333;
+  --muted-foreground: #ffffff;
+  --card: #000000;
+  --card-foreground: #ffffff;
+  --destructive: #ff0000;
+  --destructive-foreground: #ffffff;
+}
+
+.high-contrast body {
+  background: #000000;
+  background-image: none;
+}
+
+.high-contrast .glass,
+.high-contrast .glass-card {
+  background: #000000;
+  border: 2px solid #ffffff;
+  backdrop-filter: none;
+}
+
+.high-contrast * {
+  border-color: #ffffff !important;
+}
+
+.high-contrast img {
+  filter: contrast(1.5) brightness(1.2);
+}
+
+.high-contrast button,
+.high-contrast input,
+.high-contrast textarea {
+  border: 2px solid #ffffff !important;
+}
+
+.high-contrast button:hover {
+  background: #ffffff !important;
+  color: #000000 !important;
+}

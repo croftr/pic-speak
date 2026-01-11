@@ -67,6 +67,29 @@ export async function deleteCard(id: string): Promise<void> {
     await saveCards(newCards);
 }
 
+export async function updateCardOrders(boardId: string, cardOrders: { id: string; order: number }[]): Promise<void> {
+    let cards: Card[] = [];
+    try {
+        const data = await fs.readFile(CARDS_FILE, 'utf-8');
+        cards = JSON.parse(data);
+    } catch (e) {
+        return;
+    }
+
+    // Update order for cards in this board
+    cards = cards.map(card => {
+        if (card.boardId === boardId) {
+            const orderUpdate = cardOrders.find(co => co.id === card.id);
+            if (orderUpdate) {
+                return { ...card, order: orderUpdate.order };
+            }
+        }
+        return card;
+    });
+
+    await saveCards(cards);
+}
+
 // --- Boards ---
 
 export async function getBoards(userId: string): Promise<Board[]> {

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
 import { MoreVertical, Pencil, Trash2, X, Plus } from 'lucide-react';
 import { Board } from '@/types';
+import { toast } from 'sonner';
 
 export default function MyBoardsPage() {
     const [boards, setBoards] = useState<Board[]>([]);
@@ -51,9 +52,13 @@ export default function MyBoardsPage() {
                 setNewBoardName('');
                 setNewBoardDesc('');
                 setShowCreateForm(false);
+                toast.success('Board created successfully!');
+            } else {
+                toast.error('Failed to create board');
             }
         } catch (error) {
             console.error(error);
+            toast.error('Failed to create board');
         } finally {
             setIsCreating(false);
         }
@@ -70,9 +75,13 @@ export default function MyBoardsPage() {
 
             if (res.ok) {
                 setBoards(boards.filter(b => b.id !== boardId));
+                toast.success('Board deleted successfully');
+            } else {
+                toast.error('Failed to delete board');
             }
         } catch (error) {
             console.error(error);
+            toast.error('Failed to delete board');
         }
     };
 

@@ -5,6 +5,7 @@ export interface Card {
   imageUrl: string;
   audioUrl: string;
   color?: string;
+  order?: number;
 }
 
 export interface Board {

@@ -42,7 +42,8 @@
     "label": "apple",
     "imageUrl": "/uploads/applepud-1768134382373-546294217.jpg",
     "audioUrl": "/uploads/applepud-1768134382415-194102994.mp3",
-    "color": "#6366f1"
+    "color": "#6366f1",
+    "order": 0
   },
   {
     "id": "474e06fb-a1c9-42c6-ab32-7889447e4357",
@@ -58,7 +59,8 @@
     "label": "see soon please",
     "imageUrl": "/uploads/seesoon-1768134734715-723251860.jpg",
     "audioUrl": "/uploads/audio-1768134734726-1768134734740-670084189.webm",
-    "color": "#6366f1"
+    "color": "#6366f1",
+    "order": 1
   },
   {
     "id": "a07feae0-c9a9-4653-af6b-6ee05f3601c1",
@@ -66,6 +68,7 @@
     "label": "Juice",
     "imageUrl": "/uploads/generated-image-1768136352672-577453630.png",
     "audioUrl": "/uploads/audio-1768136352681-1768136352724-926702902.webm",
-    "color": "#6366f1"
+    "color": "#6366f1",
+    "order": 2
   }
 ]

@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { X, Image as ImageIcon, Check, Loader2, Mic, Upload, Music, Sparkles } from 'lucide-react';
+import { X, Image as ImageIcon, Check, Loader2, Mic, Upload, Music, Sparkles, Play, Pause, Volume2, Crop } from 'lucide-react';
 import AudioRecorder from './AudioRecorder';
+import ImageCropModal from './ImageCropModal';
 import { clsx } from 'clsx';
 import { Card } from '@/types';
+import { toast } from 'sonner';
 
 interface AddCardModalProps {
     isOpen: boolean;
@@ -25,15 +27,32 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     const [generationPrompt, setGenerationPrompt] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
 
+    // Crop state
+    const [showCropModal, setShowCropModal] = useState(false);
+    const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+
     // Audio State
     const [audioType, setAudioType] = useState<'record' | 'upload'>('record');
     const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
     const [audioFile, setAudioFile] = useState<File | null>(null);
 
+    // Audio preview state
+    const [isPlayingPreview, setIsPlayingPreview] = useState(false);
+    const audioPreviewRef = useRef<HTMLAudioElement | null>(null);
+
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const audioInputRef = useRef<HTMLInputElement>(null);
+
+    const stopAudioPreview = () => {
+        if (audioPreviewRef.current) {
+            audioPreviewRef.current.pause();
+            audioPreviewRef.current.currentTime = 0;
+            audioPreviewRef.current = null;
+        }
+        setIsPlayingPreview(false);
+    };
 
     // Populate form when editing
     useEffect(() => {
@@ -56,6 +75,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
         setAudioBlob(null);
         setAudioFile(null);
         setAudioType('record');
+        stopAudioPreview();
     };
 
     if (!isOpen) return null;
@@ -63,9 +83,27 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            setImageFile(file);
             const url = URL.createObjectURL(file);
-            setImagePreview(url);
+            setImageToCrop(url);
+            setShowCropModal(true);
+        }
+    };
+
+    const handleCropComplete = (croppedBlob: Blob) => {
+        const croppedFile = new File([croppedBlob], 'cropped-image.jpg', { type: 'image/jpeg' });
+        setImageFile(croppedFile);
+        const url = URL.createObjectURL(croppedBlob);
+        setImagePreview(url);
+        setShowCropModal(false);
+        setImageToCrop(null);
+    };
+
+    const handleCropCancel = () => {
+        setShowCropModal(false);
+        setImageToCrop(null);
+        // Reset file input
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
         }
     };
 
@@ -73,7 +111,41 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
         const file = e.target.files?.[0];
         if (file) {
             setAudioFile(file);
+            // Stop any playing preview
+            stopAudioPreview();
         }
+    };
+
+    const toggleAudioPreview = () => {
+        const audioSource = audioBlob || audioFile;
+        if (!audioSource) return;
+
+        if (isPlayingPreview && audioPreviewRef.current) {
+            stopAudioPreview();
+            return;
+        }
+
+        const audioUrl = URL.createObjectURL(audioSource);
+        const audio = new Audio(audioUrl);
+
+        audio.onended = () => {
+            setIsPlayingPreview(false);
+            audioPreviewRef.current = null;
+        };
+
+        audio.onerror = () => {
+            toast.error('Failed to play audio');
+            setIsPlayingPreview(false);
+            audioPreviewRef.current = null;
+        };
+
+        audioPreviewRef.current = audio;
+        setIsPlayingPreview(true);
+        audio.play().catch(err => {
+            console.error('Audio playback failed:', err);
+            toast.error('Failed to play audio');
+            setIsPlayingPreview(false);
+        });
     };
 
     const handleGenerateImage = async () => {
@@ -92,16 +164,12 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
             const data = await res.json();
             const imageUrl = data.image; // data:image/png;base64,...
 
-            // Convert data URL to File object
-            const response = await fetch(imageUrl);
-            const blob = await response.blob();
-            const file = new File([blob], "generated-image.png", { type: "image/png" });
-
-            setImageFile(file);
-            setImagePreview(imageUrl);
+            // Open crop modal for generated image
+            setImageToCrop(imageUrl);
+            setShowCropModal(true);
         } catch (error) {
             console.error(error);
-            alert('Failed to generate image. Please try again.');
+            toast.error('Failed to generate image. Please try again.');
         } finally {
             setIsGenerating(false);
         }
@@ -166,6 +234,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
 
                 const updatedCard = await res.json();
                 onCardUpdated?.(updatedCard);
+                toast.success('Card updated successfully!');
             } else {
                 // 3b. Create new card
                 const res = await fetch('/api/cards', {
@@ -184,21 +253,31 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
 
                 const newCard = await res.json();
                 onCardAdded(newCard);
+                toast.success('Card created successfully!');
             }
 
             onClose();
             resetForm();
         } catch (error) {
             console.error(error);
-            alert(editCard ? 'Error updating card' : 'Error creating card');
+            toast.error(editCard ? 'Error updating card' : 'Error creating card');
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden glass-card max-h-[90vh] overflow-y-auto">
+        <>
+            {showCropModal && imageToCrop && (
+                <ImageCropModal
+                    imageSrc={imageToCrop}
+                    onCropComplete={handleCropComplete}
+                    onCancel={handleCropCancel}
+                />
+            )}
+
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden glass-card max-h-[90vh] overflow-y-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
                     <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
@@ -391,6 +470,27 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                 </div>
                             )}
                         </div>
+
+                        {/* Audio Preview Button */}
+                        {(audioBlob || audioFile) && (
+                            <button
+                                type="button"
+                                onClick={toggleAudioPreview}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-accent to-primary text-white rounded-xl font-bold hover:opacity-90 transition-all transform hover:scale-[1.02]"
+                            >
+                                {isPlayingPreview ? (
+                                    <>
+                                        <Pause className="w-5 h-5" />
+                                        Pause Preview
+                                    </>
+                                ) : (
+                                    <>
+                                        <Play className="w-5 h-5" />
+                                        Preview Audio
+                                    </>
+                                )}
+                            </button>
+                        )}
                     </div>
 
                     {/* Footer */}
@@ -419,5 +519,6 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                 </form>
             </div>
         </div>
+        </>
     );
 }
