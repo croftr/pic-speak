@@ -1,4 +1,4 @@
-import { Client } from 'pg';
+import { Pool, PoolClient } from 'pg';
 import { Card, Board } from '@/types';
 
 // Database row types (snake_case from DB)
@@ -23,16 +23,21 @@ type BoardRow = {
     updated_at?: string;
 };
 
-// Helper function to get a database client
-async function getDbClient() {
-    const client = new Client({
-        connectionString: process.env.POSTGRES_URL,
-        ssl: {
-            rejectUnauthorized: false
-        }
-    });
-    await client.connect();
-    return client;
+// Create a connection pool for better performance
+// Pool reuses connections instead of creating new ones for each query
+const pool = new Pool({
+    connectionString: process.env.POSTGRES_URL,
+    ssl: {
+        rejectUnauthorized: false
+    },
+    max: 20, // Maximum number of clients in the pool
+    idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
+    connectionTimeoutMillis: 2000, // Return an error after 2 seconds if unable to get a connection
+});
+
+// Helper function to get a database client from the pool
+async function getDbClient(): Promise<PoolClient> {
+    return await pool.connect();
 }
 
 // --- Cards ---
@@ -65,7 +70,7 @@ export async function getCards(boardId?: string): Promise<Card[]> {
         console.error('Error getting cards:', error);
         return [];
     } finally {
-        await client.end();
+        client.release();
     }
 }
 
@@ -80,7 +85,7 @@ export async function addCard(card: Card): Promise<void> {
         console.error('Error adding card:', error);
         throw error;
     } finally {
-        await client.end();
+        client.release();
     }
 }
 
@@ -95,7 +100,7 @@ export async function updateCard(updatedCard: Card): Promise<void> {
         console.error('Error updating card:', error);
         throw error;
     } finally {
-        await client.end();
+        client.release();
     }
 }
 
@@ -107,7 +112,7 @@ export async function deleteCard(id: string): Promise<void> {
         console.error('Error deleting card:', error);
         throw error;
     } finally {
-        await client.end();
+        client.release();
     }
 }
 
@@ -130,7 +135,7 @@ export async function updateCardOrders(boardId: string, cardOrders: { id: string
         console.error('Error updating card orders:', error);
         throw error;
     } finally {
-        await client.end();
+        client.release();
     }
 }
 
@@ -155,7 +160,7 @@ export async function getBoards(userId: string): Promise<Board[]> {
         console.error('Error getting boards:', error);
         return [];
     } finally {
-        await client.end();
+        client.release();
     }
 }
 
@@ -170,7 +175,7 @@ export async function addBoard(board: Board): Promise<void> {
         console.error('Error adding board:', error);
         throw error;
     } finally {
-        await client.end();
+        client.release();
     }
 }
 
@@ -196,7 +201,7 @@ export async function getBoard(id: string): Promise<Board | undefined> {
         console.error('Error getting board:', error);
         return undefined;
     } finally {
-        await client.end();
+        client.release();
     }
 }
 
@@ -211,7 +216,7 @@ export async function updateBoard(updatedBoard: Board): Promise<void> {
         console.error('Error updating board:', error);
         throw error;
     } finally {
-        await client.end();
+        client.release();
     }
 }
 
@@ -224,6 +229,6 @@ export async function deleteBoard(id: string): Promise<void> {
         console.error('Error deleting board:', error);
         throw error;
     } finally {
-        await client.end();
+        client.release();
     }
 }

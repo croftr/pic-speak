@@ -11,7 +11,8 @@
     "migrate": "tsx scripts/migrate-data.ts",
     "test:db": "tsx scripts/test-postgres.ts",
     "test:blob": "tsx scripts/test-blob.ts",
-    "test:api": "tsx scripts/test-api-e2e.ts"
+    "test:api": "tsx scripts/test-api-e2e.ts",
+    "test:compression": "tsx scripts/test-compression.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.36.7",
@@ -30,6 +31,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-easy-crop": "^5.5.6",
+    "sharp": "^0.34.5",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0"
   },
