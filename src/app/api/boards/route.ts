@@ -1,13 +1,26 @@
 import { NextResponse } from 'next/server';
 import { getBoards, addBoard } from '@/lib/storage';
 import { Board } from '@/types';
+import { auth } from '@clerk/nextjs/server';
 
 export async function GET() {
-    const boards = await getBoards();
+    const { userId } = await auth();
+
+    if (!userId) {
+        return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const boards = await getBoards(userId);
     return NextResponse.json(boards);
 }
 
 export async function POST(request: Request) {
+    const { userId } = await auth();
+
+    if (!userId) {
+        return new NextResponse("Unauthorized", { status: 401 });
+    }
+
     try {
         const body = await request.json();
         const { name, description } = body;
@@ -21,6 +34,7 @@ export async function POST(request: Request) {
 
         const newBoard: Board = {
             id: crypto.randomUUID(),
+            userId,
             name,
             description: description || '',
             createdAt: new Date().toISOString()

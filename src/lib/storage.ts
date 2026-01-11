@@ -40,10 +40,11 @@ export async function addCard(card: Card): Promise<void> {
 
 // --- Boards ---
 
-export async function getBoards(): Promise<Board[]> {
+export async function getBoards(userId: string): Promise<Board[]> {
     try {
         const data = await fs.readFile(BOARDS_FILE, 'utf-8');
-        return JSON.parse(data);
+        const boards: Board[] = JSON.parse(data);
+        return boards.filter(b => b.userId === userId);
     } catch (error) {
         return [];
     }
@@ -54,12 +55,27 @@ export async function saveBoards(boards: Board[]): Promise<void> {
 }
 
 export async function addBoard(board: Board): Promise<void> {
-    const boards = await getBoards();
+    // Read all boards to append correctly (we don't want to overwrite other users' data)
+    let boards: Board[] = [];
+    try {
+        const data = await fs.readFile(BOARDS_FILE, 'utf-8');
+        boards = JSON.parse(data);
+    } catch (e) {
+        boards = [];
+    }
+
     boards.push(board);
     await saveBoards(boards);
 }
 
 export async function getBoard(id: string): Promise<Board | undefined> {
-    const boards = await getBoards();
+    // Helper to get board, caller must verify ownership if needed
+    let boards: Board[] = [];
+    try {
+        const data = await fs.readFile(BOARDS_FILE, 'utf-8');
+        boards = JSON.parse(data);
+    } catch (e) {
+        return undefined;
+    }
     return boards.find(b => b.id === id);
 }

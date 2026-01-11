@@ -1,16 +1,29 @@
 import { NextResponse } from 'next/server';
-import { getCards, addCard } from '@/lib/storage';
+import { getCards, addCard, getBoard } from '@/lib/storage';
 import { Card } from '@/types';
+import { auth } from '@clerk/nextjs/server';
 
 export async function GET(request: Request) {
+    const { userId } = await auth();
+    if (!userId) {
+        return new NextResponse("Unauthorized", { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const boardId = searchParams.get('boardId');
 
-    // If no boardId, return empty list or all cards (depending on policy). 
-    // For now return empty to encourage board usage, or maybe all if really needed.
+    // If no boardId, currently we returned all cards. 
+    // Now we must ensure we only return cards for boards owned by the user.
+    // However, the previous logic was just "getCards()". 
+    // To be safe/simple, let's require boardId for now or return empty.
     if (!boardId) {
-        const cards = await getCards(); // returns all
-        return NextResponse.json(cards);
+        return NextResponse.json([]);
+    }
+
+    // Check board ownership
+    const board = await getBoard(boardId);
+    if (!board || board.userId !== userId) {
+        return new NextResponse("Unauthorized Board Access", { status: 403 });
     }
 
     const cards = await getCards(boardId);
@@ -18,6 +31,11 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+    const { userId } = await auth();
+    if (!userId) {
+        return new NextResponse("Unauthorized", { status: 401 });
+    }
+
     try {
         const body = await request.json();
         const { label, imageUrl, audioUrl, color, boardId } = body;
@@ -28,6 +46,12 @@ export async function POST(request: Request) {
                 { error: 'Image, Audio, and Board ID are required' },
                 { status: 400 }
             );
+        }
+
+        // Verify board ownership
+        const board = await getBoard(boardId);
+        if (!board || board.userId !== userId) {
+            return new NextResponse("Unauthorized Board Access", { status: 403 });
         }
 
         const newCard: Card = {

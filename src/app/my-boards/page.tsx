@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { UserButton } from '@clerk/nextjs';
 
 export default function MyBoardsPage() {
     const [boards, setBoards] = useState<any[]>([]); // Using 'any' for now or import type
@@ -51,12 +52,7 @@ export default function MyBoardsPage() {
                     <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">
                         My Boards
                     </h1>
-                    <Link
-                        href="/"
-                        className="text-sm font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
-                    >
-                        Sign Out
-                    </Link>
+                    <UserButton />
                 </header>
 
                 {/* Create Board Form */}

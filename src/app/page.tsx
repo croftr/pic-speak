@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowRight, MessageSquare, Mic, Image as ImageIcon, Smile, Plus } from 'lucide-react';
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
 
 export default function LandingPage() {
   return (
@@ -16,12 +17,30 @@ export default function LandingPage() {
             Pic Speak
           </span>
         </div>
-        <Link
-          href="/my-boards"
-          className="px-6 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold rounded-full hover:opacity-90 transition-opacity"
-        >
-          Login
-        </Link>
+
+        <div className="flex items-center gap-4">
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button className="px-6 py-2.5 font-bold text-gray-900 dark:text-white hover:opacity-80 transition-opacity">
+                Login
+              </button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <button className="px-6 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold rounded-full hover:opacity-90 transition-opacity">
+                Sign Up
+              </button>
+            </SignUpButton>
+          </SignedOut>
+          <SignedIn>
+            <Link
+              href="/my-boards"
+              className="mr-4 font-bold text-primary hover:underline"
+            >
+              My Boards
+            </Link>
+            <UserButton />
+          </SignedIn>
+        </div>
       </nav>
 
       {/* Hero */}

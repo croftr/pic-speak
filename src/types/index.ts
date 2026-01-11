@@ -9,6 +9,7 @@ export interface Card {
 
 export interface Board {
   id: string;
+  userId: string;
   name: string;
   description?: string;
   createdAt: string;
