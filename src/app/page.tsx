@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowRight, MessageSquare, Mic, Image as ImageIcon, Smile, Plus, Eye, User } from 'lucide-react';
+import { ArrowRight, MessageSquare, Mic, Image as ImageIcon, Smile, Plus, Eye, User, Heart, MessageCircle } from 'lucide-react';
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
 import { Board } from '@/types';
 
@@ -108,6 +108,19 @@ function PublicBoardsSection() {
                   </div>
                 </div>
               )}
+
+              {/* Interaction Stats */}
+              <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-3">
+                <div className="flex items-center gap-1">
+                  <Heart className="w-4 h-4" />
+                  <span>{board.likeCount || 0}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <MessageCircle className="w-4 h-4" />
+                  <span>{board.commentCount || 0}</span>
+                </div>
+              </div>
+
               <div className="flex items-center justify-between text-xs text-gray-400">
                 <span>
                   {new Date(board.createdAt).toLocaleDateString()}

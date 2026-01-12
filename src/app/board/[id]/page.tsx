@@ -4,6 +4,8 @@ import { useState, useEffect, use, useRef } from 'react';
 import PecsCard from '@/components/PecsCard';
 import AddCardModal from '@/components/AddCardModal';
 import MoveCopyCardModal from '@/components/MoveCopyCardModal';
+import LikeButton from '@/components/LikeButton';
+import CommentsSection from '@/components/CommentsSection';
 import { Card, Board } from '@/types';
 import { Plus, LayoutGrid, ArrowLeft, Save, Loader2, Search, X, Upload, Trash2, Share2, Check, User, Pencil } from 'lucide-react';
 import Link from 'next/link';
@@ -694,6 +696,19 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     </DndContext>
                 )}
             </div>
+
+            {/* Like and Comments Section - Only show for public boards when not owner */}
+            {!isOwner && board?.isPublic && (
+                <div className="mt-12 space-y-8 max-w-4xl mx-auto px-4">
+                    {/* Like Button */}
+                    <div className="flex justify-center">
+                        <LikeButton boardId={unwrappedParams.id} size="lg" />
+                    </div>
+
+                    {/* Comments Section */}
+                    <CommentsSection boardId={unwrappedParams.id} />
+                </div>
+            )}
 
             {/* Floating Action Buttons - Only in Edit Mode */}
             {isEditing && (

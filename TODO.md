@@ -21,11 +21,6 @@ Card shape options (square, circle, rounded)
 Allow upload of image for the board istelf displayed alongside the board name
 
 
-12. Social Features
-"Like" or "Favorite" public boards
-Comments on public boards
-
-
 🔧 Technical Improvements
 13. Performance Optimizations
 Image lazy loading on board view

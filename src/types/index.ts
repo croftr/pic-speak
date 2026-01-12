@@ -19,6 +19,28 @@ export interface Board {
   isPublic?: boolean;
   creatorName?: string;
   creatorImageUrl?: string;
+  likeCount?: number;
+  commentCount?: number;
+  isLikedByUser?: boolean;
+}
+
+export interface BoardLike {
+  id: string;
+  userId: string;
+  boardId: string;
+  createdAt: string;
+}
+
+export interface BoardComment {
+  id: string;
+  userId: string;
+  boardId: string;
+  content: string;
+  commenterName: string;
+  commenterImageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+  isEdited: boolean;
 }
 
 export interface ApiResponse {

@@ -1,5 +1,5 @@
 import { Pool, PoolClient } from 'pg';
-import { Card, Board } from '@/types';
+import { Card, Board, BoardComment } from '@/types';
 
 // Database row types (snake_case from DB)
 type CardRow = {
@@ -431,6 +431,186 @@ export async function getPublicBoards(): Promise<Board[]> {
     } catch (error) {
         console.error('Error getting public boards:', error);
         return [];
+    } finally {
+        client.release();
+    }
+}
+
+// ============= LIKES =============
+
+export async function likeBoardByUser(boardId: string, userId: string, userName: string): Promise<void> {
+    const client = await getDbClient();
+    try {
+        const id = crypto.randomUUID();
+        await client.query(
+            'INSERT INTO board_likes (id, user_id, board_id) VALUES ($1, $2, $3) ON CONFLICT (user_id, board_id) DO NOTHING',
+            [id, userId, boardId]
+        );
+    } finally {
+        client.release();
+    }
+}
+
+export async function unlikeBoardByUser(boardId: string, userId: string): Promise<void> {
+    const client = await getDbClient();
+    try {
+        await client.query(
+            'DELETE FROM board_likes WHERE user_id = $1 AND board_id = $2',
+            [userId, boardId]
+        );
+    } finally {
+        client.release();
+    }
+}
+
+export async function getBoardLikeCount(boardId: string): Promise<number> {
+    const client = await getDbClient();
+    try {
+        const result = await client.query(
+            'SELECT COUNT(*) FROM board_likes WHERE board_id = $1',
+            [boardId]
+        );
+        return parseInt(result.rows[0].count);
+    } finally {
+        client.release();
+    }
+}
+
+export async function isUserLikedBoard(boardId: string, userId: string): Promise<boolean> {
+    const client = await getDbClient();
+    try {
+        const result = await client.query(
+            'SELECT 1 FROM board_likes WHERE user_id = $1 AND board_id = $2',
+            [userId, boardId]
+        );
+        return result.rows.length > 0;
+    } finally {
+        client.release();
+    }
+}
+
+// ============= COMMENTS =============
+
+interface CommentRow {
+    id: string;
+    user_id: string;
+    board_id: string;
+    content: string;
+    commenter_name: string;
+    commenter_image_url: string | null;
+    created_at: Date;
+    updated_at: Date;
+    is_edited: boolean;
+}
+
+export async function addComment(
+    boardId: string,
+    userId: string,
+    content: string,
+    commenterName: string,
+    commenterImageUrl?: string
+): Promise<BoardComment> {
+    const client = await getDbClient();
+    try {
+        const id = crypto.randomUUID();
+        const result = await client.query<CommentRow>(
+            `INSERT INTO board_comments (id, user_id, board_id, content, commenter_name, commenter_image_url)
+             VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+            [id, userId, boardId, content, commenterName, commenterImageUrl || null]
+        );
+
+        const row = result.rows[0];
+        return {
+            id: row.id,
+            userId: row.user_id,
+            boardId: row.board_id,
+            content: row.content,
+            commenterName: row.commenter_name,
+            commenterImageUrl: row.commenter_image_url || undefined,
+            createdAt: row.created_at.toISOString(),
+            updatedAt: row.updated_at.toISOString(),
+            isEdited: row.is_edited
+        };
+    } finally {
+        client.release();
+    }
+}
+
+export async function updateComment(commentId: string, userId: string, content: string): Promise<BoardComment | null> {
+    const client = await getDbClient();
+    try {
+        const result = await client.query<CommentRow>(
+            `UPDATE board_comments
+             SET content = $1, updated_at = NOW(), is_edited = true
+             WHERE id = $2 AND user_id = $3
+             RETURNING *`,
+            [content, commentId, userId]
+        );
+
+        if (result.rows.length === 0) return null;
+
+        const row = result.rows[0];
+        return {
+            id: row.id,
+            userId: row.user_id,
+            boardId: row.board_id,
+            content: row.content,
+            commenterName: row.commenter_name,
+            commenterImageUrl: row.commenter_image_url || undefined,
+            createdAt: row.created_at.toISOString(),
+            updatedAt: row.updated_at.toISOString(),
+            isEdited: row.is_edited
+        };
+    } finally {
+        client.release();
+    }
+}
+
+export async function deleteComment(commentId: string, userId: string): Promise<boolean> {
+    const client = await getDbClient();
+    try {
+        const result = await client.query(
+            'DELETE FROM board_comments WHERE id = $1 AND user_id = $2',
+            [commentId, userId]
+        );
+        return result.rowCount !== null && result.rowCount > 0;
+    } finally {
+        client.release();
+    }
+}
+
+export async function getCommentsByBoard(boardId: string): Promise<BoardComment[]> {
+    const client = await getDbClient();
+    try {
+        const result = await client.query<CommentRow>(
+            'SELECT * FROM board_comments WHERE board_id = $1 ORDER BY created_at DESC',
+            [boardId]
+        );
+
+        return result.rows.map(row => ({
+            id: row.id,
+            userId: row.user_id,
+            boardId: row.board_id,
+            content: row.content,
+            commenterName: row.commenter_name,
+            commenterImageUrl: row.commenter_image_url || undefined,
+            createdAt: row.created_at.toISOString(),
+            updatedAt: row.updated_at.toISOString(),
+            isEdited: row.is_edited
+        }));
+    } finally {
+        client.release();
+    }
+}
+
+export async function getBoardCommentCount(boardId: string): Promise<number> {
+    const client = await getDbClient();
+    try {
+        const result = await client.query(
+            'SELECT COUNT(*) FROM board_comments WHERE board_id = $1',
+            [boardId]
+        );
+        return parseInt(result.rows[0].count);
     } finally {
         client.release();
     }
