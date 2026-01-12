@@ -4,7 +4,7 @@ import { Card } from '@/types';
 import { useState, useRef } from 'react';
 import { Volume2 } from 'lucide-react';
 import { clsx } from 'clsx';
-import { Trash2, Pencil, GripVertical, Copy } from 'lucide-react';
+import { Trash2, Pencil, GripVertical, Copy, Sparkles } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -24,6 +24,9 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
     const [volume, setVolume] = useState(1.0); // 0.0 to 1.0
     const [showVolumeControl, setShowVolumeControl] = useState(false);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+
+    // Template cards cannot be edited
+    const isTemplateCard = !!card.templateKey;
 
     const {
         attributes,
@@ -95,17 +98,19 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
                         >
                             <Copy className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                         </button>
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                onEdit?.(card);
-                            }}
-                            className="p-2 sm:p-2 md:p-2.5 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-colors transform active:scale-95 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
-                            title="Edit Card"
-                        >
-                            <Pencil className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />
-                        </button>
+                        {!isTemplateCard && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    onEdit?.(card);
+                                }}
+                                className="p-2 sm:p-2 md:p-2.5 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-colors transform active:scale-95 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
+                                title="Edit Card"
+                            >
+                                <Pencil className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+                            </button>
+                        )}
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
@@ -153,6 +158,13 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
                 }}
             >
                 <div className="relative flex-1 w-full overflow-hidden rounded-xl sm:rounded-2xl bg-gray-100 dark:bg-gray-700 pointer-events-none">
+                    {/* Template badge */}
+                    {isTemplateCard && (
+                        <div className="absolute top-1 right-1 z-10 px-1.5 py-0.5 bg-gradient-to-r from-amber-400 to-orange-500 rounded-md flex items-center gap-0.5">
+                            <Sparkles className="w-2.5 h-2.5 text-white" />
+                            <span className="text-[9px] font-bold text-white uppercase tracking-wide">Template</span>
+                        </div>
+                    )}
                     {/* Helper layout for centering image */}
                     <div className="absolute inset-0 flex items-center justify-center">
                         {/* Using img tag for simplicity with local/blob urls, Next/Image requires playing nice with loaders */}

@@ -7,6 +7,7 @@ export interface Card {
   color?: string;
   order?: number;
   type: 'Thing' | 'Word';
+  templateKey?: string; // If set, this card references a template and cannot be edited
 }
 
 export interface Board {

@@ -11,6 +11,7 @@ type CardRow = {
     color?: string;
     order?: number;
     type: 'Thing' | 'Word';
+    template_key?: string;
     created_at?: string;
     updated_at?: string;
 };
@@ -59,22 +60,41 @@ const STARTER_BOARDS: Board[] = [
     }
 ];
 
+// Template card definitions - these are referenced by templateKey and never stored in DB
+const TEMPLATE_CARDS_REGISTRY: Record<string, Omit<Card, 'id' | 'boardId' | 'order'>> = {
+    'tpl-yes': { label: 'Yes', imageUrl: '/prebuilt/yes.png', audioUrl: '/prebuilt/yes.mp3', type: 'Word', templateKey: 'tpl-yes' },
+    'tpl-no': { label: 'No', imageUrl: '/prebuilt/no.png', audioUrl: '/prebuilt/no.mp3', type: 'Word', templateKey: 'tpl-no' },
+    'tpl-hello': { label: 'Hello', imageUrl: '/prebuilt/hello.png', audioUrl: '/prebuilt/hello.mp3', type: 'Word', templateKey: 'tpl-hello' },
+    'tpl-bye': { label: 'Bye', imageUrl: '/prebuilt/bye.png', audioUrl: '/prebuilt/bye.mp3', type: 'Word', templateKey: 'tpl-bye' },
+    'tpl-thank-you': { label: 'Thank You', imageUrl: '/prebuilt/thank_you.png', audioUrl: '/prebuilt/thank_you.mp3', type: 'Word', templateKey: 'tpl-thank-you' },
+    'tpl-please': { label: 'Please', imageUrl: '/prebuilt/please.png', audioUrl: '/prebuilt/please.mp3', type: 'Word', templateKey: 'tpl-please' },
+    'tpl-computer': { label: 'Computer', imageUrl: '/prebuilt/computer.png', audioUrl: '/prebuilt/computer.mp3', type: 'Thing', templateKey: 'tpl-computer' },
+    'tpl-tablet': { label: 'Tablet', imageUrl: '/prebuilt/tablet.png', audioUrl: '/prebuilt/tablet.mp3', type: 'Thing', templateKey: 'tpl-tablet' },
+    'tpl-mobile-phone': { label: 'Mobile Phone', imageUrl: '/prebuilt/mobile_phone.png', audioUrl: '/prebuilt/mobile_phone.mp3', type: 'Thing', templateKey: 'tpl-mobile-phone' },
+    'tpl-bed': { label: 'Bed', imageUrl: '/prebuilt/bed.png', audioUrl: '/prebuilt/bed.mp3', type: 'Thing', templateKey: 'tpl-bed' },
+    'tpl-toilet': { label: 'Toilet', imageUrl: '/prebuilt/toilet.png', audioUrl: '/prebuilt/toilet.mp3', type: 'Thing', templateKey: 'tpl-toilet' },
+    'tpl-brush-teeth': { label: 'Brush Teeth', imageUrl: '/prebuilt/brush_teeth.png', audioUrl: '/prebuilt/brush_teeth.mp3', type: 'Thing', templateKey: 'tpl-brush-teeth' },
+};
+
+// Export for use in other modules
+export function getTemplateCard(templateKey: string): Omit<Card, 'id' | 'boardId' | 'order'> | undefined {
+    return TEMPLATE_CARDS_REGISTRY[templateKey];
+}
+
 const STARTER_CARDS: Record<string, Card[]> = {
     'starter-template': [
-        // Word types
-        { id: 'sbp-1', boardId: 'starter-template', label: 'Yes', imageUrl: '/prebuilt/yes.png', audioUrl: '/prebuilt/yes.mp3', type: 'Word', order: 0 },
-        { id: 'sbp-2', boardId: 'starter-template', label: 'No', imageUrl: '/prebuilt/no.png', audioUrl: '/prebuilt/no.mp3', type: 'Word', order: 1 },
-        { id: 'sbp-3', boardId: 'starter-template', label: 'Hello', imageUrl: '/prebuilt/hello.png', audioUrl: '/prebuilt/hello.mp3', type: 'Word', order: 2 },
-        { id: 'sbp-4', boardId: 'starter-template', label: 'Bye', imageUrl: '/prebuilt/bye.png', audioUrl: '/prebuilt/bye.mp3', type: 'Word', order: 3 },
-        { id: 'sbp-5', boardId: 'starter-template', label: 'Thank You', imageUrl: '/prebuilt/thank_you.png', audioUrl: '/prebuilt/thank_you.mp3', type: 'Word', order: 4 },
-        { id: 'sbp-6', boardId: 'starter-template', label: 'Please', imageUrl: '/prebuilt/please.png', audioUrl: '/prebuilt/please.mp3', type: 'Word', order: 5 },
-        // Thing types
-        { id: 'sbp-7', boardId: 'starter-template', label: 'Computer', imageUrl: '/prebuilt/computer.png', audioUrl: '/prebuilt/computer.mp3', type: 'Thing', order: 6 },
-        { id: 'sbp-8', boardId: 'starter-template', label: 'Tablet', imageUrl: '/prebuilt/tablet.png', audioUrl: '/prebuilt/tablet.mp3', type: 'Thing', order: 7 },
-        { id: 'sbp-9', boardId: 'starter-template', label: 'Mobile Phone', imageUrl: '/prebuilt/mobile_phone.png', audioUrl: '/prebuilt/mobile_phone.mp3', type: 'Thing', order: 8 },
-        { id: 'sbp-10', boardId: 'starter-template', label: 'Bed', imageUrl: '/prebuilt/bed.png', audioUrl: '/prebuilt/bed.mp3', type: 'Thing', order: 9 },
-        { id: 'sbp-11', boardId: 'starter-template', label: 'Toilet', imageUrl: '/prebuilt/toilet.png', audioUrl: '/prebuilt/toilet.mp3', type: 'Thing', order: 10 },
-        { id: 'sbp-12', boardId: 'starter-template', label: 'Brush Teeth', imageUrl: '/prebuilt/brush_teeth.png', audioUrl: '/prebuilt/brush_teeth.mp3', type: 'Thing', order: 11 },
+        { id: 'sbp-1', boardId: 'starter-template', label: 'Yes', imageUrl: '/prebuilt/yes.png', audioUrl: '/prebuilt/yes.mp3', type: 'Word', order: 0, templateKey: 'tpl-yes' },
+        { id: 'sbp-2', boardId: 'starter-template', label: 'No', imageUrl: '/prebuilt/no.png', audioUrl: '/prebuilt/no.mp3', type: 'Word', order: 1, templateKey: 'tpl-no' },
+        { id: 'sbp-3', boardId: 'starter-template', label: 'Hello', imageUrl: '/prebuilt/hello.png', audioUrl: '/prebuilt/hello.mp3', type: 'Word', order: 2, templateKey: 'tpl-hello' },
+        { id: 'sbp-4', boardId: 'starter-template', label: 'Bye', imageUrl: '/prebuilt/bye.png', audioUrl: '/prebuilt/bye.mp3', type: 'Word', order: 3, templateKey: 'tpl-bye' },
+        { id: 'sbp-5', boardId: 'starter-template', label: 'Thank You', imageUrl: '/prebuilt/thank_you.png', audioUrl: '/prebuilt/thank_you.mp3', type: 'Word', order: 4, templateKey: 'tpl-thank-you' },
+        { id: 'sbp-6', boardId: 'starter-template', label: 'Please', imageUrl: '/prebuilt/please.png', audioUrl: '/prebuilt/please.mp3', type: 'Word', order: 5, templateKey: 'tpl-please' },
+        { id: 'sbp-7', boardId: 'starter-template', label: 'Computer', imageUrl: '/prebuilt/computer.png', audioUrl: '/prebuilt/computer.mp3', type: 'Thing', order: 6, templateKey: 'tpl-computer' },
+        { id: 'sbp-8', boardId: 'starter-template', label: 'Tablet', imageUrl: '/prebuilt/tablet.png', audioUrl: '/prebuilt/tablet.mp3', type: 'Thing', order: 7, templateKey: 'tpl-tablet' },
+        { id: 'sbp-9', boardId: 'starter-template', label: 'Mobile Phone', imageUrl: '/prebuilt/mobile_phone.png', audioUrl: '/prebuilt/mobile_phone.mp3', type: 'Thing', order: 8, templateKey: 'tpl-mobile-phone' },
+        { id: 'sbp-10', boardId: 'starter-template', label: 'Bed', imageUrl: '/prebuilt/bed.png', audioUrl: '/prebuilt/bed.mp3', type: 'Thing', order: 9, templateKey: 'tpl-bed' },
+        { id: 'sbp-11', boardId: 'starter-template', label: 'Toilet', imageUrl: '/prebuilt/toilet.png', audioUrl: '/prebuilt/toilet.mp3', type: 'Thing', order: 10, templateKey: 'tpl-toilet' },
+        { id: 'sbp-12', boardId: 'starter-template', label: 'Brush Teeth', imageUrl: '/prebuilt/brush_teeth.png', audioUrl: '/prebuilt/brush_teeth.mp3', type: 'Thing', order: 11, templateKey: 'tpl-brush-teeth' },
     ]
 };
 
@@ -99,16 +119,35 @@ export async function getCards(boardId?: string): Promise<Card[]> {
             );
         }
 
-        return result.rows.map(row => ({
-            id: row.id,
-            boardId: row.board_id,
-            label: row.label,
-            imageUrl: row.image_url,
-            audioUrl: row.audio_url,
-            color: row.color,
-            order: row.order,
-            type: row.type || 'Thing'
-        }));
+        return result.rows.map(row => {
+            // If this card has a template key, get data from the template registry
+            if (row.template_key && TEMPLATE_CARDS_REGISTRY[row.template_key]) {
+                const template = TEMPLATE_CARDS_REGISTRY[row.template_key];
+                return {
+                    id: row.id,
+                    boardId: row.board_id,
+                    label: template.label,
+                    imageUrl: template.imageUrl,
+                    audioUrl: template.audioUrl,
+                    color: row.color,
+                    order: row.order,
+                    type: template.type,
+                    templateKey: row.template_key
+                };
+            }
+
+            // Regular user-created card
+            return {
+                id: row.id,
+                boardId: row.board_id,
+                label: row.label,
+                imageUrl: row.image_url,
+                audioUrl: row.audio_url,
+                color: row.color,
+                order: row.order,
+                type: row.type || 'Thing'
+            };
+        });
     } catch (error) {
         console.error('Error getting cards:', error);
         return [];
@@ -120,10 +159,19 @@ export async function getCards(boardId?: string): Promise<Card[]> {
 export async function addCard(card: Card): Promise<void> {
     const client = await getDbClient();
     try {
-        await client.query(
-            'INSERT INTO cards (id, board_id, label, image_url, audio_url, color, "order", type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-            [card.id, card.boardId, card.label, card.imageUrl, card.audioUrl, card.color || '#6366f1', card.order || 0, card.type || 'Thing']
-        );
+        // If this is a template card, only store the template key and minimal data
+        if (card.templateKey) {
+            await client.query(
+                'INSERT INTO cards (id, board_id, template_key, "order", color) VALUES ($1, $2, $3, $4, $5)',
+                [card.id, card.boardId, card.templateKey, card.order || 0, card.color || '#6366f1']
+            );
+        } else {
+            // Regular user card - store all data
+            await client.query(
+                'INSERT INTO cards (id, board_id, label, image_url, audio_url, color, "order", type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+                [card.id, card.boardId, card.label, card.imageUrl, card.audioUrl, card.color || '#6366f1', card.order || 0, card.type || 'Thing']
+            );
+        }
     } catch (error) {
         console.error('Error adding card:', error);
         throw error;
