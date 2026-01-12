@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getCards, addCard, getBoard } from '@/lib/storage';
 import { Card } from '@/types';
 import { auth } from '@clerk/nextjs/server';
+import { checkIsAdmin } from '@/lib/admin';
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
@@ -45,10 +46,17 @@ export async function POST(request: Request) {
             );
         }
 
-        // Verify board ownership
+        // Verify board ownership or admin status
         const board = await getBoard(boardId);
-        if (!board || board.userId !== userId) {
+        const isAdmin = await checkIsAdmin();
+        const isOwner = board && board.userId === userId;
+
+        if (!board || (!isOwner && !isAdmin)) {
             return new NextResponse("Unauthorized Board Access", { status: 403 });
+        }
+
+        if (boardId.startsWith('starter-')) {
+            return new NextResponse("Cards cannot be added to template boards", { status: 403 });
         }
 
         const newCard: Card = {

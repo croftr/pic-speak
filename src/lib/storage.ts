@@ -44,9 +44,47 @@ async function getDbClient(): Promise<PoolClient> {
     return await pool.connect();
 }
 
+// --- Starter Content ---
+
+const STARTER_BOARDS: Board[] = [
+    {
+        id: 'starter-template',
+        userId: 'system',
+        name: 'Starter Template',
+        description: 'Essential everyday phrases and objects.',
+        createdAt: '2024-01-01T00:00:00.000Z',
+        isPublic: true,
+        creatorName: 'Pic Speak',
+        creatorImageUrl: '/logo.png'
+    }
+];
+
+const STARTER_CARDS: Record<string, Card[]> = {
+    'starter-template': [
+        // Word types
+        { id: 'sbp-1', boardId: 'starter-template', label: 'Yes', imageUrl: '/prebuilt/yes.png', audioUrl: '/prebuilt/yes.mp3', type: 'Word', order: 0 },
+        { id: 'sbp-2', boardId: 'starter-template', label: 'No', imageUrl: '/prebuilt/no.png', audioUrl: '/prebuilt/no.mp3', type: 'Word', order: 1 },
+        { id: 'sbp-3', boardId: 'starter-template', label: 'Hello', imageUrl: '/prebuilt/hello.png', audioUrl: '/prebuilt/hello.mp3', type: 'Word', order: 2 },
+        { id: 'sbp-4', boardId: 'starter-template', label: 'Bye', imageUrl: '/prebuilt/bye.png', audioUrl: '/prebuilt/bye.mp3', type: 'Word', order: 3 },
+        { id: 'sbp-5', boardId: 'starter-template', label: 'Thank You', imageUrl: '/prebuilt/thank_you.png', audioUrl: '/prebuilt/thank_you.mp3', type: 'Word', order: 4 },
+        { id: 'sbp-6', boardId: 'starter-template', label: 'Please', imageUrl: '/prebuilt/please.png', audioUrl: '/prebuilt/please.mp3', type: 'Word', order: 5 },
+        // Thing types
+        { id: 'sbp-7', boardId: 'starter-template', label: 'Computer', imageUrl: '/prebuilt/computer.png', audioUrl: '/prebuilt/computer.mp3', type: 'Thing', order: 6 },
+        { id: 'sbp-8', boardId: 'starter-template', label: 'Tablet', imageUrl: '/prebuilt/tablet.png', audioUrl: '/prebuilt/tablet.mp3', type: 'Thing', order: 7 },
+        { id: 'sbp-9', boardId: 'starter-template', label: 'Mobile Phone', imageUrl: '/prebuilt/mobile_phone.png', audioUrl: '/prebuilt/mobile_phone.mp3', type: 'Thing', order: 8 },
+        { id: 'sbp-10', boardId: 'starter-template', label: 'Bed', imageUrl: '/prebuilt/bed.png', audioUrl: '/prebuilt/bed.mp3', type: 'Thing', order: 9 },
+        { id: 'sbp-11', boardId: 'starter-template', label: 'Toilet', imageUrl: '/prebuilt/toilet.png', audioUrl: '/prebuilt/toilet.mp3', type: 'Thing', order: 10 },
+        { id: 'sbp-12', boardId: 'starter-template', label: 'Brush Teeth', imageUrl: '/prebuilt/brush_teeth.png', audioUrl: '/prebuilt/brush_teeth.mp3', type: 'Thing', order: 11 },
+    ]
+};
+
 // --- Cards ---
 
 export async function getCards(boardId?: string): Promise<Card[]> {
+    if (boardId && STARTER_CARDS[boardId]) {
+        return STARTER_CARDS[boardId];
+    }
+
     const client = await getDbClient();
     try {
         let result;
@@ -188,6 +226,9 @@ export async function addBoard(board: Board): Promise<void> {
 }
 
 export async function getBoard(id: string): Promise<Board | undefined> {
+    const starterBoard = STARTER_BOARDS.find(b => b.id === id);
+    if (starterBoard) return starterBoard;
+
     const client = await getDbClient();
     try {
         const result = await client.query<BoardRow>(
@@ -251,7 +292,7 @@ export async function getPublicBoards(): Promise<Board[]> {
             'SELECT * FROM boards WHERE is_public = true ORDER BY created_at DESC'
         );
 
-        return result.rows.map(row => ({
+        const dbBoards = result.rows.map(row => ({
             id: row.id,
             userId: row.user_id,
             name: row.name,
@@ -261,6 +302,8 @@ export async function getPublicBoards(): Promise<Board[]> {
             creatorName: row.creator_name,
             creatorImageUrl: row.creator_image_url
         }));
+
+        return [...STARTER_BOARDS, ...dbBoards];
     } catch (error) {
         console.error('Error getting public boards:', error);
         return [];

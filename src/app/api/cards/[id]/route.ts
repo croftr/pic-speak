@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCards, deleteCard, updateCard, getBoard } from '@/lib/storage';
 import { auth } from '@clerk/nextjs/server';
+import { checkIsAdmin } from '@/lib/admin';
 
 export async function PUT(
     request: Request,
@@ -23,8 +24,15 @@ export async function PUT(
         }
 
         const board = await getBoard(existingCard.boardId);
-        if (!board || board.userId !== userId) {
+        const isAdmin = await checkIsAdmin();
+        const isOwner = board && board.userId === userId;
+
+        if (!board || (!isOwner && !isAdmin)) {
             return new NextResponse("Unauthorized Access to Board", { status: 403 });
+        }
+
+        if (id.startsWith('sbp-')) {
+            return new NextResponse("Template cards cannot be modified", { status: 403 });
         }
 
         const body = await request.json();
@@ -33,7 +41,9 @@ export async function PUT(
         // If moving to a different board, verify user owns the destination board
         if (boardId && boardId !== existingCard.boardId) {
             const destinationBoard = await getBoard(boardId);
-            if (!destinationBoard || destinationBoard.userId !== userId) {
+            const isAdmin = await checkIsAdmin();
+            const isDestinationOwner = destinationBoard && destinationBoard.userId === userId;
+            if (!destinationBoard || (!isDestinationOwner && !isAdmin)) {
                 return new NextResponse("Unauthorized Access to Destination Board", { status: 403 });
             }
         }
@@ -81,8 +91,15 @@ export async function DELETE(
         }
 
         const board = await getBoard(card.boardId);
-        if (!board || board.userId !== userId) {
+        const isAdmin = await checkIsAdmin();
+        const isOwner = board && board.userId === userId;
+
+        if (!board || (!isOwner && !isAdmin)) {
             return new NextResponse("Unauthorized Access to Board", { status: 403 });
+        }
+
+        if (id.startsWith('sbp-')) {
+            return new NextResponse("Template cards cannot be deleted", { status: 403 });
         }
 
         await deleteCard(id);

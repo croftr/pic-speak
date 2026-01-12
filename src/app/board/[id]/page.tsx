@@ -5,7 +5,7 @@ import PecsCard from '@/components/PecsCard';
 import AddCardModal from '@/components/AddCardModal';
 import MoveCopyCardModal from '@/components/MoveCopyCardModal';
 import { Card, Board } from '@/types';
-import { Plus, LayoutGrid, ArrowLeft, Save, Loader2, Search, X, Upload, Trash2, Share2, Check, User } from 'lucide-react';
+import { Plus, LayoutGrid, ArrowLeft, Save, Loader2, Search, X, Upload, Trash2, Share2, Check, User, Pencil } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -58,6 +58,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
     // Keyboard navigation state
     const [focusedCardIndex, setFocusedCardIndex] = useState<number>(-1);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     // Header visibility state
     const [isHeaderVisible, setIsHeaderVisible] = useState(true);
@@ -69,8 +70,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     // Swipe gesture ref
     const gridRef = useRef<HTMLDivElement>(null);
 
-    // Computed: only allow editing if owner and requested
-    const isEditing = requestedEdit && isOwner;
+    // Computed: check if it's a template board
+    const isStarterBoard = unwrappedParams.id.startsWith('starter-');
+
+    // Computed: only allow editing if owner or admin, and requested, and NOT a template board
+    const isEditing = requestedEdit && (isOwner || isAdmin) && !isStarterBoard;
 
     // Drag and drop sensors
     const sensors = useSensors(
@@ -88,6 +92,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 const userRes = await fetch('/api/user');
                 const userData = await userRes.json();
                 const currentUserId = userData.userId;
+                setIsAdmin(userData.isAdmin || false);
 
                 // Fetch Cards
                 const cardsRes = await fetch(`/api/cards?boardId=${unwrappedParams.id}`);
@@ -562,6 +567,15 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                                 >
                                     {isCopied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
                                 </button>
+                            )}
+                            {(isOwner || isAdmin) && !isStarterBoard && (
+                                <Link
+                                    href={`/board/${board?.id}?edit=true`}
+                                    className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-600 dark:text-gray-400 rounded-lg transition-all touch-manipulation"
+                                    title="Edit Board"
+                                >
+                                    <Pencil className="w-4 h-4" />
+                                </Link>
                             )}
                             <SettingsMenu />
                         </div>

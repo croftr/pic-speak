@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { updateCardOrders, getBoard } from '@/lib/storage';
+import { checkIsAdmin } from '@/lib/admin';
 
 export async function PUT(request: Request) {
     const { userId } = await auth();
@@ -16,10 +17,17 @@ export async function PUT(request: Request) {
             return new NextResponse("Invalid request body", { status: 400 });
         }
 
-        // Verify user owns the board
+        // Verify user owns the board or is admin
         const board = await getBoard(boardId);
-        if (!board || board.userId !== userId) {
+        const isAdmin = await checkIsAdmin();
+        const isOwner = board && board.userId === userId;
+
+        if (!board || (!isOwner && !isAdmin)) {
             return new NextResponse("Unauthorized access to board", { status: 403 });
+        }
+
+        if (boardId.startsWith('starter-')) {
+            return new NextResponse("Template boards cannot be reordered", { status: 403 });
         }
 
         await updateCardOrders(boardId, cardOrders);

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getBoard, updateBoard, deleteBoard } from '@/lib/storage';
 import { auth } from '@clerk/nextjs/server';
+import { checkIsAdmin } from '@/lib/admin';
 
 export async function GET(
     request: Request,
@@ -13,9 +14,10 @@ export async function GET(
         return new NextResponse("Board not found", { status: 404 });
     }
 
-    // Allow access if board is public or user is the owner
+    // Allow access if board is public or user is the owner or admin
     const { userId } = await auth();
-    if (!board.isPublic && board.userId !== userId) {
+    const isAdmin = await checkIsAdmin();
+    if (!board.isPublic && board.userId !== userId && !isAdmin) {
         return new NextResponse("Unauthorized", { status: 403 });
     }
 
@@ -34,8 +36,15 @@ export async function PUT(
     const { id } = await params;
     const existingBoard = await getBoard(id);
 
-    if (!existingBoard || existingBoard.userId !== userId) {
+    const isAdmin = await checkIsAdmin();
+    const isOwner = existingBoard && existingBoard.userId === userId;
+
+    if (!existingBoard || (!isOwner && !isAdmin)) {
         return new NextResponse("Unauthorized", { status: 403 });
+    }
+
+    if (id.startsWith('starter-')) {
+        return new NextResponse("Template boards cannot be modified", { status: 403 });
     }
 
     try {
@@ -72,8 +81,15 @@ export async function DELETE(
     const { id } = await params;
     const existingBoard = await getBoard(id);
 
-    if (!existingBoard || existingBoard.userId !== userId) {
+    const isAdmin = await checkIsAdmin();
+    const isOwner = existingBoard && existingBoard.userId === userId;
+
+    if (!existingBoard || (!isOwner && !isAdmin)) {
         return new NextResponse("Unauthorized", { status: 403 });
+    }
+
+    if (id.startsWith('starter-')) {
+        return new NextResponse("Template boards cannot be deleted", { status: 403 });
     }
 
     try {
