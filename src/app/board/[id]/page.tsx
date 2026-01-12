@@ -1,15 +1,17 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useRef } from 'react';
 import PecsCard from '@/components/PecsCard';
 import AddCardModal from '@/components/AddCardModal';
+import MoveCopyCardModal from '@/components/MoveCopyCardModal';
 import { Card, Board } from '@/types';
-import { Plus, LayoutGrid, ArrowLeft, Save, Loader2, Search, X } from 'lucide-react';
+import { Plus, LayoutGrid, ArrowLeft, Save, Loader2, Search, X, Upload, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import SettingsMenu from '@/components/SettingsMenu';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useSwipeRef } from '@/hooks/useSwipe';
 import {
     DndContext,
     closestCenter,
@@ -38,6 +40,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     const [board, setBoard] = useState<Board | null>(null);
     const [isOwner, setIsOwner] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isBatchMode, setIsBatchMode] = useState(false);
+    const [isMoveCopyModalOpen, setIsMoveCopyModalOpen] = useState(false);
+    const [moveCopyCard, setMoveCopyCard] = useState<Card | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [editingCard, setEditingCard] = useState<Card | null>(null);
 
@@ -57,6 +62,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     // Header visibility state
     const [isHeaderVisible, setIsHeaderVisible] = useState(true);
     const [lastScrollY, setLastScrollY] = useState(0);
+
+    // Swipe gesture ref
+    const gridRef = useRef<HTMLDivElement>(null);
 
     // Computed: only allow editing if owner and requested
     const isEditing = requestedEdit && isOwner;
@@ -144,6 +152,26 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setEditingCard(null);
+        setIsBatchMode(false);
+    };
+
+    const handleBatchUpload = () => {
+        setIsBatchMode(true);
+        setIsModalOpen(true);
+    };
+
+    const handleMoveCopyCard = (card: Card) => {
+        setMoveCopyCard(card);
+        setIsMoveCopyModalOpen(true);
+    };
+
+    const handleMoveCopySuccess = (action: 'move' | 'copy') => {
+        if (action === 'move' && moveCopyCard) {
+            // Remove card from current board if moved
+            setCards(prev => prev.filter(c => c.id !== moveCopyCard.id));
+        }
+        setIsMoveCopyModalOpen(false);
+        setMoveCopyCard(null);
     };
 
     const handleSaveBoard = async () => {
@@ -174,6 +202,30 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             toast.error('Failed to update board');
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleDeleteBoard = async () => {
+        if (!board) return;
+
+        if (!confirm(`Are you sure you want to delete "${board.name}"? This will permanently delete the board and all its cards. This action cannot be undone.`)) {
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/boards/${board.id}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                toast.success('Board deleted successfully');
+                router.push('/my-boards');
+            } else {
+                toast.error('Failed to delete board');
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to delete board');
         }
     };
 
@@ -252,6 +304,45 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
     }, [lastScrollY]);
+
+    // Swipe gesture navigation for mobile
+    useSwipeRef(gridRef, {
+        onSwipeLeft: () => {
+            if (isEditing || filteredCards.length === 0) return;
+
+            if (focusedCardIndex === -1) {
+                setFocusedCardIndex(0);
+            } else if (focusedCardIndex < filteredCards.length - 1) {
+                const newIndex = focusedCardIndex + 1;
+                setFocusedCardIndex(newIndex);
+
+                // Play the card
+                const card = filteredCards[newIndex];
+                const cardElement = document.querySelector(`[data-card-id="${card.id}"]`);
+                if (cardElement instanceof HTMLElement) {
+                    cardElement.click();
+                }
+            }
+        },
+        onSwipeRight: () => {
+            if (isEditing || filteredCards.length === 0) return;
+
+            if (focusedCardIndex > 0) {
+                const newIndex = focusedCardIndex - 1;
+                setFocusedCardIndex(newIndex);
+
+                // Play the card
+                const card = filteredCards[newIndex];
+                const cardElement = document.querySelector(`[data-card-id="${card.id}"]`);
+                if (cardElement instanceof HTMLElement) {
+                    cardElement.click();
+                }
+            } else if (focusedCardIndex === -1 && filteredCards.length > 0) {
+                setFocusedCardIndex(0);
+            }
+        },
+        minSwipeDistance: 50
+    });
 
     // Keyboard navigation
     useEffect(() => {
@@ -343,8 +434,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             <header className={`max-w-7xl mx-auto mb-4 md:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 glass p-3 sm:p-4 rounded-xl md:rounded-2xl sticky top-16 sm:top-[4.5rem] z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-sm transition-transform duration-300 ${isHeaderVisible ? 'translate-y-0' : '-translate-y-[150%]'
                 }`}>
                 <div className="flex items-center gap-2 sm:gap-3 flex-1 w-full sm:w-auto">
-                    <Link href="/my-boards" className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors flex-shrink-0">
-                        <ArrowLeft className="w-5 h-5" />
+                    <Link href="/my-boards" className="p-2 sm:p-2.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors flex-shrink-0 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center">
+                        <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
                     </Link>
                     <div className="bg-gradient-to-br from-primary to-secondary p-1.5 sm:p-2 rounded-lg shadow-md transform rotate-3 hidden sm:block flex-shrink-0">
                         <LayoutGrid className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
@@ -393,14 +484,24 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
                 <div className="flex items-center gap-2">
                     {isEditing && (
-                        <button
-                            onClick={handleSaveBoard}
-                            disabled={isSaving}
-                            className="bg-primary text-white px-4 sm:px-5 py-1.5 sm:py-2 rounded-full font-bold shadow-lg hover:bg-primary/90 transition-all flex items-center gap-2 disabled:opacity-50 text-sm w-full sm:w-auto justify-center"
-                        >
-                            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                            Save
-                        </button>
+                        <>
+                            <button
+                                onClick={handleDeleteBoard}
+                                className="bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white px-4 sm:px-5 py-2.5 sm:py-3 rounded-full font-bold shadow-lg transition-all flex items-center gap-2 text-sm touch-manipulation min-h-[44px]"
+                                title="Delete Board"
+                            >
+                                <Trash2 className="w-5 h-5" />
+                                <span className="hidden sm:inline">Delete</span>
+                            </button>
+                            <button
+                                onClick={handleSaveBoard}
+                                disabled={isSaving}
+                                className="bg-primary text-white px-4 sm:px-5 py-2.5 sm:py-3 rounded-full font-bold shadow-lg hover:bg-primary/90 transition-all flex items-center gap-2 disabled:opacity-50 text-sm w-full sm:w-auto justify-center touch-manipulation min-h-[44px]"
+                            >
+                                {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                                Save
+                            </button>
+                        </>
                     )}
                 </div>
             </header>
@@ -456,7 +557,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             )}
 
             {/* Grid */}
-            <div className="max-w-7xl mx-auto">
+            <div ref={gridRef} className="max-w-7xl mx-auto">
                 {isLoading ? (
                     <div className="flex justify-center items-center h-64">
                         <div className="animate-bounce p-4 rounded-full bg-primary/20">
@@ -506,6 +607,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                                         isEditing={isEditing}
                                         onDelete={handleDeleteCard}
                                         onEdit={handleEditCard}
+                                        onMoveCopy={handleMoveCopyCard}
                                         isFocused={focusedCardIndex === index}
                                         onFocus={() => setFocusedCardIndex(index)}
                                     />
@@ -516,15 +618,25 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 )}
             </div>
 
-            {/* Floating Action Button - Only in Edit Mode */}
+            {/* Floating Action Buttons - Only in Edit Mode */}
             {isEditing && (
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 z-40 p-4 sm:p-5 bg-gradient-to-r from-primary to-accent text-white rounded-full shadow-2xl hover:shadow-primary/50 transition-all transform hover:scale-110 active:scale-95 group"
-                    aria-label="Add New Card"
-                >
-                    <Plus className="w-7 h-7 sm:w-8 sm:h-8 group-hover:rotate-90 transition-transform duration-300" />
-                </button>
+                <>
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 z-40 p-4 sm:p-5 bg-gradient-to-r from-primary to-accent text-white rounded-full shadow-2xl hover:shadow-primary/50 transition-all transform hover:scale-110 active:scale-95 group touch-manipulation min-w-[56px] min-h-[56px] sm:min-w-[64px] sm:min-h-[64px] flex items-center justify-center"
+                        aria-label="Add New Card"
+                    >
+                        <Plus className="w-7 h-7 sm:w-8 sm:h-8 group-hover:rotate-90 transition-transform duration-300" />
+                    </button>
+                    <button
+                        onClick={handleBatchUpload}
+                        className="fixed bottom-20 right-4 sm:bottom-28 sm:right-8 z-40 p-4 sm:p-4 bg-gradient-to-r from-secondary to-primary text-white rounded-full shadow-2xl hover:shadow-secondary/50 transition-all transform hover:scale-110 active:scale-95 group touch-manipulation min-w-[52px] min-h-[52px] sm:min-w-[56px] sm:min-h-[56px] flex items-center justify-center"
+                        aria-label="Batch Upload Cards"
+                        title="Batch Upload Multiple Images"
+                    >
+                        <Upload className="w-6 h-6 sm:w-7 sm:h-7" />
+                    </button>
+                </>
             )}
 
             {/* Modal */}
@@ -535,7 +647,22 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 onCardUpdated={handleCardUpdated}
                 boardId={unwrappedParams.id}
                 editCard={editingCard}
+                batchMode={isBatchMode}
             />
+
+            {/* Move/Copy Modal */}
+            {moveCopyCard && (
+                <MoveCopyCardModal
+                    isOpen={isMoveCopyModalOpen}
+                    onClose={() => {
+                        setIsMoveCopyModalOpen(false);
+                        setMoveCopyCard(null);
+                    }}
+                    onSuccess={handleMoveCopySuccess}
+                    card={moveCopyCard}
+                    currentBoardId={unwrappedParams.id}
+                />
+            )}
         </main>
     );
 }

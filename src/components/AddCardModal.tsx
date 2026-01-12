@@ -15,9 +15,10 @@ interface AddCardModalProps {
     onCardUpdated?: (card: Card) => void;
     boardId: string;
     editCard?: Card | null;
+    batchMode?: boolean;
 }
 
-export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdated, boardId, editCard }: AddCardModalProps) {
+export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdated, boardId, editCard, batchMode = false }: AddCardModalProps) {
     const [label, setLabel] = useState('');
     const [cardType, setCardType] = useState<'Thing' | 'Word'>('Thing');
 
@@ -27,6 +28,9 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [generationPrompt, setGenerationPrompt] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
+
+    // Batch upload state
+    const [batchImages, setBatchImages] = useState<File[]>([]);
 
     // Crop state
     const [showCropModal, setShowCropModal] = useState(false);
@@ -78,17 +82,27 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
         setAudioFile(null);
         setAudioType('record');
         setCardType('Thing');
+        setBatchImages([]);
         stopAudioPreview();
     };
 
     if (!isOpen) return null;
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            const url = URL.createObjectURL(file);
-            setImageToCrop(url);
-            setShowCropModal(true);
+        if (batchMode) {
+            // Batch upload mode - handle multiple files
+            const files = Array.from(e.target.files || []);
+            if (files.length > 0) {
+                setBatchImages(files);
+            }
+        } else {
+            // Single upload mode
+            const file = e.target.files?.[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                setImageToCrop(url);
+                setShowCropModal(true);
+            }
         }
     };
 
@@ -196,7 +210,69 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Check validation - for edit mode, we can keep existing image/audio
+        // Batch mode validation
+        if (batchMode) {
+            if (batchImages.length === 0) {
+                toast.error('Please select at least one image');
+                return;
+            }
+
+            setIsSubmitting(true);
+            try {
+                let successCount = 0;
+                let failCount = 0;
+
+                for (const imageFile of batchImages) {
+                    try {
+                        // Upload image
+                        const imageUrl = await uploadFile(imageFile, imageFile.name);
+
+                        // Create card with default title "New Card"
+                        const res = await fetch('/api/cards', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                label: 'New Card',
+                                imageUrl,
+                                audioUrl: '', // Empty audio URL for batch upload
+                                boardId,
+                                color: '#6366f1',
+                                type: 'Thing'
+                            })
+                        });
+
+                        if (res.ok) {
+                            const newCard = await res.json();
+                            onCardAdded(newCard);
+                            successCount++;
+                        } else {
+                            failCount++;
+                        }
+                    } catch (error) {
+                        console.error('Error creating card:', error);
+                        failCount++;
+                    }
+                }
+
+                if (successCount > 0) {
+                    toast.success(`${successCount} card${successCount > 1 ? 's' : ''} created successfully! You can edit them to add audio and titles.`);
+                }
+                if (failCount > 0) {
+                    toast.error(`Failed to create ${failCount} card${failCount > 1 ? 's' : ''}`);
+                }
+
+                onClose();
+                resetForm();
+            } catch (error) {
+                console.error(error);
+                toast.error('Error creating cards');
+            } finally {
+                setIsSubmitting(false);
+            }
+            return;
+        }
+
+        // Regular mode validation
         const hasAudio = audioType === 'record' ? !!audioBlob : !!audioFile;
         const hasImage = !!imageFile || (editCard && !!imagePreview);
         const hasAudioOrExisting = hasAudio || (editCard && !audioBlob && !audioFile);
@@ -286,7 +362,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                     {/* Header */}
                     <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
                         <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
-                            {editCard ? 'Edit Pic Speak' : 'New Pic Speak'}
+                            {batchMode ? 'Batch Upload Cards' : editCard ? 'Edit Pic Speak' : 'New Pic Speak'}
                         </h2>
                         <button
                             onClick={onClose}
@@ -297,65 +373,128 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                     </div>
 
                     <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                        {/* Label Input */}
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                What does it say?
-                            </label>
-                            <input
-                                type="text"
-                                value={label}
-                                onChange={(e) => setLabel(e.target.value)}
-                                placeholder="e.g., Apple, Hungry, Yes"
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium text-lg"
-                                required
-                            />
-                        </div>
+                        {batchMode ? (
+                            <>
+                                {/* Batch Upload Info */}
+                                <div className="space-y-3">
+                                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+                                        <h3 className="font-bold text-blue-900 dark:text-blue-200 mb-2">Batch Upload Mode</h3>
+                                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                                            Select multiple images to create cards quickly. All cards will be created with the title "New Card" and no audio. You can edit each card later to add custom titles and audio.
+                                        </p>
+                                    </div>
+                                </div>
 
-                        {/* Card Type Selector */}
-                        <div className="space-y-3">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Card Type
-                            </label>
-                            <div className="flex bg-gray-100 dark:bg-slate-800 rounded-xl p-1.5">
-                                <button
-                                    type="button"
-                                    onClick={() => setCardType('Thing')}
-                                    className={clsx(
-                                        "flex-1 py-2.5 rounded-lg text-sm font-bold transition-all transform active:scale-95",
-                                        cardType === 'Thing'
-                                            ? "bg-white dark:bg-slate-700 shadow-md text-primary"
-                                            : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                                    )}
-                                >
-                                    Thing
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setCardType('Word')}
-                                    className={clsx(
-                                        "flex-1 py-2.5 rounded-lg text-sm font-bold transition-all transform active:scale-95",
-                                        cardType === 'Word'
-                                            ? "bg-white dark:bg-slate-700 shadow-md text-primary"
-                                            : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                                    )}
-                                >
-                                    Word
-                                </button>
-                            </div>
-                            <p className="text-[10px] text-gray-400 px-1">
-                                {cardType === 'Thing'
-                                    ? "Represent objects, people, or actions with pictures."
-                                    : "Represent abstract concepts or conjunctions."}
-                            </p>
-                        </div>
+                                {/* Batch Image Upload */}
+                                <div className="space-y-3">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Select Images
+                                    </label>
+                                    <div
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="relative w-full min-h-48 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors overflow-hidden bg-gray-50 dark:bg-slate-800"
+                                    >
+                                        {batchImages.length > 0 ? (
+                                            <div className="w-full p-4">
+                                                <div className="text-center mb-4">
+                                                    <ImageIcon className="w-10 h-10 text-primary mx-auto mb-2" />
+                                                    <p className="text-sm font-medium text-primary">{batchImages.length} image{batchImages.length > 1 ? 's' : ''} selected</p>
+                                                    <p className="text-xs text-gray-500 mt-1">Tap to change</p>
+                                                </div>
+                                                <div className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto">
+                                                    {batchImages.map((file, idx) => (
+                                                        <div key={idx} className="aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                                                            <img
+                                                                src={URL.createObjectURL(file)}
+                                                                alt={`Preview ${idx + 1}`}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="text-center p-4">
+                                                <Upload className="w-10 h-10 text-gray-400 mx-auto mb-2" />
+                                                <p className="text-sm text-gray-500">Tap to select multiple images</p>
+                                                <p className="text-xs text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple files</p>
+                                            </div>
+                                        )}
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept="image/*"
+                                            multiple
+                                            className="hidden"
+                                            onChange={handleImageChange}
+                                        />
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                {/* Label Input */}
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        What does it say?
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={label}
+                                        onChange={(e) => setLabel(e.target.value)}
+                                        placeholder="e.g., Apple, Hungry, Yes"
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium text-lg"
+                                        required
+                                    />
+                                </div>
 
-                        {/* Image Upload */}
-                        <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Picture
-                                </label>
+                                {/* Card Type Selector */}
+                                <div className="space-y-3">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Card Type
+                                    </label>
+                                    <div className="flex bg-gray-100 dark:bg-slate-800 rounded-xl p-1.5">
+                                        <button
+                                            type="button"
+                                            onClick={() => setCardType('Thing')}
+                                            className={clsx(
+                                                "flex-1 py-2.5 rounded-lg text-sm font-bold transition-all transform active:scale-95",
+                                                cardType === 'Thing'
+                                                    ? "bg-white dark:bg-slate-700 shadow-md text-primary"
+                                                    : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                                            )}
+                                        >
+                                            Thing
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setCardType('Word')}
+                                            className={clsx(
+                                                "flex-1 py-2.5 rounded-lg text-sm font-bold transition-all transform active:scale-95",
+                                                cardType === 'Word'
+                                                    ? "bg-white dark:bg-slate-700 shadow-md text-primary"
+                                                    : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                                            )}
+                                        >
+                                            Word
+                                        </button>
+                                    </div>
+                                    <p className="text-[10px] text-gray-400 px-1">
+                                        {cardType === 'Thing'
+                                            ? "Represent objects, people, or actions with pictures."
+                                            : "Represent abstract concepts or conjunctions."}
+                                    </p>
+                                </div>
+                            </>
+                        )}
+
+                        {/* Image Upload - Only show in non-batch mode */}
+                        {!batchMode && (
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Picture
+                                    </label>
 
                                 {/* Image Toggle Switch */}
                                 <div className="flex bg-gray-100 dark:bg-slate-800 rounded-lg p-1">
@@ -441,10 +580,12 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                     </div>
                                 </div>
                             )}
-                        </div>
+                            </div>
+                        )}
 
-                        {/* Audio Input Section */}
-                        <div className="space-y-3">
+                        {/* Audio Input Section - Only show in non-batch mode */}
+                        {!batchMode && (
+                            <div className="space-y-3">
                             <div className="flex items-center justify-between">
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Sound
@@ -534,7 +675,8 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                     )}
                                 </button>
                             )}
-                        </div>
+                            </div>
+                        )}
 
                         {/* Footer */}
                         <div className="pt-4 flex justify-end gap-3">
@@ -547,16 +689,16 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                             </button>
                             <button
                                 type="submit"
-                                disabled={isSubmitting || !label || (!imageFile && !editCard) || (!editCard && (audioType === 'record' ? !audioBlob : !audioFile))}
+                                disabled={batchMode ? (isSubmitting || batchImages.length === 0) : (isSubmitting || !label || (!imageFile && !editCard) || (!editCard && (audioType === 'record' ? !audioBlob : !audioFile)))}
                                 className={clsx(
                                     "px-8 py-3 rounded-xl font-bold text-white shadow-lg transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2",
-                                    (isSubmitting || !label || (!imageFile && !editCard) || (!editCard && (audioType === 'record' ? !audioBlob : !audioFile)))
+                                    (batchMode ? (isSubmitting || batchImages.length === 0) : (isSubmitting || !label || (!imageFile && !editCard) || (!editCard && (audioType === 'record' ? !audioBlob : !audioFile))))
                                         ? "bg-gray-400 cursor-not-allowed"
                                         : "bg-gradient-to-r from-primary to-accent hover:shadow-primary/25"
                                 )}
                             >
                                 {isSubmitting ? <Loader2 className="animate-spin w-5 h-5" /> : <Check className="w-5 h-5" />}
-                                {editCard ? 'Update Card' : 'Save Card'}
+                                {batchMode ? `Create ${batchImages.length} Card${batchImages.length !== 1 ? 's' : ''}` : editCard ? 'Update Card' : 'Save Card'}
                             </button>
                         </div>
                     </form>

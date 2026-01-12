@@ -37,10 +37,10 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { label, imageUrl, audioUrl, color, boardId, type } = body;
 
-        // BoardID is mandatory now for new cards
-        if (!imageUrl || !audioUrl || !boardId) {
+        // BoardID and imageUrl are mandatory, audioUrl is optional for batch uploads
+        if (!imageUrl || !boardId) {
             return NextResponse.json(
-                { error: 'Image, Audio, and Board ID are required' },
+                { error: 'Image and Board ID are required' },
                 { status: 400 }
             );
         }

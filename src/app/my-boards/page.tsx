@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Pencil, Trash2, X, Plus } from 'lucide-react';
+import { Pencil, X, Plus } from 'lucide-react';
 import { Board } from '@/types';
 import { toast } from 'sonner';
 
@@ -60,27 +60,6 @@ export default function MyBoardsPage() {
             toast.error('Failed to create board');
         } finally {
             setIsCreating(false);
-        }
-    };
-
-    const handleDeleteBoard = async (e: React.MouseEvent, boardId: string) => {
-        e.preventDefault(); // Prevent navigation
-        if (!confirm('Are you sure you want to delete this board? This cannot be undone.')) return;
-
-        try {
-            const res = await fetch(`/api/boards/${boardId}`, {
-                method: 'DELETE'
-            });
-
-            if (res.ok) {
-                setBoards(boards.filter(b => b.id !== boardId));
-                toast.success('Board deleted successfully');
-            } else {
-                toast.error('Failed to delete board');
-            }
-        } catch (error) {
-            console.error(error);
-            toast.error('Failed to delete board');
         }
     };
 
@@ -190,26 +169,18 @@ export default function MyBoardsPage() {
                                 href={`/board/${board.id}`}
                                 className="group relative block p-5 sm:p-6 md:p-8 bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                             >
-                                <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex items-center gap-1 sm:gap-2">
+                                <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
                                     <button
                                         onClick={(e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
                                             router.push(`/board/${board.id}?edit=true`);
                                         }}
-                                        className="p-1.5 sm:p-2 bg-white dark:bg-slate-800 rounded-full shadow-md text-gray-500 hover:text-primary transition-colors hover:scale-110 flex items-center justify-center"
+                                        className="p-3 sm:p-3.5 md:p-4 bg-primary/10 dark:bg-primary/20 hover:bg-primary text-primary hover:text-white rounded-full shadow-lg transition-all hover:scale-110 active:scale-95 flex items-center justify-center touch-manipulation min-w-[48px] min-h-[48px] sm:min-w-[52px] sm:min-h-[52px]"
                                         title="Edit Board"
                                         aria-label={`Edit ${board.name} board`}
                                     >
-                                        <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                    </button>
-                                    <button
-                                        onClick={(e) => handleDeleteBoard(e, board.id)}
-                                        className="p-1.5 sm:p-2 bg-white dark:bg-slate-800 rounded-full shadow-md text-gray-500 hover:text-red-500 transition-colors hover:scale-110"
-                                        title="Delete Board"
-                                        aria-label={`Delete ${board.name} board`}
-                                    >
-                                        <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                        <Pencil className="w-5 h-5 sm:w-5 sm:h-5 md:w-6 md:h-6" />
                                     </button>
                                 </div>
 

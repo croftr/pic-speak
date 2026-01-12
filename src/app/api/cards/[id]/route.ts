@@ -28,7 +28,15 @@ export async function PUT(
         }
 
         const body = await request.json();
-        const { label, imageUrl, audioUrl, color, type } = body;
+        const { label, imageUrl, audioUrl, color, type, boardId } = body;
+
+        // If moving to a different board, verify user owns the destination board
+        if (boardId && boardId !== existingCard.boardId) {
+            const destinationBoard = await getBoard(boardId);
+            if (!destinationBoard || destinationBoard.userId !== userId) {
+                return new NextResponse("Unauthorized Access to Destination Board", { status: 403 });
+            }
+        }
 
         const updatedCard = {
             ...existingCard,
@@ -37,6 +45,7 @@ export async function PUT(
             audioUrl: audioUrl !== undefined ? audioUrl : existingCard.audioUrl,
             color: color !== undefined ? color : existingCard.color,
             type: type !== undefined ? type : existingCard.type,
+            boardId: boardId !== undefined ? boardId : existingCard.boardId,
         };
 
         await updateCard(updatedCard);

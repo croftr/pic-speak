@@ -96,8 +96,8 @@ export async function updateCard(updatedCard: Card): Promise<void> {
     const client = await getDbClient();
     try {
         await client.query(
-            'UPDATE cards SET label = $1, image_url = $2, audio_url = $3, color = $4, type = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6',
-            [updatedCard.label, updatedCard.imageUrl, updatedCard.audioUrl, updatedCard.color || '#6366f1', updatedCard.type || 'Thing', updatedCard.id]
+            'UPDATE cards SET label = $1, image_url = $2, audio_url = $3, color = $4, type = $5, board_id = $6, updated_at = CURRENT_TIMESTAMP WHERE id = $7',
+            [updatedCard.label, updatedCard.imageUrl, updatedCard.audioUrl, updatedCard.color || '#6366f1', updatedCard.type || 'Thing', updatedCard.boardId, updatedCard.id]
         );
     } catch (error) {
         console.error('Error updating card:', error);

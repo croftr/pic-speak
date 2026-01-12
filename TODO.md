@@ -5,14 +5,11 @@ Sort options (most popular, newest, alphabetical)
 
 2. Board Sharing Improvements
 Add a "Share" button that generates a shareable link
-Copy-to-clipboard functionality
-QR code generation for easy mobile access
-Social media sharing (optional)
+You may need to change the way deep linking works for public boards for this but not sure 
 
 3. User Profiles for Public Boards
-Show board creator's display name (anonymized option)
+Show board creator's display name
 "View more from this creator" feature
-Build community trust
 
 4. Board Templates
 Allow users to "clone" public boards as a starting point
@@ -20,15 +17,9 @@ Pre-made starter templates for common use cases
 
 Template idea 1
 Base Words. When using this template your new board will come with some base words
-Each of the base words should be in a card made with attractive large funky style lettering. the base word cards it comes with are - Yes, No, Hello, Bye, Thank You, Please. I dont know if you can also provide the audio for these or not, if not then I can provide the audio later.  
+Each of the base words should be in a card made with attractive large funky style lettering. the base word cards it comes with are - Yes, No, Hello, Bye, Thank You, Please. I dont know if you can also provide the audio for these or not, if not then I can provide the audio later.
 
 "Use this board as template" button on public boards
-
-5. Mobile Optimization
-Test and optimize touch interactions on mobile
-Larger tap targets for accessibility
-Swipe gestures for card navigation
-PWA (Progressive Web App) support for offline use
 
 6. Accessibility Enhancements
 High contrast mode toggle
@@ -40,10 +31,6 @@ ARIA labels audit and improvements
 View count for public boards
 "Popular" or "Trending" badges
 Usage analytics for board owners (which cards are used most)
-
-8. Card Improvements
-Allow batch upload of multiple Images from a directory.  The user can then edit them to add audio and titles later. They should have a default title, probably just needs to be "New Card" 
-Move/copy cards between boards
 
 10. Advanced Customization
 Custom themes/color schemes

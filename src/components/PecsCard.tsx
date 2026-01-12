@@ -4,7 +4,7 @@ import { Card } from '@/types';
 import { useState, useRef } from 'react';
 import { Volume2 } from 'lucide-react';
 import { clsx } from 'clsx';
-import { Trash2, Pencil, GripVertical } from 'lucide-react';
+import { Trash2, Pencil, GripVertical, Copy } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -14,11 +14,12 @@ interface PecsCardProps {
     isEditing?: boolean;
     onDelete?: (cardId: string) => void;
     onEdit?: (card: Card) => void;
+    onMoveCopy?: (card: Card) => void;
     isFocused?: boolean;
     onFocus?: () => void;
 }
 
-export default function PecsCard({ card, isEditing, onDelete, onEdit, isFocused = false, onFocus }: PecsCardProps) {
+export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy, isFocused = false, onFocus }: PecsCardProps) {
     const [isPlaying, setIsPlaying] = useState(false);
     const [volume, setVolume] = useState(1.0); // 0.0 to 1.0
     const [showVolumeControl, setShowVolumeControl] = useState(false);
@@ -82,17 +83,28 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, isFocused 
         <div ref={setNodeRef} style={style} className="relative group/card">
             {isEditing && (
                 <>
-                    <div className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 z-50 flex gap-0.5 sm:gap-1">
+                    <div className="absolute -top-2 -right-2 sm:-top-2 sm:-right-2 z-50 flex gap-1 sm:gap-1">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                onMoveCopy?.(card);
+                            }}
+                            className="p-2 sm:p-2 md:p-2.5 bg-purple-500 text-white rounded-full shadow-lg hover:bg-purple-600 transition-colors transform active:scale-95 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
+                            title="Move/Copy Card"
+                        >
+                            <Copy className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+                        </button>
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
                                 e.preventDefault();
                                 onEdit?.(card);
                             }}
-                            className="p-1.5 sm:p-2 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-colors transform hover:scale-110"
+                            className="p-2 sm:p-2 md:p-2.5 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-colors transform active:scale-95 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
                             title="Edit Card"
                         >
-                            <Pencil className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <Pencil className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                         </button>
                         <button
                             onClick={(e) => {
@@ -102,20 +114,20 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, isFocused 
                                     onDelete?.(card.id);
                                 }
                             }}
-                            className="p-1.5 sm:p-2 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-colors transform hover:scale-110"
+                            className="p-2 sm:p-2 md:p-2.5 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-colors transform active:scale-95 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
                             title="Delete Card"
                         >
-                            <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <Trash2 className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                         </button>
                     </div>
                     <div
                         {...attributes}
                         {...listeners}
-                        className="absolute -top-1.5 -left-1.5 sm:-top-2 sm:-left-2 z-50 cursor-grab active:cursor-grabbing"
+                        className="absolute -top-2 -left-2 sm:-top-2 sm:-left-2 z-50 cursor-grab active:cursor-grabbing touch-manipulation"
                         title="Drag to reorder"
                     >
-                        <div className="p-1.5 sm:p-2 bg-gray-500 text-white rounded-full shadow-lg hover:bg-gray-600 transition-colors">
-                            <GripVertical className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <div className="p-2 sm:p-2 md:p-2.5 bg-gray-500 text-white rounded-full shadow-lg hover:bg-gray-600 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
+                            <GripVertical className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                         </div>
                     </div>
                 </>
@@ -126,14 +138,15 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, isFocused 
                 disabled={isEditing}
                 data-card-id={card.id}
                 className={clsx(
-                    "relative flex flex-col items-center justify-between w-full aspect-[3/4] p-2 sm:p-3",
+                    "relative flex flex-col items-center justify-between w-full aspect-[3/4] p-3 sm:p-3 md:p-4",
                     "bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl hover:shadow-2xl",
-                    "transition-all duration-300 transform",
-                    !isEditing && "hover:-translate-y-1 sm:hover:-translate-y-2 hover:scale-105",
+                    "transition-all duration-300 transform touch-manipulation",
+                    !isEditing && "active:scale-95 hover:-translate-y-1 sm:hover:-translate-y-2 hover:scale-105",
                     "border-2 sm:border-4",
                     isPlaying ? "border-accent ring-2 sm:ring-4 ring-accent/30 scale-105" : isFocused ? "border-primary ring-2 sm:ring-4 ring-primary/30" : "border-transparent hover:border-primary/50",
                     isEditing && "cursor-default opacity-90 hover:none",
-                    isDragging && "z-50"
+                    isDragging && "z-50",
+                    "min-h-[120px]"
                 )}
                 style={{
                     borderColor: isPlaying ? undefined : isFocused ? undefined : card.color
@@ -162,10 +175,10 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, isFocused 
                         <div className="absolute bottom-2 right-2 z-10">
                             <button
                                 onClick={toggleVolumeControl}
-                                className="p-1.5 bg-white/90 dark:bg-slate-800/90 rounded-full shadow-md hover:scale-110 transition-transform"
+                                className="p-2 sm:p-2 md:p-2.5 bg-white/90 dark:bg-slate-800/90 rounded-full shadow-md hover:scale-110 transition-transform touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
                                 title="Volume Control"
                             >
-                                <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-700 dark:text-gray-300" />
+                                <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700 dark:text-gray-300" />
                             </button>
                             {showVolumeControl && (
                                 <div className="absolute bottom-full right-0 mb-2 bg-white dark:bg-slate-800 rounded-lg shadow-xl p-3 min-w-[120px] animate-in fade-in slide-in-from-bottom-2">
