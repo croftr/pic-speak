@@ -20,17 +20,6 @@ Board background images
 Card shape options (square, circle, rounded)
 Allow upload of image for the board istelf displayed alongside the board name
 
-🔧 Technical Improvements
-13. Performance Optimizations
-Image lazy loading on board view
-Implement caching for public boards
-CDN optimization for static assets
-Bundle size reduction
-
-14. Error Handling
-Better error messages for users - dont use window.alert for errors use something that looks better
-Toast notifications for relevant actions
-
 16. Security Enhancements
 Rate limiting on public endpoints
 Image/audio validation (file type, size, content)

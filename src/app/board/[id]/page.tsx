@@ -477,57 +477,90 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             <header className={`max-w-7xl mx-auto mb-4 md:mb-6 sticky top-16 sm:top-[4.5rem] z-40 transition-transform duration-300 ${isHeaderVisible ? 'translate-y-0' : '-translate-y-[150%]'
                 }`}>
                 {isEditing ? (
-                    // EDIT MODE - Keep it spacious and functional
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 glass p-3 sm:p-4 rounded-xl md:rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-sm">
-                        <div className="flex items-center gap-2 sm:gap-3 flex-1 w-full sm:w-auto">
-                            <Link href="/my-boards" className="p-2 sm:p-2.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors flex-shrink-0 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center">
-                                <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+                    // EDIT MODE - Spacious and mobile-friendly
+                    <div className="flex flex-col gap-4 glass p-4 sm:p-5 md:p-6 rounded-2xl md:rounded-3xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-lg">
+                        {/* Top Row: Back Button + Board Info */}
+                        <div className="flex items-start gap-3 sm:gap-4">
+                            <Link
+                                href="/my-boards"
+                                className="p-3 sm:p-3.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-colors flex-shrink-0 touch-manipulation min-w-[48px] min-h-[48px] flex items-center justify-center"
+                                title="Back to My Boards"
+                            >
+                                <ArrowLeft className="w-6 h-6" />
                             </Link>
-                            <div className="bg-gradient-to-br from-primary to-secondary p-1.5 sm:p-2 rounded-lg shadow-md transform rotate-3 hidden sm:block flex-shrink-0">
-                                <LayoutGrid className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                            </div>
-                            <div className="flex-1 max-w-lg space-y-1.5">
-                                <input
-                                    value={editName}
-                                    onChange={(e) => setEditName(e.target.value)}
-                                    className="w-full text-lg sm:text-xl md:text-2xl font-bold bg-transparent border-b-2 border-primary/50 focus:border-primary outline-none text-gray-900 dark:text-white placeholder-gray-400"
-                                    placeholder="Board Name"
-                                />
-                                <input
-                                    value={editDesc}
-                                    onChange={(e) => setEditDesc(e.target.value)}
-                                    className="w-full text-sm text-gray-500 bg-transparent border-b border-gray-200 focus:border-primary outline-none"
-                                    placeholder="Description (optional)"
-                                />
-                                <label className="flex items-center gap-2 pt-1 cursor-pointer">
+                            <div className="flex-1 space-y-3 min-w-0">
+                                {/* Board Name Input */}
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wide">
+                                        Board Name
+                                    </label>
+                                    <input
+                                        value={editName}
+                                        onChange={(e) => setEditName(e.target.value)}
+                                        className="w-full text-xl sm:text-2xl font-bold bg-white/50 dark:bg-slate-800/50 border-2 border-primary/30 focus:border-primary rounded-xl px-4 py-3 outline-none text-gray-900 dark:text-white placeholder-gray-400 transition-colors"
+                                        placeholder="Enter board name..."
+                                    />
+                                </div>
+
+                                {/* Description Input */}
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wide">
+                                        Description (Optional)
+                                    </label>
+                                    <input
+                                        value={editDesc}
+                                        onChange={(e) => setEditDesc(e.target.value)}
+                                        className="w-full text-base bg-white/50 dark:bg-slate-800/50 border-2 border-gray-200 dark:border-gray-700 focus:border-primary rounded-xl px-4 py-3 outline-none text-gray-700 dark:text-gray-300 placeholder-gray-400 transition-colors"
+                                        placeholder="Add a description..."
+                                    />
+                                </div>
+
+                                {/* Public Checkbox */}
+                                <label className="flex items-start gap-3 p-3 sm:p-4 bg-blue-50/50 dark:bg-blue-900/10 border-2 border-blue-200/50 dark:border-blue-800/50 rounded-xl cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors touch-manipulation">
                                     <input
                                         type="checkbox"
                                         checked={isPublic}
                                         onChange={(e) => setIsPublic(e.target.checked)}
-                                        className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary focus:ring-2"
+                                        className="mt-0.5 w-5 h-5 rounded border-2 border-blue-300 dark:border-blue-700 text-primary focus:ring-primary focus:ring-2 cursor-pointer flex-shrink-0"
                                     />
-                                    <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                                        Make this board public (anyone can view)
-                                    </span>
+                                    <div className="flex-1 min-w-0">
+                                        <span className="block text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
+                                            Make this board public
+                                        </span>
+                                        <span className="block text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+                                            Anyone with the link can view this board
+                                        </span>
+                                    </div>
                                 </label>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
+
+                        {/* Bottom Row: Action Buttons */}
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2 border-t-2 border-gray-100 dark:border-gray-800">
                             <button
                                 onClick={() => setIsDeleteDialogOpen(true)}
-                                className="bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white px-4 sm:px-5 py-2.5 sm:py-3 rounded-full font-bold shadow-lg transition-all flex items-center gap-2 text-sm touch-manipulation min-h-[44px]"
+                                className="flex-1 sm:flex-none bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white px-6 py-4 sm:py-3.5 rounded-xl font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2.5 text-base touch-manipulation min-h-[56px] sm:min-h-[52px]"
                                 title="Delete Board"
                             >
                                 <Trash2 className="w-5 h-5" />
-                                <span className="hidden sm:inline">Delete</span>
+                                <span>Delete Board</span>
                             </button>
                             <button
                                 onClick={handleSaveBoard}
                                 disabled={isSaving}
-                                className="bg-primary text-white px-4 sm:px-5 py-2.5 sm:py-3 rounded-full font-bold shadow-lg hover:bg-primary/90 transition-all flex items-center gap-2 disabled:opacity-50 text-sm w-full sm:w-auto justify-center touch-manipulation min-h-[44px]"
+                                className="flex-1 bg-primary text-white px-6 py-4 sm:py-3.5 rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-primary/90 transition-all flex items-center justify-center gap-2.5 disabled:opacity-50 disabled:cursor-not-allowed text-base touch-manipulation min-h-[56px] sm:min-h-[52px]"
                             >
-                                {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                                Save
+                                {isSaving ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        <span>Saving...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save className="w-5 h-5" />
+                                        <span>Save Changes</span>
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>
@@ -725,23 +758,26 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
             {/* Floating Action Buttons - Only in Edit Mode */}
             {isEditing && (
-                <>
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 z-40 p-4 sm:p-5 bg-gradient-to-r from-primary to-accent text-white rounded-full shadow-2xl hover:shadow-primary/50 transition-all transform hover:scale-110 active:scale-95 group touch-manipulation min-w-[56px] min-h-[56px] sm:min-w-[64px] sm:min-h-[64px] flex items-center justify-center"
-                        aria-label="Add New Card"
-                    >
-                        <Plus className="w-7 h-7 sm:w-8 sm:h-8 group-hover:rotate-90 transition-transform duration-300" />
-                    </button>
+                <div className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-40 flex flex-col gap-4 sm:gap-5">
+                    {/* Batch Upload Button */}
                     <button
                         onClick={handleBatchUpload}
-                        className="fixed bottom-20 right-4 sm:bottom-28 sm:right-8 z-40 p-4 sm:p-4 bg-gradient-to-r from-secondary to-primary text-white rounded-full shadow-2xl hover:shadow-secondary/50 transition-all transform hover:scale-110 active:scale-95 group touch-manipulation min-w-[52px] min-h-[52px] sm:min-w-[56px] sm:min-h-[56px] flex items-center justify-center"
+                        className="p-4 sm:p-5 bg-gradient-to-r from-secondary to-primary text-white rounded-2xl shadow-2xl hover:shadow-secondary/50 transition-all transform hover:scale-105 active:scale-95 group touch-manipulation min-w-[60px] min-h-[60px] sm:min-w-[64px] sm:min-h-[64px] flex items-center justify-center"
                         aria-label="Batch Upload Cards"
                         title="Batch Upload Multiple Images"
                     >
                         <Upload className="w-6 h-6 sm:w-7 sm:h-7" />
                     </button>
-                </>
+
+                    {/* Add Card Button - Primary Action */}
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="p-5 sm:p-6 bg-gradient-to-r from-primary to-accent text-white rounded-2xl shadow-2xl hover:shadow-primary/50 transition-all transform hover:scale-105 active:scale-95 group touch-manipulation min-w-[68px] min-h-[68px] sm:min-w-[72px] sm:min-h-[72px] flex items-center justify-center ring-4 ring-white/20"
+                        aria-label="Add New Card"
+                    >
+                        <Plus className="w-8 h-8 sm:w-9 sm:h-9 group-hover:rotate-90 transition-transform duration-300" />
+                    </button>
+                </div>
             )}
 
             {/* Modal */}
