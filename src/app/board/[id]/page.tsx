@@ -35,6 +35,8 @@ import {
     closestCenter,
     KeyboardSensor,
     PointerSensor,
+    TouchSensor,
+    MouseSensor,
     useSensor,
     useSensors,
     DragEndEvent,
@@ -95,9 +97,22 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     // Computed: only allow editing if owner or admin, and requested, and NOT a template board
     const isEditing = requestedEdit && (isOwner || isAdmin) && !isStarterBoard;
 
-    // Drag and drop sensors
+    // Drag and drop sensors - configured for both desktop and mobile
     const sensors = useSensors(
-        useSensor(PointerSensor),
+        // Mouse sensor for desktop with activation distance to prevent conflicts with clicks
+        useSensor(MouseSensor, {
+            activationConstraint: {
+                distance: 8, // 8px movement required before drag starts
+            },
+        }),
+        // Touch sensor for mobile with activation distance to prevent conflicts with scrolling
+        useSensor(TouchSensor, {
+            activationConstraint: {
+                delay: 200, // 200ms press required before drag starts
+                tolerance: 8, // Allow 8px of movement during the delay
+            },
+        }),
+        // Keyboard sensor for accessibility
         useSensor(KeyboardSensor, {
             coordinateGetter: sortableKeyboardCoordinates,
         })

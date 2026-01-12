@@ -129,10 +129,10 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
                         {...attributes}
                         {...listeners}
                         className="absolute -top-2 -left-2 sm:-top-2 sm:-left-2 z-50 cursor-grab active:cursor-grabbing touch-manipulation"
-                        title="Drag to reorder"
+                        title="Press and hold to drag"
                     >
-                        <div className="p-2 sm:p-2 md:p-2.5 bg-gray-500 text-white rounded-full shadow-lg hover:bg-gray-600 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
-                            <GripVertical className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+                        <div className="p-2.5 sm:p-3 md:p-3.5 bg-gradient-to-br from-gray-600 to-gray-700 text-white rounded-full shadow-xl hover:shadow-2xl hover:from-gray-700 hover:to-gray-800 transition-all active:scale-95 min-w-[48px] min-h-[48px] flex items-center justify-center border-2 border-white/20">
+                            <GripVertical className="w-5 h-5 sm:w-5 sm:h-5 md:w-6 md:h-6" />
                         </div>
                     </div>
                 </>
