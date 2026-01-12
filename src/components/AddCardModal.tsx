@@ -31,6 +31,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
 
     // Batch upload state
     const [batchImages, setBatchImages] = useState<File[]>([]);
+    const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
 
     // Crop state
     const [showCropModal, setShowCropModal] = useState(false);
@@ -218,51 +219,84 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
             }
 
             setIsSubmitting(true);
+            setUploadProgress({ current: 0, total: batchImages.length });
+
             try {
+                const CONCURRENT_UPLOADS = 8; // Upload 8 images at once
+
+                // Create chunks of uploads
+                const chunks = [];
+                for (let i = 0; i < batchImages.length; i += CONCURRENT_UPLOADS) {
+                    chunks.push(batchImages.slice(i, i + CONCURRENT_UPLOADS));
+                }
+
                 let successCount = 0;
                 let failCount = 0;
+                let processedCount = 0;
 
-                for (const imageFile of batchImages) {
-                    try {
-                        // Upload image
-                        const imageUrl = await uploadFile(imageFile, imageFile.name);
+                // Process each chunk sequentially, but uploads within chunk are parallel
+                for (const chunk of chunks) {
+                    const results = await Promise.allSettled(
+                        chunk.map(async (imageFile) => {
+                            try {
+                                const imageUrl = await uploadFile(imageFile, imageFile.name);
+                                return { imageUrl, fileName: imageFile.name };
+                            } catch (error) {
+                                console.error('Upload failed:', error);
+                                return null;
+                            }
+                        })
+                    );
 
-                        // Create card with default title "New Card"
-                        const res = await fetch('/api/cards', {
+                    // Update progress
+                    processedCount += chunk.length;
+                    setUploadProgress({ current: processedCount, total: batchImages.length });
+
+                    // Create cards for successful uploads
+                    const cardsToCreate = results
+                        .filter(r => r.status === 'fulfilled' && r.value !== null)
+                        .map(r => (r as PromiseFulfilledResult<{ imageUrl: string; fileName: string } | null>).value!)
+                        .filter(v => v !== null);
+
+                    // Batch insert the cards
+                    if (cardsToCreate.length > 0) {
+                        const res = await fetch('/api/cards/batch', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                label: 'New Card',
-                                imageUrl,
-                                audioUrl: '', // Empty audio URL for batch upload
                                 boardId,
-                                color: '#6366f1',
-                                type: 'Thing'
+                                cards: cardsToCreate.map(c => ({
+                                    label: '', // Empty label - user will edit later
+                                    imageUrl: c.imageUrl,
+                                    audioUrl: '', // Empty audio - user will edit later
+                                    color: '#6366f1',
+                                    type: 'Thing'
+                                }))
                             })
                         });
 
                         if (res.ok) {
-                            const newCard = await res.json();
-                            onCardAdded(newCard);
-                            successCount++;
+                            const newCards = await res.json();
+                            newCards.forEach((card: Card) => onCardAdded(card));
+                            successCount += cardsToCreate.length;
                         } else {
-                            failCount++;
+                            failCount += cardsToCreate.length;
                         }
-                    } catch (error) {
-                        console.error('Error creating card:', error);
-                        failCount++;
                     }
+
+                    failCount += results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && r.value === null)).length;
                 }
 
                 if (successCount > 0) {
-                    toast.success(`${successCount} card${successCount > 1 ? 's' : ''} created successfully! You can edit them to add audio and titles.`);
+                    toast.success(`${successCount} card${successCount > 1 ? 's' : ''} created! Edit them to add labels and audio.`);
                 }
                 if (failCount > 0) {
-                    toast.error(`Failed to create ${failCount} card${failCount > 1 ? 's' : ''}`);
+                    toast.error(`${failCount} upload${failCount > 1 ? 's' : ''} failed`);
                 }
 
                 onClose();
                 resetForm();
+                setUploadProgress({ current: 0, total: 0 });
             } catch (error) {
                 console.error(error);
                 toast.error('Error creating cards');
@@ -430,6 +464,22 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                         />
                                     </div>
                                 </div>
+
+                                {/* Progress Tracking */}
+                                {uploadProgress.total > 0 && (
+                                    <div className="space-y-2 bg-gradient-to-r from-primary/10 to-secondary/10 dark:from-primary/20 dark:to-secondary/20 rounded-xl p-4 border border-primary/20">
+                                        <div className="flex justify-between text-sm mb-1">
+                                            <span className="font-medium text-gray-700 dark:text-gray-200">Uploading images...</span>
+                                            <span className="font-bold text-primary">{uploadProgress.current} / {uploadProgress.total}</span>
+                                        </div>
+                                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden shadow-inner">
+                                            <div
+                                                className="bg-gradient-to-r from-primary to-secondary h-3 rounded-full transition-all duration-300 ease-out shadow-lg"
+                                                style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
                             </>
                         ) : (
                             <>

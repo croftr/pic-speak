@@ -3,16 +3,6 @@ Add search/filter functionality to the public boards section
 Categories or tags for boards (e.g., "Food", "Daily Routine", "Emotions")
 Sort options (most popular, newest, alphabetical)
 
-4. Board Templates
-Allow users to "clone" public boards as a starting point
-Pre-made starter templates for common use cases
-
-Template idea 1
-Base Words. When using this template your new board will come with some base words
-Each of the base words should be in a card made with attractive large funky style lettering. the base word cards it comes with are - Yes, No, Hello, Bye, Thank You, Please. I dont know if you can also provide the audio for these or not, if not then I can provide the audio later.
-
-"Use this board as template" button on public boards
-
 6. Accessibility Enhancements
 High contrast mode toggle
 Text-to-speech for card labels (in addition to recorded audio)
@@ -33,8 +23,8 @@ Allow upload of image for the board istelf displayed alongside the board name
 
 12. Social Features
 "Like" or "Favorite" public boards
-Comments on public boards (moderated)
-User ratings/reviews
+Comments on public boards
+
 
 🔧 Technical Improvements
 13. Performance Optimizations

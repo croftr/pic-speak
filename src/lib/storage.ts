@@ -180,6 +180,82 @@ export async function addCard(card: Card): Promise<void> {
     }
 }
 
+export async function batchAddCards(cards: Card[]): Promise<void> {
+    if (cards.length === 0) return;
+
+    const client = await getDbClient();
+    try {
+        await client.query('BEGIN');
+
+        // Separate template cards from regular cards
+        const templateCards = cards.filter(c => c.templateKey);
+        const regularCards = cards.filter(c => !c.templateKey);
+
+        // Batch insert template cards if any
+        if (templateCards.length > 0) {
+            const templateValues: any[] = [];
+            const templatePlaceholders: string[] = [];
+            let paramIndex = 1;
+
+            templateCards.forEach((card) => {
+                templateValues.push(
+                    card.id,
+                    card.boardId,
+                    card.templateKey,
+                    card.order || 0,
+                    card.color || '#6366f1'
+                );
+                templatePlaceholders.push(
+                    `($${paramIndex}, $${paramIndex + 1}, $${paramIndex + 2}, $${paramIndex + 3}, $${paramIndex + 4})`
+                );
+                paramIndex += 5;
+            });
+
+            await client.query(
+                `INSERT INTO cards (id, board_id, template_key, "order", color) VALUES ${templatePlaceholders.join(',')}`,
+                templateValues
+            );
+        }
+
+        // Batch insert regular cards if any
+        if (regularCards.length > 0) {
+            const regularValues: any[] = [];
+            const regularPlaceholders: string[] = [];
+            let paramIndex = 1;
+
+            regularCards.forEach((card) => {
+                regularValues.push(
+                    card.id,
+                    card.boardId,
+                    card.label,
+                    card.imageUrl,
+                    card.audioUrl,
+                    card.color || '#6366f1',
+                    card.order || 0,
+                    card.type || 'Thing'
+                );
+                regularPlaceholders.push(
+                    `($${paramIndex}, $${paramIndex + 1}, $${paramIndex + 2}, $${paramIndex + 3}, $${paramIndex + 4}, $${paramIndex + 5}, $${paramIndex + 6}, $${paramIndex + 7})`
+                );
+                paramIndex += 8;
+            });
+
+            await client.query(
+                `INSERT INTO cards (id, board_id, label, image_url, audio_url, color, "order", type) VALUES ${regularPlaceholders.join(',')}`,
+                regularValues
+            );
+        }
+
+        await client.query('COMMIT');
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error batch adding cards:', error);
+        throw error;
+    } finally {
+        client.release();
+    }
+}
+
 export async function updateCard(updatedCard: Card): Promise<void> {
     const client = await getDbClient();
     try {
