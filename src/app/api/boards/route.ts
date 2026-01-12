@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getBoards, addBoard } from '@/lib/storage';
 import { Board } from '@/types';
-import { auth } from '@clerk/nextjs/server';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 
 export async function GET() {
     const { userId } = await auth();
@@ -32,12 +32,27 @@ export async function POST(request: Request) {
             );
         }
 
+        // Fetch user info from Clerk
+        let creatorName: string | undefined;
+        let creatorImageUrl: string | undefined;
+        try {
+            const client = await clerkClient();
+            const user = await client.users.getUser(userId);
+            creatorName = user.fullName || user.firstName || user.username || undefined;
+            creatorImageUrl = user.imageUrl || undefined;
+        } catch (error) {
+            console.error('Error fetching user from Clerk:', error);
+            // Continue without creator info if Clerk fails
+        }
+
         const newBoard: Board = {
             id: crypto.randomUUID(),
             userId,
             name,
             description: description || '',
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            creatorName,
+            creatorImageUrl
         };
 
         await addBoard(newBoard);

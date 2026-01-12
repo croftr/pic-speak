@@ -3,13 +3,13 @@ Add search/filter functionality to the public boards section
 Categories or tags for boards (e.g., "Food", "Daily Routine", "Emotions")
 Sort options (most popular, newest, alphabetical)
 
-2. Board Sharing Improvements
-Add a "Share" button that generates a shareable link
-You may need to change the way deep linking works for public boards for this but not sure 
+✅ 2. Board Sharing Improvements (COMPLETED)
+✅ Add a "Share" button that generates a shareable link
+✅ Added share button to public boards that copies link to clipboard
 
-3. User Profiles for Public Boards
-Show board creator's display name
-"View more from this creator" feature
+✅ 3. User Profiles for Public Boards (COMPLETED)
+✅ Show board creator's display name (with avatar if available)
+✅ "View more from this creator" feature (filter by creator on landing page)
 
 4. Board Templates
 Allow users to "clone" public boards as a starting point

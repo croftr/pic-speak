@@ -9,7 +9,9 @@
       "Bash(npm run build:*)",
       "Bash(npm run dev:*)",
       "Bash(git checkout:*)",
-      "Bash(npm run tsx:*)"
+      "Bash(npm run tsx:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)"
     ]
   }
 }

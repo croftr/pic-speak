@@ -5,7 +5,7 @@ import PecsCard from '@/components/PecsCard';
 import AddCardModal from '@/components/AddCardModal';
 import MoveCopyCardModal from '@/components/MoveCopyCardModal';
 import { Card, Board } from '@/types';
-import { Plus, LayoutGrid, ArrowLeft, Save, Loader2, Search, X, Upload, Trash2 } from 'lucide-react';
+import { Plus, LayoutGrid, ArrowLeft, Save, Loader2, Search, X, Upload, Trash2, Share2, Check, User } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -62,6 +62,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     // Header visibility state
     const [isHeaderVisible, setIsHeaderVisible] = useState(true);
     const [lastScrollY, setLastScrollY] = useState(0);
+
+    // Share button state
+    const [isCopied, setIsCopied] = useState(false);
 
     // Swipe gesture ref
     const gridRef = useRef<HTMLDivElement>(null);
@@ -226,6 +229,26 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         } catch (error) {
             console.error(error);
             toast.error('Failed to delete board');
+        }
+    };
+
+    const handleShare = async () => {
+        if (!board) return;
+
+        // Generate shareable link
+        const baseUrl = window.location.origin;
+        const shareUrl = `${baseUrl}/board/${board.id}`;
+
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+            setIsCopied(true);
+            toast.success('Board link copied to clipboard!');
+
+            // Reset copied state after 2 seconds
+            setTimeout(() => setIsCopied(false), 2000);
+        } catch (error) {
+            console.error('Failed to copy to clipboard:', error);
+            toast.error('Failed to copy link');
         }
     };
 
@@ -431,60 +454,45 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     return (
         <main className="min-h-screen p-2 sm:p-4 md:p-8 relative pb-32">
             {/* Header */}
-            <header className={`max-w-7xl mx-auto mb-4 md:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 glass p-3 sm:p-4 rounded-xl md:rounded-2xl sticky top-16 sm:top-[4.5rem] z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-sm transition-transform duration-300 ${isHeaderVisible ? 'translate-y-0' : '-translate-y-[150%]'
+            <header className={`max-w-7xl mx-auto mb-4 md:mb-6 sticky top-16 sm:top-[4.5rem] z-40 transition-transform duration-300 ${isHeaderVisible ? 'translate-y-0' : '-translate-y-[150%]'
                 }`}>
-                <div className="flex items-center gap-2 sm:gap-3 flex-1 w-full sm:w-auto">
-                    <Link href="/my-boards" className="p-2 sm:p-2.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors flex-shrink-0 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center">
-                        <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-                    </Link>
-                    <div className="bg-gradient-to-br from-primary to-secondary p-1.5 sm:p-2 rounded-lg shadow-md transform rotate-3 hidden sm:block flex-shrink-0">
-                        <LayoutGrid className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                    </div>
-                    {isEditing ? (
-                        <div className="flex-1 max-w-lg space-y-1.5">
-                            <input
-                                value={editName}
-                                onChange={(e) => setEditName(e.target.value)}
-                                className="w-full text-lg sm:text-xl md:text-2xl font-bold bg-transparent border-b-2 border-primary/50 focus:border-primary outline-none text-gray-900 dark:text-white placeholder-gray-400"
-                                placeholder="Board Name"
-                            />
-                            <input
-                                value={editDesc}
-                                onChange={(e) => setEditDesc(e.target.value)}
-                                className="w-full text-sm text-gray-500 bg-transparent border-b border-gray-200 focus:border-primary outline-none"
-                                placeholder="Description (optional)"
-                            />
-                            <label className="flex items-center gap-2 pt-1 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={isPublic}
-                                    onChange={(e) => setIsPublic(e.target.checked)}
-                                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary focus:ring-2"
-                                />
-                                <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                                    Make this board public (anyone can view)
-                                </span>
-                            </label>
-                        </div>
-                    ) : (
-                        <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 justify-between">
-                                <h1 className="text-lg sm:text-xl md:text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent tracking-tight truncate">
-                                    {board?.name || 'Loading...'}
-                                </h1>
-                                {!isEditing && <SettingsMenu />}
+                {isEditing ? (
+                    // EDIT MODE - Keep it spacious and functional
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 glass p-3 sm:p-4 rounded-xl md:rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-sm">
+                        <div className="flex items-center gap-2 sm:gap-3 flex-1 w-full sm:w-auto">
+                            <Link href="/my-boards" className="p-2 sm:p-2.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors flex-shrink-0 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center">
+                                <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+                            </Link>
+                            <div className="bg-gradient-to-br from-primary to-secondary p-1.5 sm:p-2 rounded-lg shadow-md transform rotate-3 hidden sm:block flex-shrink-0">
+                                <LayoutGrid className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                             </div>
-
-                            {board?.description && (
-                                <p className="text-gray-500 text-xs sm:text-sm mt-0.5 line-clamp-1">{board.description}</p>
-                            )}
+                            <div className="flex-1 max-w-lg space-y-1.5">
+                                <input
+                                    value={editName}
+                                    onChange={(e) => setEditName(e.target.value)}
+                                    className="w-full text-lg sm:text-xl md:text-2xl font-bold bg-transparent border-b-2 border-primary/50 focus:border-primary outline-none text-gray-900 dark:text-white placeholder-gray-400"
+                                    placeholder="Board Name"
+                                />
+                                <input
+                                    value={editDesc}
+                                    onChange={(e) => setEditDesc(e.target.value)}
+                                    className="w-full text-sm text-gray-500 bg-transparent border-b border-gray-200 focus:border-primary outline-none"
+                                    placeholder="Description (optional)"
+                                />
+                                <label className="flex items-center gap-2 pt-1 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={isPublic}
+                                        onChange={(e) => setIsPublic(e.target.checked)}
+                                        className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary focus:ring-2"
+                                    />
+                                    <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                                        Make this board public (anyone can view)
+                                    </span>
+                                </label>
+                            </div>
                         </div>
-                    )}
-                </div>
-
-                <div className="flex items-center gap-2">
-                    {isEditing && (
-                        <>
+                        <div className="flex items-center gap-2">
                             <button
                                 onClick={handleDeleteBoard}
                                 className="bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white px-4 sm:px-5 py-2.5 sm:py-3 rounded-full font-bold shadow-lg transition-all flex items-center gap-2 text-sm touch-manipulation min-h-[44px]"
@@ -501,9 +509,64 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                                 {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                                 Save
                             </button>
-                        </>
-                    )}
-                </div>
+                        </div>
+                    </div>
+                ) : (
+                    // VIEW MODE - Compact and streamlined
+                    <div className="flex items-center justify-between gap-3 px-2 py-1.5 rounded-lg bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm shadow-sm border border-gray-100 dark:border-gray-800">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <Link
+                                href="/my-boards"
+                                className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors flex-shrink-0 touch-manipulation"
+                                title="Back to My Boards"
+                            >
+                                <ArrowLeft className="w-5 h-5" />
+                            </Link>
+                            <div className="flex-1 min-w-0">
+                                <h1 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white truncate">
+                                    {board?.name || 'Loading...'}
+                                </h1>
+                                {board?.isPublic && board?.creatorName && !isOwner && (
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                        {board.creatorImageUrl ? (
+                                            <img
+                                                src={board.creatorImageUrl}
+                                                alt={board.creatorName}
+                                                className="w-3.5 h-3.5 rounded-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-3.5 h-3.5 rounded-full bg-primary/10 flex items-center justify-center">
+                                                <User className="w-2 h-2 text-primary" />
+                                            </div>
+                                        )}
+                                        <span className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                                            by {board.creatorName}
+                                        </span>
+                                        <span className="text-gray-300 dark:text-gray-700 text-[10px]">•</span>
+                                        <Link
+                                            href={`/?creator=${board.userId}`}
+                                            className="text-[10px] text-primary hover:underline whitespace-nowrap"
+                                        >
+                                            View more
+                                        </Link>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                            {board?.isPublic && (
+                                <button
+                                    onClick={handleShare}
+                                    className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg transition-all touch-manipulation"
+                                    title="Share Board"
+                                >
+                                    {isCopied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+                                </button>
+                            )}
+                            <SettingsMenu />
+                        </div>
+                    </div>
+                )}
             </header>
 
             {/* Search Bar - Only show when cards exist and in edit mode */}

@@ -16,6 +16,8 @@ export interface Board {
   description?: string;
   createdAt: string;
   isPublic?: boolean;
+  creatorName?: string;
+  creatorImageUrl?: string;
 }
 
 export interface ApiResponse {

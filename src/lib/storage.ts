@@ -23,6 +23,8 @@ type BoardRow = {
     created_at: string;
     updated_at?: string;
     is_public?: boolean;
+    creator_name?: string;
+    creator_image_url?: string;
 };
 
 // Create a connection pool for better performance
@@ -158,7 +160,9 @@ export async function getBoards(userId: string): Promise<Board[]> {
             name: row.name,
             description: row.description,
             createdAt: row.created_at,
-            isPublic: row.is_public || false
+            isPublic: row.is_public || false,
+            creatorName: row.creator_name,
+            creatorImageUrl: row.creator_image_url
         }));
     } catch (error) {
         console.error('Error getting boards:', error);
@@ -172,8 +176,8 @@ export async function addBoard(board: Board): Promise<void> {
     const client = await getDbClient();
     try {
         await client.query(
-            'INSERT INTO boards (id, user_id, name, description, created_at, is_public) VALUES ($1, $2, $3, $4, $5, $6)',
-            [board.id, board.userId, board.name, board.description || '', board.createdAt, board.isPublic || false]
+            'INSERT INTO boards (id, user_id, name, description, created_at, is_public, creator_name, creator_image_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+            [board.id, board.userId, board.name, board.description || '', board.createdAt, board.isPublic || false, board.creatorName, board.creatorImageUrl]
         );
     } catch (error) {
         console.error('Error adding board:', error);
@@ -200,7 +204,9 @@ export async function getBoard(id: string): Promise<Board | undefined> {
             name: row.name,
             description: row.description,
             createdAt: row.created_at,
-            isPublic: row.is_public || false
+            isPublic: row.is_public || false,
+            creatorName: row.creator_name,
+            creatorImageUrl: row.creator_image_url
         };
     } catch (error) {
         console.error('Error getting board:', error);
@@ -214,8 +220,8 @@ export async function updateBoard(updatedBoard: Board): Promise<void> {
     const client = await getDbClient();
     try {
         await client.query(
-            'UPDATE boards SET name = $1, description = $2, is_public = $3, updated_at = CURRENT_TIMESTAMP WHERE id = $4',
-            [updatedBoard.name, updatedBoard.description || '', updatedBoard.isPublic || false, updatedBoard.id]
+            'UPDATE boards SET name = $1, description = $2, is_public = $3, creator_name = $4, creator_image_url = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6',
+            [updatedBoard.name, updatedBoard.description || '', updatedBoard.isPublic || false, updatedBoard.creatorName, updatedBoard.creatorImageUrl, updatedBoard.id]
         );
     } catch (error) {
         console.error('Error updating board:', error);
@@ -251,7 +257,9 @@ export async function getPublicBoards(): Promise<Board[]> {
             name: row.name,
             description: row.description,
             createdAt: row.created_at,
-            isPublic: row.is_public || false
+            isPublic: row.is_public || false,
+            creatorName: row.creator_name,
+            creatorImageUrl: row.creator_image_url
         }));
     } catch (error) {
         console.error('Error getting public boards:', error);
