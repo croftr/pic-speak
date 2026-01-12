@@ -7,6 +7,7 @@ import { clsx } from 'clsx';
 import { Trash2, Pencil, GripVertical, Copy, Sparkles } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import ConfirmDialog from './ConfirmDialog';
 
 interface PecsCardProps {
     card: Card;
@@ -23,6 +24,7 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
     const [isPlaying, setIsPlaying] = useState(false);
     const [volume, setVolume] = useState(1.0); // 0.0 to 1.0
     const [showVolumeControl, setShowVolumeControl] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
     // Template cards cannot be edited
@@ -115,9 +117,7 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
                             onClick={(e) => {
                                 e.stopPropagation();
                                 e.preventDefault();
-                                if (confirm('Delete this card?')) {
-                                    onDelete?.(card.id);
-                                }
+                                setIsDeleteDialogOpen(true);
                             }}
                             className="p-2 sm:p-2 md:p-2.5 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-colors transform active:scale-95 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
                             title="Delete Card"
@@ -171,6 +171,7 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
                         <img
                             src={card.imageUrl}
                             alt={card.label}
+                            loading="lazy"
                             className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
                         />
                     </div>
@@ -221,6 +222,18 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
                     </h3>
                 </div>
             </button>
+
+            {/* Delete Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={isDeleteDialogOpen}
+                onClose={() => setIsDeleteDialogOpen(false)}
+                onConfirm={() => onDelete?.(card.id)}
+                title="Delete Card?"
+                message={`Are you sure you want to delete "${card.label}"? This action cannot be undone.`}
+                confirmText="Delete"
+                cancelText="Cancel"
+                variant="danger"
+            />
         </div>
     );
 }

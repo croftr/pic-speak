@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Mic, Square, Play, RefreshCw, Trash2 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { toast } from 'sonner';
 
 interface AudioRecorderProps {
     onRecordingComplete: (blob: Blob) => void;
@@ -42,7 +43,7 @@ export default function AudioRecorder({ onRecordingComplete, className }: AudioR
             setIsRecording(true);
         } catch (err) {
             console.error('Error accessing microphone:', err);
-            alert('Could not access microphone. Please allow permissions.');
+            toast.error('Could not access microphone. Please allow microphone permissions.');
         }
     };
 

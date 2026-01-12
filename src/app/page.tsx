@@ -79,6 +79,7 @@ function PublicBoardsSection() {
                     <img
                       src={board.creatorImageUrl}
                       alt={board.creatorName}
+                      loading="lazy"
                       className="w-6 h-6 rounded-full object-cover"
                     />
                   ) : (

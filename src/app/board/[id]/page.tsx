@@ -1,17 +1,33 @@
 'use client';
 
 import { useState, useEffect, use, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import PecsCard from '@/components/PecsCard';
-import AddCardModal from '@/components/AddCardModal';
-import MoveCopyCardModal from '@/components/MoveCopyCardModal';
-import LikeButton from '@/components/LikeButton';
-import CommentsSection from '@/components/CommentsSection';
+
+// Dynamically import heavy components that are not immediately visible
+const AddCardModal = dynamic(() => import('@/components/AddCardModal'), {
+    loading: () => null
+});
+const MoveCopyCardModal = dynamic(() => import('@/components/MoveCopyCardModal'), {
+    loading: () => null
+});
+const LikeButton = dynamic(() => import('@/components/LikeButton'), {
+    loading: () => <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
+});
+const CommentsSection = dynamic(() => import('@/components/CommentsSection'), {
+    loading: () => <div className="space-y-4"><div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" /></div>
+});
+const ConfirmDialog = dynamic(() => import('@/components/ConfirmDialog'), {
+    loading: () => null
+});
 import { Card, Board } from '@/types';
 import { Plus, LayoutGrid, ArrowLeft, Save, Loader2, Search, X, Upload, Trash2, Share2, Check, User, Pencil } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import SettingsMenu from '@/components/SettingsMenu';
+const SettingsMenu = dynamic(() => import('@/components/SettingsMenu'), {
+    loading: () => <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+});
 import { useSettings } from '@/contexts/SettingsContext';
 import { useSwipeRef } from '@/hooks/useSwipe';
 import {
@@ -47,6 +63,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     const [moveCopyCard, setMoveCopyCard] = useState<Card | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [editingCard, setEditingCard] = useState<Card | null>(null);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
     // Edit states
     const [editName, setEditName] = useState('');
@@ -217,10 +234,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
     const handleDeleteBoard = async () => {
         if (!board) return;
-
-        if (!confirm(`Are you sure you want to delete "${board.name}"? This will permanently delete the board and all its cards. This action cannot be undone.`)) {
-            return;
-        }
 
         try {
             const res = await fetch(`/api/boards/${board.id}`, {
@@ -501,7 +514,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                         </div>
                         <div className="flex items-center gap-2">
                             <button
-                                onClick={handleDeleteBoard}
+                                onClick={() => setIsDeleteDialogOpen(true)}
                                 className="bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white px-4 sm:px-5 py-2.5 sm:py-3 rounded-full font-bold shadow-lg transition-all flex items-center gap-2 text-sm touch-manipulation min-h-[44px]"
                                 title="Delete Board"
                             >
@@ -755,6 +768,18 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     currentBoardId={unwrappedParams.id}
                 />
             )}
+
+            {/* Delete Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={isDeleteDialogOpen}
+                onClose={() => setIsDeleteDialogOpen(false)}
+                onConfirm={handleDeleteBoard}
+                title="Delete Board?"
+                message={`Are you sure you want to delete "${board?.name}"? This will permanently delete the board and all its cards. This action cannot be undone.`}
+                confirmText="Delete"
+                cancelText="Cancel"
+                variant="danger"
+            />
         </main>
     );
 }

@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { X, Image as ImageIcon, Check, Loader2, Mic, Upload, Music, Sparkles, Play, Pause, Volume2, Crop } from 'lucide-react';
 import AudioRecorder from './AudioRecorder';
-import ImageCropModal from './ImageCropModal';
+const ImageCropModal = dynamic(() => import('./ImageCropModal'), {
+    loading: () => null
+});
 import { clsx } from 'clsx';
 import { Card } from '@/types';
 import { toast } from 'sonner';
