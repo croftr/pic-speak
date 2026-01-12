@@ -11,9 +11,6 @@ const nextConfig: NextConfig = {
     } : false,
   },
 
-  // Enable SWC minification for smaller bundles
-  swcMinify: true,
-
   // Optimize images
   images: {
     formats: ['image/avif', 'image/webp'],
