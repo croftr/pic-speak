@@ -5,10 +5,9 @@ const nextConfig: NextConfig = {
 
   // Performance optimizations
   compiler: {
-    // Remove console.log in production
-    removeConsole: process.env.NODE_ENV === 'production' ? {
-      exclude: ['error', 'warn'],
-    } : false,
+    // Keep console logs for debugging card creation issues
+    // We can re-enable this optimization once the issue is resolved
+    removeConsole: false,
   },
 
   // Optimize images

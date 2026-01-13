@@ -197,18 +197,37 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     };
 
     const uploadFile = async (file: Blob, filename: string): Promise<string> => {
+        const startTime = Date.now();
+        const fileSize = (file.size / 1024).toFixed(2);
+        console.log(`[Frontend-Upload] Starting upload: ${filename} (${fileSize}KB, type: ${file.type})`);
+
         const formData = new FormData();
         const fileToUpload = new File([file], filename, { type: file.type });
         formData.append('file', fileToUpload);
 
-        const res = await fetch('/api/upload', {
-            method: 'POST',
-            body: formData,
-        });
+        try {
+            const fetchStart = Date.now();
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+            });
+            const fetchTime = Date.now() - fetchStart;
 
-        if (!res.ok) throw new Error('Upload failed');
-        const data = await res.json();
-        return data.url;
+            if (!res.ok) {
+                console.error(`[Frontend-Upload] FAILED after ${fetchTime}ms: HTTP ${res.status}`);
+                throw new Error('Upload failed');
+            }
+
+            const data = await res.json();
+            const totalTime = Date.now() - startTime;
+            console.log(`[Frontend-Upload] SUCCESS in ${totalTime}ms (fetch: ${fetchTime}ms)`);
+            console.log(`[Frontend-Upload] URL: ${data.url}`);
+            return data.url;
+        } catch (error) {
+            const totalTime = Date.now() - startTime;
+            console.error(`[Frontend-Upload] ERROR after ${totalTime}ms:`, error);
+            throw error;
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -316,25 +335,40 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
 
         if (!label || !hasImage || !hasAudioOrExisting) return;
 
+        const operationStart = Date.now();
+        const operationId = crypto.randomUUID().slice(0, 8);
+        console.log(`[Frontend-CardOp-${operationId}] Starting ${editCard ? 'update' : 'create'} operation`);
+
         setIsSubmitting(true);
         try {
             // 1. Upload Image (only if new file selected)
             let imageUrl = editCard?.imageUrl || '';
             if (imageFile) {
+                console.log(`[Frontend-CardOp-${operationId}] Uploading image...`);
+                const imageUploadStart = Date.now();
                 imageUrl = await uploadFile(imageFile, imageFile.name);
+                console.log(`[Frontend-CardOp-${operationId}] Image uploaded in ${Date.now() - imageUploadStart}ms`);
             }
 
             // 2. Upload Audio (only if new audio provided)
             let audioUrl = editCard?.audioUrl || '';
             if (audioType === 'record' && audioBlob) {
+                console.log(`[Frontend-CardOp-${operationId}] Uploading recorded audio...`);
+                const audioUploadStart = Date.now();
                 const audioExtension = audioBlob.type.includes('webm') ? 'webm' : 'wav';
                 audioUrl = await uploadFile(audioBlob, `audio-${Date.now()}.${audioExtension}`);
+                console.log(`[Frontend-CardOp-${operationId}] Audio uploaded in ${Date.now() - audioUploadStart}ms`);
             } else if (audioType === 'upload' && audioFile) {
+                console.log(`[Frontend-CardOp-${operationId}] Uploading audio file...`);
+                const audioUploadStart = Date.now();
                 audioUrl = await uploadFile(audioFile, audioFile.name);
+                console.log(`[Frontend-CardOp-${operationId}] Audio uploaded in ${Date.now() - audioUploadStart}ms`);
             }
 
             if (editCard) {
                 // 3a. Update existing card
+                console.log(`[Frontend-CardOp-${operationId}] Sending update request for card ${editCard.id}...`);
+                const apiCallStart = Date.now();
                 const res = await fetch(`/api/cards/${editCard.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -347,13 +381,19 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                     })
                 });
 
-                if (!res.ok) throw new Error('Failed to update card');
+                if (!res.ok) {
+                    console.error(`[Frontend-CardOp-${operationId}] Update failed: HTTP ${res.status}`);
+                    throw new Error('Failed to update card');
+                }
 
                 const updatedCard = await res.json();
+                console.log(`[Frontend-CardOp-${operationId}] Card updated successfully in ${Date.now() - apiCallStart}ms`);
                 onCardUpdated?.(updatedCard);
                 toast.success('Card updated successfully!');
             } else {
                 // 3b. Create new card
+                console.log(`[Frontend-CardOp-${operationId}] Sending create request...`);
+                const apiCallStart = Date.now();
                 const res = await fetch('/api/cards', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -367,9 +407,17 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                     })
                 });
 
-                if (!res.ok) throw new Error('Failed to create card');
+                if (!res.ok) {
+                    console.error(`[Frontend-CardOp-${operationId}] Create failed: HTTP ${res.status}`);
+                    const errorText = await res.text();
+                    console.error(`[Frontend-CardOp-${operationId}] Error response:`, errorText);
+                    throw new Error('Failed to create card');
+                }
 
                 const newCard = await res.json();
+                const apiCallTime = Date.now() - apiCallStart;
+                const totalTime = Date.now() - operationStart;
+                console.log(`[Frontend-CardOp-${operationId}] Card created successfully! API: ${apiCallTime}ms, Total: ${totalTime}ms`);
                 onCardAdded(newCard);
                 toast.success('Card created successfully!');
             }
@@ -377,7 +425,8 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
             onClose();
             resetForm();
         } catch (error) {
-            console.error(error);
+            const totalTime = Date.now() - operationStart;
+            console.error(`[Frontend-CardOp-${operationId}] FAILED after ${totalTime}ms:`, error);
             toast.error(editCard ? 'Error updating card' : 'Error creating card');
         } finally {
             setIsSubmitting(false);

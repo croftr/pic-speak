@@ -29,17 +29,40 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+    const startTime = Date.now();
+    const requestId = crypto.randomUUID().slice(0, 8);
+
+    console.log(`[CreateCard-${requestId}] Started at ${new Date().toISOString()}`);
+
+    const authStart = Date.now();
     const { userId } = await auth();
+    console.log(`[CreateCard-${requestId}] Auth check completed in ${Date.now() - authStart}ms`);
+
     if (!userId) {
+        console.log(`[CreateCard-${requestId}] FAILED: Unauthorized user`);
         return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    console.log(`[CreateCard-${requestId}] User: ${userId}`);
+
     try {
+        const parseStart = Date.now();
         const body = await request.json();
+        console.log(`[CreateCard-${requestId}] Request body parsed in ${Date.now() - parseStart}ms`);
+
         const { label, imageUrl, audioUrl, color, boardId, type } = body;
+
+        console.log(`[CreateCard-${requestId}] Card details:`, {
+            label: label || 'Untitled',
+            boardId,
+            hasImage: !!imageUrl,
+            hasAudio: !!audioUrl,
+            type: type || 'Thing'
+        });
 
         // BoardID and imageUrl are mandatory, audioUrl is optional for batch uploads
         if (!imageUrl || !boardId) {
+            console.log(`[CreateCard-${requestId}] FAILED: Missing required fields (imageUrl: ${!!imageUrl}, boardId: ${!!boardId})`);
             return NextResponse.json(
                 { error: 'Image and Board ID are required' },
                 { status: 400 }
@@ -47,20 +70,26 @@ export async function POST(request: Request) {
         }
 
         // Verify board ownership or admin status
+        const boardCheckStart = Date.now();
+        console.log(`[CreateCard-${requestId}] Checking board ownership for board: ${boardId}`);
         const board = await getBoard(boardId);
         const isAdmin = await checkIsAdmin();
         const isOwner = board && board.userId === userId;
+        console.log(`[CreateCard-${requestId}] Board check completed in ${Date.now() - boardCheckStart}ms (found: ${!!board}, isOwner: ${isOwner}, isAdmin: ${isAdmin})`);
 
         if (!board || (!isOwner && !isAdmin)) {
+            console.log(`[CreateCard-${requestId}] FAILED: Unauthorized board access`);
             return new NextResponse("Unauthorized Board Access", { status: 403 });
         }
 
         if (boardId.startsWith('starter-')) {
+            console.log(`[CreateCard-${requestId}] FAILED: Attempted to add card to template board`);
             return new NextResponse("Cards cannot be added to template boards", { status: 403 });
         }
 
+        const cardId = crypto.randomUUID();
         const newCard: Card = {
-            id: crypto.randomUUID(),
+            id: cardId,
             boardId,
             label: label || 'Untitled',
             imageUrl,
@@ -69,11 +98,24 @@ export async function POST(request: Request) {
             type: type || 'Thing',
         };
 
+        console.log(`[CreateCard-${requestId}] Creating card with ID: ${cardId}`);
+        const dbInsertStart = Date.now();
         await addCard(newCard);
+        const dbInsertTime = Date.now() - dbInsertStart;
+        console.log(`[CreateCard-${requestId}] Card inserted into database in ${dbInsertTime}ms`);
+
+        const totalTime = Date.now() - startTime;
+        console.log(`[CreateCard-${requestId}] SUCCESS! Card created in ${totalTime}ms`);
 
         return NextResponse.json(newCard, { status: 201 });
     } catch (error) {
-        console.error('Error adding card:', error);
+        const totalTime = Date.now() - startTime;
+        console.error(`[CreateCard-${requestId}] FAILED after ${totalTime}ms:`, error);
+        console.error(`[CreateCard-${requestId}] Error details:`, {
+            name: error instanceof Error ? error.name : 'Unknown',
+            message: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined
+        });
         return NextResponse.json(
             { error: 'Failed to add card' },
             { status: 500 }

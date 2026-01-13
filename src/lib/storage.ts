@@ -42,7 +42,17 @@ const pool = new Pool({
 
 // Helper function to get a database client from the pool
 async function getDbClient(): Promise<PoolClient> {
-    return await pool.connect();
+    const startTime = Date.now();
+    try {
+        const client = await pool.connect();
+        const connectionTime = Date.now() - startTime;
+        console.log(`[DB-Pool] Client acquired in ${connectionTime}ms (pool: ${pool.totalCount} total, ${pool.idleCount} idle, ${pool.waitingCount} waiting)`);
+        return client;
+    } catch (error) {
+        const connectionTime = Date.now() - startTime;
+        console.error(`[DB-Pool] Failed to acquire client after ${connectionTime}ms:`, error);
+        throw error;
+    }
 }
 
 // --- Starter Content ---
@@ -157,26 +167,45 @@ export async function getCards(boardId?: string): Promise<Card[]> {
 }
 
 export async function addCard(card: Card): Promise<void> {
+    const startTime = Date.now();
+    console.log(`[DB-AddCard] Starting for card ${card.id} on board ${card.boardId}`);
+
     const client = await getDbClient();
     try {
+        const queryStart = Date.now();
         // If this is a template card, only store the template key and minimal data
         if (card.templateKey) {
+            console.log(`[DB-AddCard] Inserting template card with key: ${card.templateKey}`);
             await client.query(
                 'INSERT INTO cards (id, board_id, template_key, "order", color) VALUES ($1, $2, $3, $4, $5)',
                 [card.id, card.boardId, card.templateKey, card.order || 0, card.color || '#6366f1']
             );
         } else {
             // Regular user card - store all data
+            console.log(`[DB-AddCard] Inserting user card: ${card.label}`);
             await client.query(
                 'INSERT INTO cards (id, board_id, label, image_url, audio_url, color, "order", type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
                 [card.id, card.boardId, card.label, card.imageUrl, card.audioUrl, card.color || '#6366f1', card.order || 0, card.type || 'Thing']
             );
         }
+        const queryTime = Date.now() - queryStart;
+        const totalTime = Date.now() - startTime;
+        console.log(`[DB-AddCard] SUCCESS! Query: ${queryTime}ms, Total: ${totalTime}ms`);
     } catch (error) {
-        console.error('Error adding card:', error);
+        const totalTime = Date.now() - startTime;
+        console.error(`[DB-AddCard] FAILED after ${totalTime}ms for card ${card.id}:`, error);
+        console.error(`[DB-AddCard] Error details:`, {
+            name: error instanceof Error ? error.name : 'Unknown',
+            message: error instanceof Error ? error.message : String(error),
+            code: (error as any)?.code,
+            detail: (error as any)?.detail,
+            constraint: (error as any)?.constraint
+        });
         throw error;
     } finally {
+        const releaseStart = Date.now();
         client.release();
+        console.log(`[DB-AddCard] Client released in ${Date.now() - releaseStart}ms`);
     }
 }
 
@@ -350,19 +379,33 @@ export async function addBoard(board: Board): Promise<void> {
 }
 
 export async function getBoard(id: string): Promise<Board | undefined> {
+    const startTime = Date.now();
+    console.log(`[DB-GetBoard] Looking up board: ${id}`);
+
     const starterBoard = STARTER_BOARDS.find(b => b.id === id);
-    if (starterBoard) return starterBoard;
+    if (starterBoard) {
+        console.log(`[DB-GetBoard] Found starter board in ${Date.now() - startTime}ms`);
+        return starterBoard;
+    }
 
     const client = await getDbClient();
     try {
+        const queryStart = Date.now();
         const result = await client.query<BoardRow>(
             'SELECT * FROM boards WHERE id = $1 LIMIT 1',
             [id]
         );
+        const queryTime = Date.now() - queryStart;
 
-        if (result.rows.length === 0) return undefined;
+        if (result.rows.length === 0) {
+            console.log(`[DB-GetBoard] Board not found (query: ${queryTime}ms)`);
+            return undefined;
+        }
 
         const row = result.rows[0];
+        const totalTime = Date.now() - startTime;
+        console.log(`[DB-GetBoard] Found board "${row.name}" in ${totalTime}ms (query: ${queryTime}ms)`);
+
         return {
             id: row.id,
             userId: row.user_id,
@@ -374,7 +417,8 @@ export async function getBoard(id: string): Promise<Board | undefined> {
             creatorImageUrl: row.creator_image_url
         };
     } catch (error) {
-        console.error('Error getting board:', error);
+        const totalTime = Date.now() - startTime;
+        console.error(`[DB-GetBoard] FAILED after ${totalTime}ms:`, error);
         return undefined;
     } finally {
         client.release();
