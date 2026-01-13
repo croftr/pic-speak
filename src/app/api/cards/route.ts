@@ -5,26 +5,43 @@ import { auth } from '@clerk/nextjs/server';
 import { checkIsAdmin } from '@/lib/admin';
 
 export async function GET(request: Request) {
+    const startTime = Date.now();
+    const requestId = crypto.randomUUID().slice(0, 8);
+
     const { searchParams } = new URL(request.url);
     const boardId = searchParams.get('boardId');
 
+    console.log(`[GetCards-${requestId}] Started for board: ${boardId}`);
+
     if (!boardId) {
+        console.log(`[GetCards-${requestId}] No boardId provided`);
         return NextResponse.json([]);
     }
 
-    // Check board access (public or owned)
-    const board = await getBoard(boardId);
+    // Check board access (public or owned) - run auth and board lookup in parallel
+    const [board, authResult] = await Promise.all([
+        getBoard(boardId),
+        auth()
+    ]);
+
     if (!board) {
+        console.log(`[GetCards-${requestId}] Board not found`);
         return new NextResponse("Board not found", { status: 404 });
     }
 
     // Allow access if board is public or user is the owner
-    const { userId } = await auth();
+    const { userId } = authResult;
     if (!board.isPublic && board.userId !== userId) {
+        console.log(`[GetCards-${requestId}] Unauthorized access attempt`);
         return new NextResponse("Unauthorized Board Access", { status: 403 });
     }
 
+    const cardsStart = Date.now();
     const cards = await getCards(boardId);
+    const totalTime = Date.now() - startTime;
+
+    console.log(`[GetCards-${requestId}] SUCCESS! Retrieved ${cards.length} cards in ${totalTime}ms (query: ${Date.now() - cardsStart}ms)`);
+
     return NextResponse.json(cards);
 }
 
@@ -69,11 +86,13 @@ export async function POST(request: Request) {
             );
         }
 
-        // Verify board ownership or admin status
+        // Verify board ownership or admin status (run in parallel for speed)
         const boardCheckStart = Date.now();
         console.log(`[CreateCard-${requestId}] Checking board ownership for board: ${boardId}`);
-        const board = await getBoard(boardId);
-        const isAdmin = await checkIsAdmin();
+        const [board, isAdmin] = await Promise.all([
+            getBoard(boardId),
+            checkIsAdmin()
+        ]);
         const isOwner = board && board.userId === userId;
         console.log(`[CreateCard-${requestId}] Board check completed in ${Date.now() - boardCheckStart}ms (found: ${!!board}, isOwner: ${isOwner}, isAdmin: ${isAdmin})`);
 

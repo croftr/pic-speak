@@ -23,8 +23,10 @@ export async function PUT(
             return new NextResponse("Card not found", { status: 404 });
         }
 
-        const board = await getBoard(existingCard.boardId);
-        const isAdmin = await checkIsAdmin();
+        const [board, isAdmin] = await Promise.all([
+            getBoard(existingCard.boardId),
+            checkIsAdmin()
+        ]);
         const isOwner = board && board.userId === userId;
 
         if (!board || (!isOwner && !isAdmin)) {
@@ -40,8 +42,10 @@ export async function PUT(
 
         // If moving to a different board, verify user owns the destination board
         if (boardId && boardId !== existingCard.boardId) {
-            const destinationBoard = await getBoard(boardId);
-            const isAdmin = await checkIsAdmin();
+            const [destinationBoard, isAdmin] = await Promise.all([
+                getBoard(boardId),
+                checkIsAdmin()
+            ]);
             const isDestinationOwner = destinationBoard && destinationBoard.userId === userId;
             if (!destinationBoard || (!isDestinationOwner && !isAdmin)) {
                 return new NextResponse("Unauthorized Access to Destination Board", { status: 403 });
@@ -90,8 +94,10 @@ export async function DELETE(
             return new NextResponse("Card not found", { status: 404 });
         }
 
-        const board = await getBoard(card.boardId);
-        const isAdmin = await checkIsAdmin();
+        const [board, isAdmin] = await Promise.all([
+            getBoard(card.boardId),
+            checkIsAdmin()
+        ]);
         const isOwner = board && board.userId === userId;
 
         if (!board || (!isOwner && !isAdmin)) {
