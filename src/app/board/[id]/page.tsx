@@ -494,8 +494,22 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 {isEditing ? (
                     // EDIT MODE - Spacious and mobile-friendly
                     <div className="flex flex-col gap-4 glass p-4 sm:p-5 md:p-6 rounded-2xl md:rounded-3xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-lg">
-                        {/* Top Row: Back Button + Board Info */}
-                        <div className="flex items-start gap-3 sm:gap-4">
+                        {/* Back Button - Above everything on mobile, inline on desktop */}
+                        <div className="flex items-center gap-3 sm:gap-4 sm:hidden">
+                            <Link
+                                href="/my-boards"
+                                className="p-3 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-colors flex-shrink-0 touch-manipulation min-w-[48px] min-h-[48px] flex items-center justify-center"
+                                title="Back to My Boards"
+                            >
+                                <ArrowLeft className="w-6 h-6" />
+                            </Link>
+                            <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">
+                                Edit Board
+                            </span>
+                        </div>
+
+                        {/* Desktop: Back Button + Board Info in one row */}
+                        <div className="hidden sm:flex items-start gap-3 sm:gap-4">
                             <Link
                                 href="/my-boards"
                                 className="p-3 sm:p-3.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-colors flex-shrink-0 touch-manipulation min-w-[48px] min-h-[48px] flex items-center justify-center"
@@ -548,6 +562,53 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                                     </div>
                                 </label>
                             </div>
+                        </div>
+
+                        {/* Mobile: Full-width form fields stacked */}
+                        <div className="flex flex-col space-y-3 sm:hidden">
+                            {/* Board Name Input */}
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wide">
+                                    Board Name
+                                </label>
+                                <input
+                                    value={editName}
+                                    onChange={(e) => setEditName(e.target.value)}
+                                    className="w-full text-xl font-bold bg-white/50 dark:bg-slate-800/50 border-2 border-primary/30 focus:border-primary rounded-xl px-4 py-3 outline-none text-gray-900 dark:text-white placeholder-gray-400 transition-colors"
+                                    placeholder="Enter board name..."
+                                />
+                            </div>
+
+                            {/* Description Input */}
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wide">
+                                    Description (Optional)
+                                </label>
+                                <input
+                                    value={editDesc}
+                                    onChange={(e) => setEditDesc(e.target.value)}
+                                    className="w-full text-base bg-white/50 dark:bg-slate-800/50 border-2 border-gray-200 dark:border-gray-700 focus:border-primary rounded-xl px-4 py-3 outline-none text-gray-700 dark:text-gray-300 placeholder-gray-400 transition-colors"
+                                    placeholder="Add a description..."
+                                />
+                            </div>
+
+                            {/* Public Checkbox */}
+                            <label className="flex items-start gap-3 p-3 bg-blue-50/50 dark:bg-blue-900/10 border-2 border-blue-200/50 dark:border-blue-800/50 rounded-xl cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors touch-manipulation">
+                                <input
+                                    type="checkbox"
+                                    checked={isPublic}
+                                    onChange={(e) => setIsPublic(e.target.checked)}
+                                    className="mt-0.5 w-5 h-5 rounded border-2 border-blue-300 dark:border-blue-700 text-primary focus:ring-primary focus:ring-2 cursor-pointer flex-shrink-0"
+                                />
+                                <div className="flex-1 min-w-0">
+                                    <span className="block text-sm font-semibold text-gray-900 dark:text-white">
+                                        Make this board public
+                                    </span>
+                                    <span className="block text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                                        Anyone with the link can view this board
+                                    </span>
+                                </div>
+                            </label>
                         </div>
 
                         {/* Bottom Row: Action Buttons */}
