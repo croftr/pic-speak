@@ -8,6 +8,7 @@ import { Trash2, Pencil, GripVertical, Copy, Sparkles } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import ConfirmDialog from './ConfirmDialog';
+import Image from 'next/image';
 
 interface PecsCardProps {
     card: Card;
@@ -167,13 +168,24 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
                     )}
                     {/* Helper layout for centering image */}
                     <div className="absolute inset-0 flex items-center justify-center">
-                        {/* Using img tag for simplicity with local/blob urls, Next/Image requires playing nice with loaders */}
-                        <img
-                            src={card.imageUrl}
-                            alt={card.label}
-                            loading="lazy"
-                            className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
-                        />
+                        {/* Use Next.js Image for uploaded images (http/https), fallback to img for blob URLs */}
+                        {card.imageUrl.startsWith('http') ? (
+                            <Image
+                                src={card.imageUrl}
+                                alt={card.label}
+                                fill
+                                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                                className="object-contain transition-transform duration-500 group-hover:scale-110"
+                                priority={false}
+                            />
+                        ) : (
+                            <img
+                                src={card.imageUrl}
+                                alt={card.label}
+                                loading="lazy"
+                                className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
+                            />
+                        )}
                     </div>
 
                     {/* Overlay showing audio icon on hover only if not editing */}

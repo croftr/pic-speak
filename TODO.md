@@ -1,51 +1,88 @@
-1. Public Board Discovery & Search
-Add search/filter functionality to the public boards section
-Categories or tags for boards (e.g., "Food", "Daily Routine", "Emotions")
-Sort options (most popular, newest, alphabetical)
 
-6. Accessibility Enhancements
-High contrast mode toggle
-Text-to-speech for card labels (in addition to recorded audio)
-Keyboard shortcuts reference (help modal)
-ARIA labels audit and improvements
+🎯 Priority 4: Add Proper Loading States with Suspense
+Current Issue: Manual loading states with useState. No streaming.
 
-7. Board Statistics
-View count for public boards
-"Popular" or "Trending" badges
-Usage analytics for board owners (which cards are used most)
+Recommendation:
+Create app/my-boards/loading.tsx:
 
-10. Advanced Customization
-Custom themes/color schemes
-Board background images
-Card shape options (square, circle, rounded)
-Allow upload of image for the board istelf displayed alongside the board name
+export default function Loading() {
+  return (
+    <div className="grid gap-4">
+      {[1,2,3].map(i => (
+        <div key={i} className="h-48 rounded-3xl bg-gray-200 animate-pulse" />
+      ))}
+    </div>
+  );
+}
 
-16. Security Enhancements
-Rate limiting on public endpoints
-Image/audio validation (file type, size, content)
-CSRF protection
+Same for app/board/[id]/loading.tsx
 
-🎨 UI/UX Polish
-17. Onboarding
-First-time user tutorial
-Sample board for new users
-Interactive walkthrough
-Help tooltips
+Benefits:
 
-18. Visual Improvements
-Skeleton loaders for better perceived performance
-Empty state illustrations
-Success animations
-Loading states for all async actions
+Automatic Suspense boundaries
+Progressive page rendering
+Better perceived performance
 
-19. Board Customization UI
-Drag-and-drop board cover image
-Emoji picker for board names
-Visual board themes
+🎯 Priority 5: Implement Optimistic Updates
+Current Issue: Card operations wait for server response before updating UI.
 
-20. Admin Dashboard
-Monitor public board activity
-Moderation queue
-User growth metrics
+Recommendation:
+Use React 19's useOptimistic hook in board/[id]/page.tsx:
 
+const [optimisticCards, addOptimisticCard] = useOptimistic(
+  cards,
+  (state, newCard) => [...state, newCard]
+);
 
+Benefits:
+
+Instant UI feedback
+Better user experience
+Perceived 10x faster interactions
+
+🎯 Priority 6: Add Database Query Optimization
+Current Issue: Sequential queries, no prepared statements, no query result caching.
+
+Recommendations:
+
+Parallel queries where possible (already doing some)
+Add indexes on frequently queried columns:
+boards(userId)
+cards(boardId)
+comments(boardId)
+Use database query caching for public boards
+
+🎯 Priority 7: Prefetch Data on Hover
+Current Issue: Navigation waits for click before fetching.
+
+Recommendation:
+In my-boards/page.tsx, prefetch board data on hover:
+
+<Link 
+  href={`/board/${board.id}`}
+  onMouseEnter={() => {
+    router.prefetch(`/board/${board.id}`);
+  }}
+>
+
+Benefits:
+
+Instant navigation feel
+Pre-loaded data before click
+
+🎯 Priority 8: Add Request Deduplication
+Current Issue: Multiple components may fetch same data simultaneously.
+
+Recommendation:
+Use React 19's cache() or a library like SWR:
+
+import { cache } from 'react';
+
+const getBoard = cache(async (id: string) => {
+  return fetch(`/api/boards/${id}`).then(r => r.json());
+});
+
+Benefits:
+
+Single request for duplicate calls
+Automatic request deduplication

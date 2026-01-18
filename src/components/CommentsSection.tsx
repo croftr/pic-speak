@@ -5,6 +5,7 @@ import { MessageCircle, Send, Edit2, Trash2, X } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 import { BoardComment } from '@/types';
+import Image from 'next/image';
 
 interface CommentsSectionProps {
     boardId: string;
@@ -187,11 +188,15 @@ export default function CommentsSection({ boardId }: CommentsSectionProps) {
                             <div className="flex items-start justify-between mb-3">
                                 <div className="flex items-center gap-3">
                                     {comment.commenterImageUrl && (
-                                        <img
-                                            src={comment.commenterImageUrl}
-                                            alt={comment.commenterName}
-                                            className="w-10 h-10 rounded-full"
-                                        />
+                                        <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                                            <Image
+                                                src={comment.commenterImageUrl}
+                                                alt={comment.commenterName}
+                                                fill
+                                                sizes="40px"
+                                                className="object-cover"
+                                            />
+                                        </div>
                                     )}
                                     <div>
                                         <p className="font-semibold text-gray-900 dark:text-white">

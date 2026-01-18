@@ -5,6 +5,7 @@ import { X, Copy, ArrowRight, Loader2 } from 'lucide-react';
 import { Card, Board } from '@/types';
 import { toast } from 'sonner';
 import clsx from 'clsx';
+import Image from 'next/image';
 
 interface MoveCopyCardModalProps {
     isOpen: boolean;
@@ -140,11 +141,23 @@ export default function MoveCopyCardModal({ isOpen, onClose, onSuccess, card, cu
                             }
                         </label>
                         <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                            <img
-                                src={card.imageUrl}
-                                alt={card.label}
-                                className="w-16 h-16 object-cover rounded-lg"
-                            />
+                            <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                                {card.imageUrl.startsWith('http') ? (
+                                    <Image
+                                        src={card.imageUrl}
+                                        alt={card.label}
+                                        fill
+                                        sizes="64px"
+                                        className="object-cover"
+                                    />
+                                ) : (
+                                    <img
+                                        src={card.imageUrl}
+                                        alt={card.label}
+                                        className="w-full h-full object-cover"
+                                    />
+                                )}
+                            </div>
                             <div className="flex-1">
                                 <p className="font-bold text-gray-900 dark:text-white">{card.label}</p>
                                 <p className="text-xs text-gray-500">{card.type}</p>

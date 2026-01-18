@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ArrowRight, Eye, User, Heart, MessageCircle } from 'lucide-react';
 import { Board } from '@/types';
+import Image from 'next/image';
 
 function PublicBoardsContent() {
     const searchParams = useSearchParams();
@@ -80,12 +81,15 @@ function PublicBoardsContent() {
                             {board.creatorName && (
                                 <div className="mb-3 flex items-center gap-2">
                                     {board.creatorImageUrl ? (
-                                        <img
-                                            src={board.creatorImageUrl}
-                                            alt={board.creatorName}
-                                            loading="lazy"
-                                            className="w-6 h-6 rounded-full object-cover"
-                                        />
+                                        <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
+                                            <Image
+                                                src={board.creatorImageUrl}
+                                                alt={board.creatorName}
+                                                fill
+                                                sizes="24px"
+                                                className="object-cover"
+                                            />
+                                        </div>
                                     ) : (
                                         <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
                                             <User className="w-3 h-3 text-primary" />

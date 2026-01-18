@@ -23,6 +23,7 @@ const ConfirmDialog = dynamic(() => import('@/components/ConfirmDialog'), {
 import { Card, Board } from '@/types';
 import { Plus, Upload, ArrowLeft, Save, Loader2, Search, X, Trash2, Share2, Check, User, Pencil } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 const SettingsMenu = dynamic(() => import('@/components/SettingsMenu'), {
@@ -613,11 +614,15 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
                                 {board?.isPublic && board?.creatorName && !isOwner && (
                                     <div className="flex items-center gap-1.5 mt-0.5">
                                         {board.creatorImageUrl ? (
-                                            <img
-                                                src={board.creatorImageUrl}
-                                                alt={board.creatorName}
-                                                className="w-3.5 h-3.5 rounded-full object-cover"
-                                            />
+                                            <div className="relative w-3.5 h-3.5 rounded-full overflow-hidden">
+                                                <Image
+                                                    src={board.creatorImageUrl}
+                                                    alt={board.creatorName}
+                                                    fill
+                                                    sizes="14px"
+                                                    className="object-cover"
+                                                />
+                                            </div>
                                         ) : (
                                             <div className="w-3.5 h-3.5 rounded-full bg-primary/10 flex items-center justify-center">
                                                 <User className="w-2 h-2 text-primary" />
