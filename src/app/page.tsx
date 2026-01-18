@@ -1,135 +1,136 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowRight, MessageSquare, Mic, Image as ImageIcon, Smile, Eye, User, Heart, MessageCircle } from 'lucide-react';
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
+import { Globe, Grid, LogIn, UserPlus } from 'lucide-react';
+import { clsx } from 'clsx';
+import Image from 'next/image';
 
-export default function LandingPage() {
-  return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 overflow-hidden">
-      {/* Hero */}
-      <main className="max-w-7xl mx-auto px-6 pt-10 md:pt-12 lg:pt-20 pb-20">
-        <div className="flex flex-col lg:flex-row items-center gap-16">
-          <div className="flex-1 text-center lg:text-left z-10">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-gray-900 dark:text-white leading-tight mb-6">
-              Help your child{' '}
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent">
-                communicate
-              </span>{' '}
-              with pictures & voice
-            </h1>
-            <p className="text-lg sm:text-xl text-gray-500 mb-8 max-w-2xl mx-auto lg:mx-0">
-              Create custom PECS boards with your own photos and voice recordings. Perfect for children with communication needs.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <SignedOut>
-                <SignUpButton mode="modal">
-                  <button className="group bg-gradient-to-r from-primary to-accent text-white px-8 py-4 rounded-full font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2">
-                    Get Started Free
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </button>
-                </SignUpButton>
-                <SignInButton mode="modal">
-                  <button className="bg-white dark:bg-slate-900 text-gray-900 dark:text-white border-2 border-gray-200 dark:border-gray-700 px-8 py-4 rounded-full font-bold text-lg hover:border-primary hover:text-primary transition-all duration-300">
-                    Sign In
-                  </button>
-                </SignInButton>
-              </SignedOut>
-              <SignedIn>
-                <div className="flex flex-col gap-4">
-                  <Link href="/my-boards" className="group bg-gradient-to-r from-primary to-accent text-white px-8 py-4 rounded-full font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2">
-                    Go to My Boards
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                  <Link href="/public-boards" className="text-gray-500 hover:text-primary font-medium text-center lg:text-left px-8 py-2 transition-colors flex items-center justify-center lg:justify-start gap-2 group">
-                    View Public Boards
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                </div>
-              </SignedIn>
-              <SignedOut>
-                <div className="flex flex-col gap-4">
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                    <SignUpButton mode="modal">
-                      <button className="group bg-gradient-to-r from-primary to-accent text-white px-8 py-4 rounded-full font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2">
-                        Get Started Free
-                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                      </button>
-                    </SignUpButton>
-                    <SignInButton mode="modal">
-                      <button className="bg-white dark:bg-slate-900 text-gray-900 dark:text-white border-2 border-gray-200 dark:border-gray-700 px-8 py-4 rounded-full font-bold text-lg hover:border-primary hover:text-primary transition-all duration-300">
-                        Sign In
-                      </button>
-                    </SignInButton>
-                  </div>
-                  <Link href="/public-boards" className="text-gray-500 hover:text-primary font-medium text-center lg:text-left px-8 py-2 transition-colors flex items-center justify-center lg:justify-start gap-2 group">
-                    Browse Public Boards
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                </div>
-              </SignedOut>
-            </div>
-          </div>
+// NavCard Component for consistent, big, friendly buttons
+interface NavCardProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  icon: React.ReactNode;
+  label: string;
+  colorClass: string;
+  delay?: number;
+  href?: string;
+  className?: string;
+}
 
-          {/* Hero Illustration */}
-          <div className="flex-1 relative w-full lg:w-auto hidden lg:block">
-            <div className="relative w-full aspect-square max-w-[300px] sm:max-w-lg mx-auto">
-              {/* Floating cards */}
-              <div className="absolute inset-0 animate-float">
-                <div className="absolute top-0 right-0 w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-primary to-secondary rounded-2xl md:rounded-3xl shadow-2xl transform rotate-12 flex items-center justify-center">
-                  <MessageSquare className="w-10 h-10 md:w-16 md:h-16 text-white" />
-                </div>
-              </div>
-              <div className="absolute inset-0 animate-float-delayed">
-                <div className="absolute bottom-10 left-6 md:bottom-20 md:left-10 w-20 h-20 md:w-28 md:h-28 bg-gradient-to-br from-accent to-pink-500 rounded-2xl md:rounded-3xl shadow-2xl transform -rotate-12 flex items-center justify-center">
-                  <Mic className="w-8 h-8 md:w-12 md:h-12 text-white" />
-                </div>
-              </div>
-              <div className="absolute inset-0 animate-float-delayed-2">
-                <div className="absolute top-24 left-0 md:top-32 md:left-0 w-16 h-16 md:w-24 md:h-24 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl md:rounded-3xl shadow-2xl transform rotate-6 flex items-center justify-center">
-                  <ImageIcon className="w-6 h-6 md:w-10 md:h-10 text-white" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      {/* Features Section */}
-      <section className="py-20 bg-gradient-to-br from-gray-50 to-white dark:from-slate-900 dark:to-slate-950">
-        <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-black text-center text-gray-900 dark:text-white mb-16">
-            Everything you need to build communication boards
-          </h2>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="p-8 bg-white dark:bg-slate-900 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 space-y-4">
-              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400">
-                <ImageIcon className="w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-bold">Your Photos</h3>
-              <p className="text-gray-500">Use familiar images from your own camera roll. Real photos help children connect faster.</p>
-            </div>
-
-            <div className="p-8 bg-white dark:bg-slate-900 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 space-y-4">
-              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center text-purple-600 dark:text-purple-400">
-                <Mic className="w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-bold">Your Voice</h3>
-              <p className="text-gray-500">Record words in your own voice or upload audio. Familiar voices create comfort and trust.</p>
-            </div>
-
-            <div className="p-8 bg-white dark:bg-slate-900 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 space-y-4">
-              <div className="w-12 h-12 bg-pink-100 dark:bg-pink-900/30 rounded-2xl flex items-center justify-center text-pink-600 dark:text-pink-400">
-                <Smile className="w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-bold">Easy to Use</h3>
-              <p className="text-gray-500">Designed for accessibility. Big buttons, clear visuals, and instant feedback.</p>
-            </div>
-          </div>
-        </div>
-      </section>
+function NavCard({ icon, label, colorClass, delay = 0, href, className, style, ...props }: NavCardProps) {
+  const content = (
+    <div className="flex flex-col items-center justify-center p-6 h-full w-full pointer-events-none">
+      <div className="mb-4 transform transition-transform group-hover:scale-110 duration-300">
+        {icon}
+      </div>
+      <span className="text-xl sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200">
+        {label}
+      </span>
     </div>
+  );
+
+  const containerClasses = clsx(
+    "relative group w-full aspect-[4/3] sm:aspect-square max-w-sm mx-auto",
+    "rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300",
+    "border-4 border-white/50 dark:border-white/10",
+    "hover:-translate-y-2 active:scale-95 touch-manipulation",
+    "backdrop-blur-sm bg-white/80 dark:bg-slate-800/80",
+    colorClass,
+    "animate-in fade-in zoom-in duration-500 fill-mode-backwards",
+    className
+  );
+
+  const combinedStyle = { animationDelay: `${delay}ms`, ...style };
+
+  if (href) {
+    return (
+      <Link href={href} className={containerClasses} style={combinedStyle}>
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <button type="button" className={containerClasses} style={combinedStyle} {...props}>
+      {content}
+    </button>
+  );
+}
+
+export default function Home() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return (
+    <main className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-100 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-950 dark:to-slate-950 flex flex-col items-center justify-center p-4">
+
+      <div className="w-full max-w-4xl mx-auto flex flex-col items-center gap-8 sm:gap-12">
+
+        {/* Logo / Header Area */}
+        <div className="text-center space-y-4 animate-in slide-in-from-top-10 duration-700">
+          <div className="w-24 h-24 sm:w-32 sm:h-32 mx-auto bg-white dark:bg-slate-800 rounded-3xl shadow-lg flex items-center justify-center p-4 transform -rotate-3 hover:rotate-0 transition-transform duration-500">
+            <Image src="/logo.svg" alt="Pic Speak Logo" width={100} height={100} className="w-full h-full" priority />
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-black text-slate-800 dark:text-white tracking-tight">
+            Pic Speak
+          </h1>
+          <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 font-medium max-w-md mx-auto">
+            Communication made easy
+          </p>
+        </div>
+
+        {/* Action Grid */}
+        <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8 px-4">
+
+          <SignedOut>
+            <SignInButton mode="modal">
+              <NavCard
+                icon={<LogIn size={64} className="text-green-500" />}
+                label="Log In"
+                colorClass="border-green-100 dark:border-green-900/30 hover:border-green-300 dark:hover:border-green-700 hover:ring-4 ring-green-400/30"
+                delay={100}
+              />
+            </SignInButton>
+
+            <NavCard
+              href="/public-boards"
+              icon={<Globe size={64} className="text-blue-500" />}
+              label="Public Boards"
+              colorClass="border-blue-100 dark:border-blue-900/30 hover:border-blue-300 dark:hover:border-blue-700 hover:ring-4 ring-blue-400/30"
+              delay={200}
+            />
+          </SignedOut>
+
+          <SignedIn>
+            <NavCard
+              href="/my-boards"
+              icon={<Grid size={64} className="text-purple-500" />}
+              label="My Boards"
+              colorClass="border-purple-100 dark:border-purple-900/30 hover:border-purple-300 dark:hover:border-purple-700 hover:ring-4 ring-purple-400/30"
+              delay={100}
+            />
+
+            <NavCard
+              href="/public-boards"
+              icon={<Globe size={64} className="text-blue-500" />}
+              label="Public Boards"
+              colorClass="border-blue-100 dark:border-blue-900/30 hover:border-blue-300 dark:hover:border-blue-700 hover:ring-4 ring-blue-400/30"
+              delay={200}
+            />
+          </SignedIn>
+        </div>
+
+        {/* Footer/Info */}
+        <div className="mt-8 text-center text-slate-400 text-sm animate-in fade-in duration-1000 delay-500">
+          <p>Simple tools for powerful voices</p>
+        </div>
+
+      </div>
+    </main>
   );
 }

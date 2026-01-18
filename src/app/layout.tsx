@@ -18,22 +18,22 @@ export const metadata: Metadata = {
   description: "Create personalized PECS boards with custom photos and audio. Help non-verbal children communicate with confidence using familiar pictures and voices.",
   icons: {
     icon: [
-      { url: '/logo.png', sizes: 'any' },
-      { url: '/logo.png', type: 'image/png' },
+      { url: '/logo.svg', sizes: 'any' },
+      { url: '/logo.svg', type: 'image/svg+xml' },
     ],
-    apple: '/logo.png',
+    apple: '/logo.svg',
   },
   openGraph: {
     title: "Pic Speak - PECS Communication Board Builder",
     description: "Create personalized PECS boards with custom photos and audio. Help non-verbal children communicate with confidence.",
-    images: ['/logo.png'],
+    images: ['/logo.svg'],
     type: 'website',
   },
   twitter: {
     card: 'summary',
     title: "Pic Speak - PECS Communication Board Builder",
     description: "Create personalized PECS boards with custom photos and audio.",
-    images: ['/logo.png'],
+    images: ['/logo.svg'],
   },
 };
 
