@@ -1,3 +1,6 @@
+1) in edit mode need to be able to play cards
+2) in view mode remove the sound icon
+
 
 🎯 Priority 4: Add Proper Loading States with Suspense
 Current Issue: Manual loading states with useState. No streaming.

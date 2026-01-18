@@ -330,7 +330,7 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
     // Swipe gesture navigation for mobile
     useSwipeRef(gridRef, {
         onSwipeLeft: () => {
-            if (isEditing || filteredCards.length === 0) return;
+            if (filteredCards.length === 0) return;
 
             if (focusedCardIndex === -1) {
                 setFocusedCardIndex(0);
@@ -347,7 +347,7 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
             }
         },
         onSwipeRight: () => {
-            if (isEditing || filteredCards.length === 0) return;
+            if (filteredCards.length === 0) return;
 
             if (focusedCardIndex > 0) {
                 const newIndex = focusedCardIndex - 1;
@@ -368,7 +368,7 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
 
     // Keyboard navigation
     useEffect(() => {
-        if (isEditing || filteredCards.length === 0) return;
+        if (filteredCards.length === 0) return;
 
         const handleKeyDown = (e: KeyboardEvent) => {
             // Don't interfere if user is typing in an input
