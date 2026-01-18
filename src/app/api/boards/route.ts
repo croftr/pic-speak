@@ -11,7 +11,11 @@ export async function GET() {
     }
 
     const boards = await getBoards(userId);
-    return NextResponse.json(boards);
+    return NextResponse.json(boards, {
+        headers: {
+            'Cache-Control': 'private, max-age=60, stale-while-revalidate=300'
+        }
+    });
 }
 
 export async function POST(request: Request) {

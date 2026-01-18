@@ -21,7 +21,16 @@ export async function GET(
         return new NextResponse("Unauthorized", { status: 403 });
     }
 
-    return NextResponse.json(board);
+    // Cache public boards longer than private boards
+    const cacheControl = board.isPublic
+        ? 'public, max-age=300, stale-while-revalidate=600'
+        : 'private, max-age=60, stale-while-revalidate=300';
+
+    return NextResponse.json(board, {
+        headers: {
+            'Cache-Control': cacheControl
+        }
+    });
 }
 
 export async function PUT(

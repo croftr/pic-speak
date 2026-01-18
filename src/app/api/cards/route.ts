@@ -42,7 +42,16 @@ export async function GET(request: Request) {
 
     console.log(`[GetCards-${requestId}] SUCCESS! Retrieved ${cards.length} cards in ${totalTime}ms (query: ${Date.now() - cardsStart}ms)`);
 
-    return NextResponse.json(cards);
+    // Cache cards with stale-while-revalidate for better performance
+    const cacheControl = board.isPublic
+        ? 'public, max-age=300, stale-while-revalidate=600'
+        : 'private, max-age=60, stale-while-revalidate=300';
+
+    return NextResponse.json(cards, {
+        headers: {
+            'Cache-Control': cacheControl
+        }
+    });
 }
 
 export async function POST(request: Request) {

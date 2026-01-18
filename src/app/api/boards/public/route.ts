@@ -18,7 +18,11 @@ export async function GET() {
             }))
         );
 
-        return NextResponse.json(enrichedBoards);
+        return NextResponse.json(enrichedBoards, {
+            headers: {
+                'Cache-Control': 'public, max-age=300, stale-while-revalidate=600'
+            }
+        });
     } catch (error) {
         console.error('Error fetching public boards:', error);
         return NextResponse.json(

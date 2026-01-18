@@ -11,5 +11,9 @@ export async function GET() {
 
     const isAdmin = await checkIsAdmin();
 
-    return NextResponse.json({ userId, isAdmin });
+    return NextResponse.json({ userId, isAdmin }, {
+        headers: {
+            'Cache-Control': 'private, max-age=300, stale-while-revalidate=600'
+        }
+    });
 }
