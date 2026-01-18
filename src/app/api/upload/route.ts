@@ -10,6 +10,9 @@ const IMAGE_QUALITY = 85; // Good quality with smaller file size
 // Maximum audio file size (5MB)
 const MAX_AUDIO_SIZE = 5 * 1024 * 1024;
 
+// Upload timeout (25 seconds - less than Vercel's 30s function timeout)
+const UPLOAD_TIMEOUT_MS = 25000;
+
 export async function POST(request: Request) {
     const startTime = Date.now();
     const requestId = crypto.randomUUID().slice(0, 8);
@@ -83,15 +86,20 @@ export async function POST(request: Request) {
             }
         }
 
-        // Upload to Vercel Blob
+        // Upload to Vercel Blob with timeout
         const blobUploadStart = Date.now();
         console.log(`[Upload-${requestId}] Starting Vercel Blob upload for ${fileName}...`);
 
-        const blob = await put(fileName, fileToUpload, {
-            access: 'public',
-            addRandomSuffix: true,
-            contentType: contentType,
-        });
+        const blob = await Promise.race([
+            put(fileName, fileToUpload, {
+                access: 'public',
+                addRandomSuffix: true,
+                contentType: contentType,
+            }),
+            new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error('Blob upload timeout')), UPLOAD_TIMEOUT_MS)
+            )
+        ]);
 
         const blobUploadTime = Date.now() - blobUploadStart;
         const totalTime = Date.now() - startTime;

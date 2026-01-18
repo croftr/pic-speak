@@ -196,21 +196,26 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
         }
     };
 
-    const uploadFile = async (file: Blob, filename: string): Promise<string> => {
+    const uploadFile = async (file: Blob, filename: string, timeoutMs = 30000): Promise<string> => {
         const startTime = Date.now();
         const fileSize = (file.size / 1024).toFixed(2);
         console.log(`[Frontend-Upload] Starting upload: ${filename} (${fileSize}KB, type: ${file.type})`);
 
         const formData = new FormData();
-        const fileToUpload = new File([file], filename, { type: file.type });
-        formData.append('file', fileToUpload);
+        formData.append('file', file, filename);
+
+        // Create abort controller for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
         try {
             const fetchStart = Date.now();
             const res = await fetch('/api/upload', {
                 method: 'POST',
                 body: formData,
+                signal: controller.signal,
             });
+            clearTimeout(timeoutId);
             const fetchTime = Date.now() - fetchStart;
 
             if (!res.ok) {
@@ -224,7 +229,14 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
             console.log(`[Frontend-Upload] URL: ${data.url}`);
             return data.url;
         } catch (error) {
+            clearTimeout(timeoutId);
             const totalTime = Date.now() - startTime;
+
+            if (error instanceof Error && error.name === 'AbortError') {
+                console.error(`[Frontend-Upload] TIMEOUT after ${totalTime}ms`);
+                throw new Error('Upload timeout - please try again with a smaller file');
+            }
+
             console.error(`[Frontend-Upload] ERROR after ${totalTime}ms:`, error);
             throw error;
         }
@@ -244,7 +256,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
             setUploadProgress({ current: 0, total: batchImages.length });
 
             try {
-                const CONCURRENT_UPLOADS = 8; // Upload 8 images at once
+                const CONCURRENT_UPLOADS = 2; // Reduced from 8 for better reliability on free tier
 
                 // Create chunks of uploads
                 const chunks = [];
@@ -341,29 +353,34 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
 
         setIsSubmitting(true);
         try {
-            // 1. Upload Image (only if new file selected)
-            let imageUrl = editCard?.imageUrl || '';
-            if (imageFile) {
-                console.log(`[Frontend-CardOp-${operationId}] Uploading image...`);
-                const imageUploadStart = Date.now();
-                imageUrl = await uploadFile(imageFile, imageFile.name);
-                console.log(`[Frontend-CardOp-${operationId}] Image uploaded in ${Date.now() - imageUploadStart}ms`);
-            }
+            // Upload Image and Audio in PARALLEL (not sequential)
+            const uploadsStart = Date.now();
+            console.log(`[Frontend-CardOp-${operationId}] Starting parallel uploads...`);
 
-            // 2. Upload Audio (only if new audio provided)
-            let audioUrl = editCard?.audioUrl || '';
-            if (audioType === 'record' && audioBlob) {
-                console.log(`[Frontend-CardOp-${operationId}] Uploading recorded audio...`);
-                const audioUploadStart = Date.now();
-                const audioExtension = audioBlob.type.includes('webm') ? 'webm' : 'wav';
-                audioUrl = await uploadFile(audioBlob, `audio-${Date.now()}.${audioExtension}`);
-                console.log(`[Frontend-CardOp-${operationId}] Audio uploaded in ${Date.now() - audioUploadStart}ms`);
-            } else if (audioType === 'upload' && audioFile) {
-                console.log(`[Frontend-CardOp-${operationId}] Uploading audio file...`);
-                const audioUploadStart = Date.now();
-                audioUrl = await uploadFile(audioFile, audioFile.name);
-                console.log(`[Frontend-CardOp-${operationId}] Audio uploaded in ${Date.now() - audioUploadStart}ms`);
-            }
+            const [imageUrl, audioUrl] = await Promise.all([
+                // Image upload
+                imageFile
+                    ? uploadFile(imageFile, imageFile.name).then(url => {
+                        console.log(`[Frontend-CardOp-${operationId}] Image upload completed`);
+                        return url;
+                    })
+                    : Promise.resolve(editCard?.imageUrl || ''),
+
+                // Audio upload
+                (audioType === 'record' && audioBlob)
+                    ? uploadFile(audioBlob, `audio-${Date.now()}.${audioBlob.type.includes('webm') ? 'webm' : 'wav'}`).then(url => {
+                        console.log(`[Frontend-CardOp-${operationId}] Audio upload completed`);
+                        return url;
+                    })
+                    : (audioType === 'upload' && audioFile)
+                        ? uploadFile(audioFile, audioFile.name).then(url => {
+                            console.log(`[Frontend-CardOp-${operationId}] Audio upload completed`);
+                            return url;
+                        })
+                        : Promise.resolve(editCard?.audioUrl || '')
+            ]);
+
+            console.log(`[Frontend-CardOp-${operationId}] All uploads completed in ${Date.now() - uploadsStart}ms`);
 
             if (editCard) {
                 // 3a. Update existing card
