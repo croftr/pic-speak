@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { X, Image as ImageIcon, Check, Loader2, Mic, Upload, Music, Sparkles, Play, Pause, Volume2, Crop } from 'lucide-react';
+import { X, Image as ImageIcon, Check, Loader2, Mic, Upload, Music, Sparkles, Play, Pause, Volume2, Crop, Camera } from 'lucide-react';
 import AudioRecorder from './AudioRecorder';
 const ImageCropModal = dynamic(() => import('./ImageCropModal'), {
     loading: () => null
@@ -26,11 +26,15 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     const [cardType, setCardType] = useState<'Thing' | 'Word'>('Thing');
 
     // Image State
-    const [imageType, setImageType] = useState<'upload' | 'generate'>('upload');
+    const [imageType, setImageType] = useState<'upload' | 'camera' | 'generate'>('upload');
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [generationPrompt, setGenerationPrompt] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
+    const [hasCamera, setHasCamera] = useState(false);
+    const [isCameraActive, setIsCameraActive] = useState(false);
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const streamRef = useRef<MediaStream | null>(null);
 
     // Batch upload state
     const [batchImages, setBatchImages] = useState<File[]>([]);
@@ -63,6 +67,26 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
         setIsPlayingPreview(false);
     };
 
+    // Check for camera availability on mount
+    useEffect(() => {
+        const checkCamera = async () => {
+            try {
+                // Check if mediaDevices API is supported
+                if (typeof navigator !== 'undefined' && navigator.mediaDevices) {
+                    // Try to enumerate devices to check for camera
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    const hasVideoInput = devices.some(device => device.kind === 'videoinput');
+                    setHasCamera(hasVideoInput);
+                }
+            } catch (error) {
+                console.error('Error checking camera availability:', error);
+                setHasCamera(false);
+            }
+        };
+
+        checkCamera();
+    }, []);
+
     // Populate form when editing
     useEffect(() => {
         if (editCard && isOpen) {
@@ -76,6 +100,13 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
         }
     }, [editCard, isOpen]);
 
+    // Stop camera when switching away from camera mode or closing modal
+    useEffect(() => {
+        if (imageType !== 'camera' || !isOpen) {
+            stopCamera();
+        }
+    }, [imageType, isOpen]);
+
     const resetForm = () => {
         setLabel('');
         setImageFile(null);
@@ -88,6 +119,65 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
         setCardType('Thing');
         setBatchImages([]);
         stopAudioPreview();
+        stopCamera();
+    };
+
+    const startCamera = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment' } // Prefer back camera on mobile
+            });
+
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+                streamRef.current = stream;
+                setIsCameraActive(true);
+            }
+        } catch (error) {
+            console.error('Error accessing camera:', error);
+            toast.error('Could not access camera. Please check permissions.');
+        }
+    };
+
+    const stopCamera = () => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+        }
+        if (videoRef.current) {
+            videoRef.current.srcObject = null;
+        }
+        setIsCameraActive(false);
+    };
+
+    const capturePhoto = () => {
+        if (!videoRef.current) return;
+
+        const video = videoRef.current;
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        ctx.drawImage(video, 0, 0);
+
+        canvas.toBlob((blob) => {
+            if (!blob) return;
+
+            // Stop camera after capture
+            stopCamera();
+
+            // Convert blob to data URL for cropping
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const dataUrl = reader.result as string;
+                setImageToCrop(dataUrl);
+                setShowCropModal(true);
+            };
+            reader.readAsDataURL(blob);
+        }, 'image/jpeg', 0.95);
     };
 
     if (!isOpen) return null;
@@ -629,6 +719,24 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                     >
                                         Upload
                                     </button>
+                                    {hasCamera && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setImageType('camera');
+                                                startCamera();
+                                            }}
+                                            className={clsx(
+                                                "px-3 py-1 rounded-md text-sm font-medium transition-all flex items-center gap-1",
+                                                imageType === 'camera'
+                                                    ? "bg-white dark:bg-slate-700 shadow-sm text-primary"
+                                                    : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                                            )}
+                                        >
+                                            <Camera className="w-4 h-4" />
+                                            Camera
+                                        </button>
+                                    )}
                                     <button
                                         type="button"
                                         onClick={() => setImageType('generate')}
@@ -667,6 +775,38 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                         className="hidden"
                                         onChange={handleImageChange}
                                     />
+                                </div>
+                            ) : imageType === 'camera' ? (
+                                <div className="space-y-3">
+                                    <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden bg-black">
+                                        {isCameraActive ? (
+                                            <>
+                                                <video
+                                                    ref={videoRef}
+                                                    autoPlay
+                                                    playsInline
+                                                    className="w-full h-full object-cover"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={capturePhoto}
+                                                    className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-16 h-16 bg-white rounded-full shadow-lg hover:scale-110 transition-transform flex items-center justify-center border-4 border-gray-300"
+                                                >
+                                                    <div className="w-12 h-12 bg-white rounded-full border-2 border-gray-400"></div>
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <div className="w-full h-full flex flex-col items-center justify-center text-white">
+                                                <Camera className="w-16 h-16 mb-4 opacity-50" />
+                                                <p className="text-sm opacity-75">Camera initializing...</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                    {imagePreview && (
+                                        <div className="w-full h-48 rounded-2xl overflow-hidden border-2 border-primary">
+                                            <img src={imagePreview} alt="Captured" className="w-full h-full object-contain bg-gray-50 dark:bg-slate-800" />
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="space-y-3">
