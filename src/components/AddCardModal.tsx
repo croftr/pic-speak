@@ -80,16 +80,12 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     }, []);
 
     const startCamera = useCallback(async () => {
-        console.log('[Camera] Starting camera...');
-
         // Prevent multiple simultaneous starts
         if (streamRef.current) {
-            console.log('[Camera] Camera already active');
             return;
         }
 
         try {
-            console.log('[Camera] Requesting camera access...');
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: {
                     facingMode: 'environment', // Prefer back camera on mobile
@@ -98,29 +94,23 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                 }
             });
 
-            console.log('[Camera] Got stream:', stream);
-
             if (videoRef.current) {
-                console.log('[Camera] Setting video source...');
                 videoRef.current.srcObject = stream;
                 streamRef.current = stream;
 
                 // Set active state
-                console.log('[Camera] Setting camera active state');
                 setIsCameraActive(true);
 
                 // Try to play the video explicitly (in case autoplay fails)
                 try {
                     await videoRef.current.play();
-                    console.log('[Camera] Video playing successfully');
                 } catch (playError) {
-                    console.log('[Camera] Autoplay prevented, will play on user interaction:', playError);
+                    // Autoplay might be blocked, but video will play when user interacts
+                    console.log('Autoplay prevented, video will play on interaction');
                 }
-            } else {
-                console.error('[Camera] Video ref is null');
             }
         } catch (error) {
-            console.error('[Camera] Error accessing camera:', error);
+            console.error('Error accessing camera:', error);
             toast.error('Could not access camera. Please check permissions.');
             setImageType('upload'); // Fall back to upload mode
         }
@@ -177,15 +167,11 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
 
     // Handle camera lifecycle - start when entering camera mode, stop when leaving
     useEffect(() => {
-        console.log('[Camera Effect] imageType:', imageType, 'isOpen:', isOpen, 'isCameraActive:', isCameraActive);
-
         if (imageType === 'camera' && isOpen && !isCameraActive) {
             // Start camera when entering camera mode
-            console.log('[Camera Effect] Starting camera...');
             startCamera();
         } else if (imageType !== 'camera' || !isOpen) {
             // Stop camera when switching away or closing modal
-            console.log('[Camera Effect] Stopping camera...');
             stopCamera();
         }
     }, [imageType, isOpen, isCameraActive, startCamera, stopCamera]);
@@ -208,6 +194,9 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
 
             // Stop camera after capture
             stopCamera();
+
+            // Switch back to upload mode so camera view is hidden
+            setImageType('upload');
 
             // Convert blob to data URL for cropping
             const reader = new FileReader();
