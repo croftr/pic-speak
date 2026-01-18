@@ -80,7 +80,16 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     }, []);
 
     const startCamera = useCallback(async () => {
+        console.log('[Camera] Starting camera...');
+
+        // Prevent multiple simultaneous starts
+        if (streamRef.current) {
+            console.log('[Camera] Camera already active');
+            return;
+        }
+
         try {
+            console.log('[Camera] Requesting camera access...');
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: {
                     facingMode: 'environment', // Prefer back camera on mobile
@@ -89,29 +98,29 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                 }
             });
 
+            console.log('[Camera] Got stream:', stream);
+
             if (videoRef.current) {
+                console.log('[Camera] Setting video source...');
                 videoRef.current.srcObject = stream;
                 streamRef.current = stream;
 
-                // Wait for video to be ready
-                await new Promise<void>((resolve) => {
-                    if (videoRef.current) {
-                        videoRef.current.onloadedmetadata = () => {
-                            videoRef.current?.play().then(() => {
-                                setIsCameraActive(true);
-                                resolve();
-                            }).catch((err) => {
-                                console.error('Error playing video:', err);
-                                resolve();
-                            });
-                        };
-                    } else {
-                        resolve();
-                    }
-                });
+                // Set active state
+                console.log('[Camera] Setting camera active state');
+                setIsCameraActive(true);
+
+                // Try to play the video explicitly (in case autoplay fails)
+                try {
+                    await videoRef.current.play();
+                    console.log('[Camera] Video playing successfully');
+                } catch (playError) {
+                    console.log('[Camera] Autoplay prevented, will play on user interaction:', playError);
+                }
+            } else {
+                console.error('[Camera] Video ref is null');
             }
         } catch (error) {
-            console.error('Error accessing camera:', error);
+            console.error('[Camera] Error accessing camera:', error);
             toast.error('Could not access camera. Please check permissions.');
             setImageType('upload'); // Fall back to upload mode
         }
@@ -168,11 +177,15 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
 
     // Handle camera lifecycle - start when entering camera mode, stop when leaving
     useEffect(() => {
+        console.log('[Camera Effect] imageType:', imageType, 'isOpen:', isOpen, 'isCameraActive:', isCameraActive);
+
         if (imageType === 'camera' && isOpen && !isCameraActive) {
             // Start camera when entering camera mode
+            console.log('[Camera Effect] Starting camera...');
             startCamera();
         } else if (imageType !== 'camera' || !isOpen) {
             // Stop camera when switching away or closing modal
+            console.log('[Camera Effect] Stopping camera...');
             stopCamera();
         }
     }, [imageType, isOpen, isCameraActive, startCamera, stopCamera]);
@@ -803,27 +816,32 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                             ) : imageType === 'camera' ? (
                                 <div className="space-y-3">
                                     <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden bg-black">
-                                        {isCameraActive ? (
-                                            <>
-                                                <video
-                                                    ref={videoRef}
-                                                    autoPlay
-                                                    playsInline
-                                                    className="w-full h-full object-cover"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={capturePhoto}
-                                                    className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-16 h-16 bg-white rounded-full shadow-lg hover:scale-110 transition-transform flex items-center justify-center border-4 border-gray-300"
-                                                >
-                                                    <div className="w-12 h-12 bg-white rounded-full border-2 border-gray-400"></div>
-                                                </button>
-                                            </>
-                                        ) : (
-                                            <div className="w-full h-full flex flex-col items-center justify-center text-white">
+                                        {/* Always render video element so ref is available */}
+                                        <video
+                                            ref={videoRef}
+                                            autoPlay
+                                            playsInline
+                                            muted
+                                            className={`w-full h-full object-cover ${isCameraActive ? '' : 'hidden'}`}
+                                        />
+
+                                        {/* Loading overlay */}
+                                        {!isCameraActive && (
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
                                                 <Camera className="w-16 h-16 mb-4 opacity-50" />
                                                 <p className="text-sm opacity-75">Camera initializing...</p>
                                             </div>
+                                        )}
+
+                                        {/* Capture button */}
+                                        {isCameraActive && (
+                                            <button
+                                                type="button"
+                                                onClick={capturePhoto}
+                                                className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-16 h-16 bg-white rounded-full shadow-lg hover:scale-110 transition-transform flex items-center justify-center border-4 border-gray-300"
+                                            >
+                                                <div className="w-12 h-12 bg-white rounded-full border-2 border-gray-400"></div>
+                                            </button>
                                         )}
                                     </div>
                                     {imagePreview && (
