@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { X, Image as ImageIcon, Check, Loader2, Mic, Upload, Music, Sparkles, Play, Pause, Volume2, Crop, Camera } from 'lucide-react';
 import AudioRecorder from './AudioRecorder';
@@ -67,6 +67,72 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
         setIsPlayingPreview(false);
     };
 
+    // Camera control functions
+    const stopCamera = useCallback(() => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+        }
+        if (videoRef.current) {
+            videoRef.current.srcObject = null;
+        }
+        setIsCameraActive(false);
+    }, []);
+
+    const startCamera = useCallback(async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: 'environment', // Prefer back camera on mobile
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 }
+                }
+            });
+
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+                streamRef.current = stream;
+
+                // Wait for video to be ready
+                await new Promise<void>((resolve) => {
+                    if (videoRef.current) {
+                        videoRef.current.onloadedmetadata = () => {
+                            videoRef.current?.play().then(() => {
+                                setIsCameraActive(true);
+                                resolve();
+                            }).catch((err) => {
+                                console.error('Error playing video:', err);
+                                resolve();
+                            });
+                        };
+                    } else {
+                        resolve();
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error accessing camera:', error);
+            toast.error('Could not access camera. Please check permissions.');
+            setImageType('upload'); // Fall back to upload mode
+        }
+    }, []);
+
+    // Reset form function
+    const resetForm = useCallback(() => {
+        setLabel('');
+        setImageFile(null);
+        setImagePreview(null);
+        setGenerationPrompt('');
+        setImageType('upload');
+        setAudioBlob(null);
+        setAudioFile(null);
+        setAudioType('record');
+        setCardType('Thing');
+        setBatchImages([]);
+        stopAudioPreview();
+        stopCamera();
+    }, [stopCamera]);
+
     // Check for camera availability on mount
     useEffect(() => {
         const checkCamera = async () => {
@@ -98,57 +164,18 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
             // Reset form when modal closes
             resetForm();
         }
-    }, [editCard, isOpen]);
+    }, [editCard, isOpen, resetForm]);
 
-    // Stop camera when switching away from camera mode or closing modal
+    // Handle camera lifecycle - start when entering camera mode, stop when leaving
     useEffect(() => {
-        if (imageType !== 'camera' || !isOpen) {
+        if (imageType === 'camera' && isOpen && !isCameraActive) {
+            // Start camera when entering camera mode
+            startCamera();
+        } else if (imageType !== 'camera' || !isOpen) {
+            // Stop camera when switching away or closing modal
             stopCamera();
         }
-    }, [imageType, isOpen]);
-
-    const resetForm = () => {
-        setLabel('');
-        setImageFile(null);
-        setImagePreview(null);
-        setGenerationPrompt('');
-        setImageType('upload');
-        setAudioBlob(null);
-        setAudioFile(null);
-        setAudioType('record');
-        setCardType('Thing');
-        setBatchImages([]);
-        stopAudioPreview();
-        stopCamera();
-    };
-
-    const startCamera = async () => {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'environment' } // Prefer back camera on mobile
-            });
-
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-                streamRef.current = stream;
-                setIsCameraActive(true);
-            }
-        } catch (error) {
-            console.error('Error accessing camera:', error);
-            toast.error('Could not access camera. Please check permissions.');
-        }
-    };
-
-    const stopCamera = () => {
-        if (streamRef.current) {
-            streamRef.current.getTracks().forEach(track => track.stop());
-            streamRef.current = null;
-        }
-        if (videoRef.current) {
-            videoRef.current.srcObject = null;
-        }
-        setIsCameraActive(false);
-    };
+    }, [imageType, isOpen, isCameraActive, startCamera, stopCamera]);
 
     const capturePhoto = () => {
         if (!videoRef.current) return;
@@ -722,10 +749,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                     {hasCamera && (
                                         <button
                                             type="button"
-                                            onClick={() => {
-                                                setImageType('camera');
-                                                startCamera();
-                                            }}
+                                            onClick={() => setImageType('camera')}
                                             className={clsx(
                                                 "px-3 py-1 rounded-md text-sm font-medium transition-all flex items-center gap-1",
                                                 imageType === 'camera'
