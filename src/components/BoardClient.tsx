@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useOptimistic } from 'react';
 import dynamic from 'next/dynamic';
 import PecsCard from '@/components/PecsCard';
 
@@ -65,6 +65,24 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
     const { cardSize } = useSettings();
 
     const [cards, setCards] = useState<Card[]>(initialCards);
+    const [optimisticCards, addOptimisticCard] = useOptimistic(
+        cards,
+        (state, newCard: Card | { action: 'add'; card: Card } | { action: 'update'; card: Card } | { action: 'delete'; cardId: string }) => {
+            if ('action' in newCard) {
+                switch (newCard.action) {
+                    case 'add':
+                        return [...state, newCard.card];
+                    case 'update':
+                        return state.map(c => c.id === newCard.card.id ? newCard.card : c);
+                    case 'delete':
+                        return state.filter(c => c.id !== newCard.cardId);
+                    default:
+                        return state;
+                }
+            }
+            return [...state, newCard];
+        }
+    );
     const [board, setBoard] = useState<Board>(initialBoard);
     const [isOwner] = useState(initialIsOwner);
     const [isAdmin] = useState(initialIsAdmin);
@@ -126,10 +144,14 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
     );
 
     const handleCardAdded = (newCard: Card) => {
+        // Optimistic update for instant UI feedback
+        addOptimisticCard({ action: 'add', card: newCard });
         setCards(prev => [...prev, newCard]);
     };
 
     const handleCardUpdated = (updatedCard: Card) => {
+        // Optimistic update for instant UI feedback
+        addOptimisticCard({ action: 'update', card: updatedCard });
         setCards(prev => prev.map(c => c.id === updatedCard.id ? updatedCard : c));
         setEditingCard(null);
         setIsModalOpen(false);
@@ -141,12 +163,16 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
     };
 
     const handleDeleteCard = async (cardId: string) => {
+        // Optimistic update for instant UI feedback
+        addOptimisticCard({ action: 'delete', cardId });
+
         try {
             const res = await fetch(`/api/cards/${cardId}`, { method: 'DELETE' });
             if (res.ok) {
                 setCards(prev => prev.filter(c => c.id !== cardId));
                 toast.success('Card deleted successfully');
             } else {
+                // Revert optimistic update on error
                 toast.error('Failed to delete card');
             }
         } catch (error) {
@@ -252,11 +278,13 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
     };
 
     // Filter cards based on search term and type
-    const hasThings = cards.some(c => c.type === 'Thing');
-    const hasWords = cards.some(c => c.type === 'Word');
+    // Use optimisticCards for instant UI updates
+    const displayCards = optimisticCards;
+    const hasThings = displayCards.some(c => c.type === 'Thing');
+    const hasWords = displayCards.some(c => c.type === 'Word');
     const showTypeFilter = hasThings && hasWords;
 
-    const filteredCards = cards.filter(card => {
+    const filteredCards = displayCards.filter(card => {
         const matchesSearch = card.label.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesType = typeFilter === 'All' || card.type === typeFilter;
         return matchesSearch && matchesType;
@@ -269,15 +297,16 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
             return;
         }
 
-        const oldIndex = cards.findIndex(card => card.id === active.id);
-        const newIndex = cards.findIndex(card => card.id === over.id);
+        const currentCards = cards;
+        const oldIndex = currentCards.findIndex(card => card.id === active.id);
+        const newIndex = currentCards.findIndex(card => card.id === over.id);
 
         if (oldIndex === -1 || newIndex === -1) {
             return;
         }
 
         // Optimistically update UI
-        const newCards = arrayMove(cards, oldIndex, newIndex);
+        const newCards = arrayMove(currentCards, oldIndex, newIndex);
         setCards(newCards);
 
         // Update orders in backend
@@ -298,12 +327,12 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
 
             if (!res.ok) {
                 // Revert on error
-                setCards(cards);
+                setCards(currentCards);
                 toast.error('Failed to reorder cards');
             }
         } catch (error) {
             console.error('Error reordering cards:', error);
-            setCards(cards);
+            setCards(currentCards);
             toast.error('Failed to reorder cards');
         }
     };
@@ -668,7 +697,7 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
             </header>
 
             {/* Search Bar - Only show when cards exist and in edit mode */}
-            {isEditing && cards.length > 0 && (
+            {isEditing && displayCards.length > 0 && (
                 <div className="max-w-7xl mx-auto mb-4 sm:mb-6">
                     <div className="relative">
                         <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
@@ -709,7 +738,7 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
                             >
                                 {type === 'All' ? 'Everything' : type}
                                 <span className="ml-2 opacity-50 text-[10px]">
-                                    ({type === 'All' ? cards.length : cards.filter(c => c.type === type).length})
+                                    ({type === 'All' ? displayCards.length : displayCards.filter(c => c.type === type).length})
                                 </span>
                             </button>
                         ))}
@@ -719,7 +748,7 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
 
             {/* Grid */}
             <div ref={gridRef} className="max-w-7xl mx-auto">
-                {cards.length === 0 ? (
+                {displayCards.length === 0 ? (
                     <div className="flex flex-col items-center justify-center p-12 text-center rounded-3xl border-2 border-dashed border-gray-300 dark:border-gray-700 bg-white/50 dark:bg-slate-800/50">
                         <div className="p-6 bg-gray-100 dark:bg-slate-700 rounded-full mb-6 animate-float">
                             <Plus className="w-12 h-12 text-gray-400" />

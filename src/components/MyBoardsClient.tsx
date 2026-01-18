@@ -291,6 +291,10 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards }:
                             <Link
                                 key={board.id}
                                 href={`/board/${board.id}`}
+                                onMouseEnter={() => {
+                                    // Prefetch board data on hover for instant navigation
+                                    router.prefetch(`/board/${board.id}`);
+                                }}
                                 className="group relative block p-5 sm:p-6 md:p-8 bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                             >
                                 <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
