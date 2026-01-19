@@ -4,7 +4,7 @@ import { Card } from '@/types';
 import { useState, useRef } from 'react';
 import { Volume2 } from 'lucide-react';
 import { clsx } from 'clsx';
-import { Trash2, Pencil, GripVertical, Copy, Sparkles } from 'lucide-react';
+import { Trash2, Pencil, GripVertical, Copy, Sparkles, MoreVertical } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import ConfirmDialog from './ConfirmDialog';
@@ -25,6 +25,7 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
     const [isPlaying, setIsPlaying] = useState(false);
     const [volume, setVolume] = useState(1.0); // 0.0 to 1.0
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
     // Template cards cannot be edited
@@ -69,51 +70,82 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
         <div ref={setNodeRef} style={style} className="relative group/card">
             {isEditing && (
                 <>
-                    <div className="absolute -top-2 -right-2 sm:-top-2 sm:-right-2 z-50 flex gap-1 sm:gap-1">
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                onMoveCopy?.(card);
-                            }}
-                            className="p-2 sm:p-2 md:p-2.5 bg-purple-500 text-white rounded-full shadow-lg hover:bg-purple-600 transition-colors transform active:scale-95 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
-                            title="Move/Copy Card"
-                        >
-                            <Copy className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />
-                        </button>
-                        {!isTemplateCard && (
+                    <div className={`absolute top-2 right-2 ${isMenuOpen ? 'z-[50]' : 'z-[5]'}`}>
+                        <div className="relative">
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     e.preventDefault();
-                                    onEdit?.(card);
+                                    setIsMenuOpen(!isMenuOpen);
                                 }}
-                                className="p-2 sm:p-2 md:p-2.5 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-colors transform active:scale-95 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
-                                title="Edit Card"
+                                className="p-2.5 bg-white/90 dark:bg-slate-700/90 backdrop-blur-sm text-gray-700 dark:text-gray-200 rounded-full shadow-lg hover:bg-gray-50 dark:hover:bg-slate-600 transition-all border border-gray-100 dark:border-gray-600 active:scale-95 touch-manipulation w-10 h-10 flex items-center justify-center"
+                                title="Card Options"
                             >
-                                <Pencil className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+                                <MoreVertical className="w-5 h-5" />
                             </button>
-                        )}
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                setIsDeleteDialogOpen(true);
-                            }}
-                            className="p-2 sm:p-2 md:p-2.5 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-colors transform active:scale-95 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
-                            title="Delete Card"
-                        >
-                            <Trash2 className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />
-                        </button>
+
+                            {isMenuOpen && (
+                                <>
+                                    <div
+                                        className="fixed inset-0 z-[61]"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setIsMenuOpen(false);
+                                        }}
+                                    />
+                                    <div className="absolute right-0 top-full mt-2 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-1.5 min-w-[160px] flex flex-col gap-1 z-[62] animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                e.preventDefault();
+                                                onMoveCopy?.(card);
+                                                setIsMenuOpen(false);
+                                            }}
+                                            className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg transition-colors text-left"
+                                        >
+                                            <Copy className="w-4 h-4" />
+                                            Copy / Move
+                                        </button>
+                                        {!isTemplateCard && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    e.preventDefault();
+                                                    onEdit?.(card);
+                                                    setIsMenuOpen(false);
+                                                }}
+                                                className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors text-left"
+                                            >
+                                                <Pencil className="w-4 h-4" />
+                                                Edit Card
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                e.preventDefault();
+                                                setIsDeleteDialogOpen(true);
+                                                setIsMenuOpen(false);
+                                            }}
+                                            className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors text-left"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                            Delete
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
+
                     <div
                         {...attributes}
                         {...listeners}
-                        className="absolute -top-2 -left-2 sm:-top-2 sm:-left-2 z-50 cursor-grab active:cursor-grabbing touch-manipulation"
+                        className="absolute top-2 left-2 z-[5] cursor-grab active:cursor-grabbing touch-manipulation"
                         title="Press and hold to drag"
                     >
-                        <div className="p-2.5 sm:p-3 md:p-3.5 bg-gradient-to-br from-gray-600 to-gray-700 text-white rounded-full shadow-xl hover:shadow-2xl hover:from-gray-700 hover:to-gray-800 transition-all active:scale-95 min-w-[48px] min-h-[48px] flex items-center justify-center border-2 border-white/20">
-                            <GripVertical className="w-5 h-5 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+                        <div className="p-2.5 bg-white/90 dark:bg-slate-700/90 backdrop-blur-sm text-gray-400 dark:text-gray-400 rounded-full shadow-lg hover:text-primary hover:bg-gray-50 dark:hover:bg-slate-600 transition-all border border-gray-100 dark:border-gray-600 active:scale-95 w-10 h-10 flex items-center justify-center">
+                            <GripVertical className="w-5 h-5" />
                         </div>
                     </div>
                 </>

@@ -62,7 +62,7 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
     const router = useRouter();
     const searchParams = useSearchParams();
     const requestedEdit = searchParams.get('edit') === 'true';
-    const { cardSize } = useSettings();
+    const { cardSize: userCardSize } = useSettings();
 
     const [cards, setCards] = useState<Card[]>(initialCards);
     const [optimisticCards, addOptimisticCard] = useOptimistic(
@@ -121,6 +121,8 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
 
     // Computed: only allow editing if owner or admin, and requested, and NOT a template board
     const isEditing = requestedEdit && (isOwner || isAdmin) && !isStarterBoard;
+
+    const cardSize = isEditing ? 'large' : userCardSize;
 
     // Drag and drop sensors - configured for both desktop and mobile
     const sensors = useSensors(
@@ -477,151 +479,33 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
             <header className={`max-w-7xl mx-auto mb-4 md:mb-6 sticky top-16 sm:top-[4.5rem] z-40 transition-transform duration-300 ${isHeaderVisible ? 'translate-y-0' : '-translate-y-[150%]'
                 }`}>
                 {isEditing ? (
-                    // EDIT MODE - Spacious and mobile-friendly
-                    <div className="flex flex-col gap-4 glass p-4 sm:p-5 md:p-6 rounded-2xl md:rounded-3xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-lg">
-                        {/* Back Button - Above everything on mobile, inline on desktop */}
-                        <div className="flex items-center gap-3 sm:gap-4 sm:hidden">
+                    // EDIT MODE - Compact Sticky Header
+                    <div className="flex items-center justify-between gap-3 p-3 sm:p-4 glass rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-lg border border-white/20">
+                        <div className="flex items-center gap-3 min-w-0">
                             <Link
                                 href="/my-boards"
-                                className="p-3 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-colors flex-shrink-0 touch-manipulation min-w-[48px] min-h-[48px] flex items-center justify-center"
-                                title="Back to My Boards"
+                                className="p-2 sm:p-2.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-colors flex items-center justify-center text-gray-600 dark:text-gray-300 flex-shrink-0"
+                                title="Exit Edit Mode"
                             >
-                                <ArrowLeft className="w-6 h-6" />
+                                <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
                             </Link>
-                            <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">
+                            <h1 className="font-bold text-lg sm:text-xl text-gray-900 dark:text-white truncate">
                                 Edit Board
-                            </span>
+                            </h1>
                         </div>
 
-                        {/* Desktop: Back Button + Board Info in one row */}
-                        <div className="hidden sm:flex items-start gap-3 sm:gap-4">
-                            <Link
-                                href="/my-boards"
-                                className="p-3 sm:p-3.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-colors flex-shrink-0 touch-manipulation min-w-[48px] min-h-[48px] flex items-center justify-center"
-                                title="Back to My Boards"
-                            >
-                                <ArrowLeft className="w-6 h-6" />
-                            </Link>
-                            <div className="flex-1 space-y-3 min-w-0">
-                                {/* Board Name Input */}
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wide">
-                                        Board Name
-                                    </label>
-                                    <input
-                                        value={editName}
-                                        onChange={(e) => setEditName(e.target.value)}
-                                        className="w-full text-xl sm:text-2xl font-bold bg-white/50 dark:bg-slate-800/50 border-2 border-primary/30 focus:border-primary rounded-xl px-4 py-3 outline-none text-gray-900 dark:text-white placeholder-gray-400 transition-colors"
-                                        placeholder="Enter board name..."
-                                    />
-                                </div>
-
-                                {/* Description Input */}
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wide">
-                                        Description (Optional)
-                                    </label>
-                                    <input
-                                        value={editDesc}
-                                        onChange={(e) => setEditDesc(e.target.value)}
-                                        className="w-full text-base bg-white/50 dark:bg-slate-800/50 border-2 border-gray-200 dark:border-gray-700 focus:border-primary rounded-xl px-4 py-3 outline-none text-gray-700 dark:text-gray-300 placeholder-gray-400 transition-colors"
-                                        placeholder="Add a description..."
-                                    />
-                                </div>
-
-                                {/* Public Checkbox */}
-                                <label className="flex items-start gap-3 p-3 sm:p-4 bg-blue-50/50 dark:bg-blue-900/10 border-2 border-blue-200/50 dark:border-blue-800/50 rounded-xl cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors touch-manipulation">
-                                    <input
-                                        type="checkbox"
-                                        checked={isPublic}
-                                        onChange={(e) => setIsPublic(e.target.checked)}
-                                        className="mt-0.5 w-5 h-5 rounded border-2 border-blue-300 dark:border-blue-700 text-primary focus:ring-primary focus:ring-2 cursor-pointer flex-shrink-0"
-                                    />
-                                    <div className="flex-1 min-w-0">
-                                        <span className="block text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
-                                            Make this board public
-                                        </span>
-                                        <span className="block text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5">
-                                            Anyone with the link can view this board
-                                        </span>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-
-                        {/* Mobile: Full-width form fields stacked */}
-                        <div className="flex flex-col space-y-3 sm:hidden">
-                            {/* Board Name Input */}
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wide">
-                                    Board Name
-                                </label>
-                                <input
-                                    value={editName}
-                                    onChange={(e) => setEditName(e.target.value)}
-                                    className="w-full text-xl font-bold bg-white/50 dark:bg-slate-800/50 border-2 border-primary/30 focus:border-primary rounded-xl px-4 py-3 outline-none text-gray-900 dark:text-white placeholder-gray-400 transition-colors"
-                                    placeholder="Enter board name..."
-                                />
-                            </div>
-
-                            {/* Description Input */}
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wide">
-                                    Description (Optional)
-                                </label>
-                                <input
-                                    value={editDesc}
-                                    onChange={(e) => setEditDesc(e.target.value)}
-                                    className="w-full text-base bg-white/50 dark:bg-slate-800/50 border-2 border-gray-200 dark:border-gray-700 focus:border-primary rounded-xl px-4 py-3 outline-none text-gray-700 dark:text-gray-300 placeholder-gray-400 transition-colors"
-                                    placeholder="Add a description..."
-                                />
-                            </div>
-
-                            {/* Public Checkbox */}
-                            <label className="flex items-start gap-3 p-3 bg-blue-50/50 dark:bg-blue-900/10 border-2 border-blue-200/50 dark:border-blue-800/50 rounded-xl cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors touch-manipulation">
-                                <input
-                                    type="checkbox"
-                                    checked={isPublic}
-                                    onChange={(e) => setIsPublic(e.target.checked)}
-                                    className="mt-0.5 w-5 h-5 rounded border-2 border-blue-300 dark:border-blue-700 text-primary focus:ring-primary focus:ring-2 cursor-pointer flex-shrink-0"
-                                />
-                                <div className="flex-1 min-w-0">
-                                    <span className="block text-sm font-semibold text-gray-900 dark:text-white">
-                                        Make this board public
-                                    </span>
-                                    <span className="block text-xs text-gray-600 dark:text-gray-400 mt-0.5">
-                                        Anyone with the link can view this board
-                                    </span>
-                                </div>
-                            </label>
-                        </div>
-
-                        {/* Bottom Row: Action Buttons */}
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2 border-t-2 border-gray-100 dark:border-gray-800">
-                            <button
-                                onClick={() => setIsDeleteDialogOpen(true)}
-                                className="flex-1 sm:flex-none bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white px-6 py-4 sm:py-3.5 rounded-xl font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2.5 text-base touch-manipulation min-h-[56px] sm:min-h-[52px]"
-                                title="Delete Board"
-                            >
-                                <Trash2 className="w-5 h-5" />
-                                <span>Delete Board</span>
-                            </button>
+                        <div className="flex items-center gap-2 flex-shrink-0">
                             <button
                                 onClick={handleSaveBoard}
                                 disabled={isSaving}
-                                className="flex-1 bg-primary text-white px-6 py-4 sm:py-3.5 rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-primary/90 transition-all flex items-center justify-center gap-2.5 disabled:opacity-50 disabled:cursor-not-allowed text-base touch-manipulation min-h-[56px] sm:min-h-[52px]"
+                                className="bg-primary text-white px-4 py-2 sm:py-2.5 rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-primary/90 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                             >
                                 {isSaving ? (
-                                    <>
-                                        <Loader2 className="w-5 h-5 animate-spin" />
-                                        <span>Saving...</span>
-                                    </>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
                                 ) : (
-                                    <>
-                                        <Save className="w-5 h-5" />
-                                        <span>Save Changes</span>
-                                    </>
+                                    <Save className="w-4 h-4" />
                                 )}
+                                <span>Save</span>
                             </button>
                         </div>
                     </div>
@@ -695,6 +579,66 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
                     </div>
                 )}
             </header>
+
+            {/* Board Settings Form - Edit Mode Only - Placed in normal flow */}
+            {isEditing && (
+                <div className="max-w-7xl mx-auto mb-6 px-1">
+                    <div className="bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm rounded-3xl p-4 sm:p-6 border border-gray-100 dark:border-gray-800 shadow-sm space-y-5">
+                        <div className="grid gap-5 md:grid-cols-2">
+                            {/* Board Name Input */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide px-1">
+                                    Board Name
+                                </label>
+                                <input
+                                    value={editName}
+                                    onChange={(e) => setEditName(e.target.value)}
+                                    className="w-full text-lg font-bold bg-white dark:bg-slate-800 border-2 border-gray-200 dark:border-gray-700 focus:border-primary rounded-xl px-4 py-3 outline-none text-gray-900 dark:text-white placeholder-gray-400 transition-colors"
+                                    placeholder="Enter board name..."
+                                />
+                            </div>
+
+                            {/* Description Input */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide px-1">
+                                    Description (Optional)
+                                </label>
+                                <input
+                                    value={editDesc}
+                                    onChange={(e) => setEditDesc(e.target.value)}
+                                    className="w-full text-base bg-white dark:bg-slate-800 border-2 border-gray-200 dark:border-gray-700 focus:border-primary rounded-xl px-4 py-3.5 outline-none text-gray-700 dark:text-gray-300 placeholder-gray-400 transition-colors"
+                                    placeholder="Add a description..."
+                                />
+                            </div>
+                        </div>
+
+                        {/* Toggles & Actions */}
+                        <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                            <label className="flex items-center gap-3 p-3.5 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-xl cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex-1">
+                                <input
+                                    type="checkbox"
+                                    checked={isPublic}
+                                    onChange={(e) => setIsPublic(e.target.checked)}
+                                    className="w-5 h-5 rounded border-2 border-blue-300 dark:border-blue-700 text-primary focus:ring-primary focus:ring-2 cursor-pointer flex-shrink-0"
+                                />
+                                <div className="flex-1">
+                                    <span className="block text-sm font-bold text-gray-900 dark:text-white">Public Board</span>
+                                    <span className="block text-xs text-gray-500 dark:text-gray-400">Others can view with link</span>
+                                </div>
+                            </label>
+
+                            <button
+                                onClick={() => setIsDeleteDialogOpen(true)}
+                                className="flex items-center justify-center gap-2 p-3.5 text-red-600 bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-xl font-bold text-sm hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors sm:flex-none sm:px-6"
+                                title="Delete Board"
+                            >
+                                <Trash2 className="w-5 h-5" />
+                                <span>Delete Board</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Search Bar - Only show when cards exist and in edit mode */}
             {isEditing && displayCards.length > 0 && (
