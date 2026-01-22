@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useOptimistic } from 'react';
+import { useState, useEffect, useRef, useOptimistic, startTransition } from 'react';
 import dynamic from 'next/dynamic';
 import PecsCard from '@/components/PecsCard';
 
@@ -67,20 +67,11 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
     const [cards, setCards] = useState<Card[]>(initialCards);
     const [optimisticCards, addOptimisticCard] = useOptimistic(
         cards,
-        (state, newCard: Card | { action: 'add'; card: Card } | { action: 'update'; card: Card } | { action: 'delete'; cardId: string }) => {
-            if ('action' in newCard) {
-                switch (newCard.action) {
-                    case 'add':
-                        return [...state, newCard.card];
-                    case 'update':
-                        return state.map(c => c.id === newCard.card.id ? newCard.card : c);
-                    case 'delete':
-                        return state.filter(c => c.id !== newCard.cardId);
-                    default:
-                        return state;
-                }
+        (state, action: { action: 'delete'; cardId: string }) => {
+            if (action.action === 'delete') {
+                return state.filter(c => c.id !== action.cardId);
             }
-            return [...state, newCard];
+            return state;
         }
     );
     const [board, setBoard] = useState<Board>(initialBoard);
@@ -146,14 +137,12 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
     );
 
     const handleCardAdded = (newCard: Card) => {
-        // Optimistic update for instant UI feedback
-        addOptimisticCard({ action: 'add', card: newCard });
+        // Only update the real state - optimistic state will sync automatically
         setCards(prev => [...prev, newCard]);
     };
 
     const handleCardUpdated = (updatedCard: Card) => {
-        // Optimistic update for instant UI feedback
-        addOptimisticCard({ action: 'update', card: updatedCard });
+        // Only update the real state - optimistic state will sync automatically
         setCards(prev => prev.map(c => c.id === updatedCard.id ? updatedCard : c));
         setEditingCard(null);
         setIsModalOpen(false);
@@ -166,15 +155,18 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
 
     const handleDeleteCard = async (cardId: string) => {
         // Optimistic update for instant UI feedback
-        addOptimisticCard({ action: 'delete', cardId });
+        startTransition(() => {
+            addOptimisticCard({ action: 'delete', cardId });
+        });
 
         try {
             const res = await fetch(`/api/cards/${cardId}`, { method: 'DELETE' });
             if (res.ok) {
+                // Update real state after successful deletion
                 setCards(prev => prev.filter(c => c.id !== cardId));
                 toast.success('Card deleted successfully');
             } else {
-                // Revert optimistic update on error
+                // On error, the optimistic state will revert automatically when we don't update cards
                 toast.error('Failed to delete card');
             }
         } catch (error) {
