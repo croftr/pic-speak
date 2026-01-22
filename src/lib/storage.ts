@@ -84,12 +84,12 @@ const TEMPLATE_CARDS_REGISTRY: Record<string, Omit<Card, 'id' | 'boardId' | 'ord
     'tpl-bed': { label: 'Bed', imageUrl: '/prebuilt/bed.png', audioUrl: '/prebuilt/bed.mp3', type: 'Thing', templateKey: 'tpl-bed' },
     'tpl-toilet': { label: 'Toilet', imageUrl: '/prebuilt/toilet.png', audioUrl: '/prebuilt/toilet.mp3', type: 'Thing', templateKey: 'tpl-toilet' },
     'tpl-brush-teeth': { label: 'Brush Teeth', imageUrl: '/prebuilt/brush_teeth.png', audioUrl: '/prebuilt/brush_teeth.mp3', type: 'Thing', templateKey: 'tpl-brush-teeth' },
-    'tpl-school': { label: 'School', imageUrl: '/prebuilt/school.png', audioUrl: '/prebuilt/school.mp3', type: 'Thing', templateKey: 'tpl-school' },
-    'tpl-juice': { label: 'Juice', imageUrl: '/prebuilt/juice.png', audioUrl: '/prebuilt/juice.mp3', type: 'Thing', templateKey: 'tpl-juice' },
-    'tpl-chocolate': { label: 'Chocolate', imageUrl: '/prebuilt/chocolate.png', audioUrl: '/prebuilt/chocolate.mp3', type: 'Thing', templateKey: 'tpl-chocolate' },
-    'tpl-sweets': { label: 'Sweets', imageUrl: '/prebuilt/sweets.png', audioUrl: '/prebuilt/sweets.mp3', type: 'Thing', templateKey: 'tpl-sweets' },
-    'tpl-cake': { label: 'Cake', imageUrl: '/prebuilt/cake.png', audioUrl: '/prebuilt/cake.mp3', type: 'Thing', templateKey: 'tpl-cake' },
-    'tpl-apple': { label: 'Apple', imageUrl: '/prebuilt/apple.png', audioUrl: '/prebuilt/apple.mp3', type: 'Thing', templateKey: 'tpl-apple' },
+    'tpl-school': { label: 'School', imageUrl: '/prebuilt/school.png', audioUrl: '/prebuilt/school.wav', type: 'Thing', templateKey: 'tpl-school' },
+    'tpl-juice': { label: 'Juice', imageUrl: '/prebuilt/juice.png', audioUrl: '/prebuilt/juice.wav', type: 'Thing', templateKey: 'tpl-juice' },
+    'tpl-chocolate': { label: 'Chocolate', imageUrl: '/prebuilt/chocolate.png', audioUrl: '/prebuilt/chocolate.wav', type: 'Thing', templateKey: 'tpl-chocolate' },
+    'tpl-sweets': { label: 'Sweets', imageUrl: '/prebuilt/sweets.png', audioUrl: '/prebuilt/sweets.wav', type: 'Thing', templateKey: 'tpl-sweets' },
+    'tpl-cake': { label: 'Cake', imageUrl: '/prebuilt/cake.png', audioUrl: '/prebuilt/cake.wav', type: 'Thing', templateKey: 'tpl-cake' },
+    'tpl-apple': { label: 'Apple', imageUrl: '/prebuilt/apple.png', audioUrl: '/prebuilt/apple.wav', type: 'Thing', templateKey: 'tpl-apple' },
 };
 
 // Export for use in other modules
@@ -111,12 +111,12 @@ const STARTER_CARDS: Record<string, Card[]> = {
         { id: 'sbp-10', boardId: 'starter-template', label: 'Bed', imageUrl: '/prebuilt/bed.png', audioUrl: '/prebuilt/bed.mp3', type: 'Thing', order: 9, templateKey: 'tpl-bed' },
         { id: 'sbp-11', boardId: 'starter-template', label: 'Toilet', imageUrl: '/prebuilt/toilet.png', audioUrl: '/prebuilt/toilet.mp3', type: 'Thing', order: 10, templateKey: 'tpl-toilet' },
         { id: 'sbp-12', boardId: 'starter-template', label: 'Brush Teeth', imageUrl: '/prebuilt/brush_teeth.png', audioUrl: '/prebuilt/brush_teeth.mp3', type: 'Thing', order: 11, templateKey: 'tpl-brush-teeth' },
-        { id: 'sbp-13', boardId: 'starter-template', label: 'School', imageUrl: '/prebuilt/school.png', audioUrl: '/prebuilt/school.mp3', type: 'Thing', order: 12, templateKey: 'tpl-school' },
-        { id: 'sbp-14', boardId: 'starter-template', label: 'Juice', imageUrl: '/prebuilt/juice.png', audioUrl: '/prebuilt/juice.mp3', type: 'Thing', order: 13, templateKey: 'tpl-juice' },
-        { id: 'sbp-15', boardId: 'starter-template', label: 'Chocolate', imageUrl: '/prebuilt/chocolate.png', audioUrl: '/prebuilt/chocolate.mp3', type: 'Thing', order: 14, templateKey: 'tpl-chocolate' },
-        { id: 'sbp-16', boardId: 'starter-template', label: 'Sweets', imageUrl: '/prebuilt/sweets.png', audioUrl: '/prebuilt/sweets.mp3', type: 'Thing', order: 15, templateKey: 'tpl-sweets' },
-        { id: 'sbp-17', boardId: 'starter-template', label: 'Cake', imageUrl: '/prebuilt/cake.png', audioUrl: '/prebuilt/cake.mp3', type: 'Thing', order: 16, templateKey: 'tpl-cake' },
-        { id: 'sbp-18', boardId: 'starter-template', label: 'Apple', imageUrl: '/prebuilt/apple.png', audioUrl: '/prebuilt/apple.mp3', type: 'Thing', order: 17, templateKey: 'tpl-apple' },
+        { id: 'sbp-13', boardId: 'starter-template', label: 'School', imageUrl: '/prebuilt/school.png', audioUrl: '/prebuilt/school.wav', type: 'Thing', order: 12, templateKey: 'tpl-school' },
+        { id: 'sbp-14', boardId: 'starter-template', label: 'Juice', imageUrl: '/prebuilt/juice.png', audioUrl: '/prebuilt/juice.wav', type: 'Thing', order: 13, templateKey: 'tpl-juice' },
+        { id: 'sbp-15', boardId: 'starter-template', label: 'Chocolate', imageUrl: '/prebuilt/chocolate.png', audioUrl: '/prebuilt/chocolate.wav', type: 'Thing', order: 14, templateKey: 'tpl-chocolate' },
+        { id: 'sbp-16', boardId: 'starter-template', label: 'Sweets', imageUrl: '/prebuilt/sweets.png', audioUrl: '/prebuilt/sweets.wav', type: 'Thing', order: 15, templateKey: 'tpl-sweets' },
+        { id: 'sbp-17', boardId: 'starter-template', label: 'Cake', imageUrl: '/prebuilt/cake.png', audioUrl: '/prebuilt/cake.wav', type: 'Thing', order: 16, templateKey: 'tpl-cake' },
+        { id: 'sbp-18', boardId: 'starter-template', label: 'Apple', imageUrl: '/prebuilt/apple.png', audioUrl: '/prebuilt/apple.wav', type: 'Thing', order: 17, templateKey: 'tpl-apple' },
     ]
 };
 
