@@ -45,9 +45,11 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     const [imageToCrop, setImageToCrop] = useState<string | null>(null);
 
     // Audio State
-    const [audioType, setAudioType] = useState<'record' | 'upload'>('record');
+    const [audioType, setAudioType] = useState<'record' | 'upload' | 'generate'>('record');
     const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
     const [audioFile, setAudioFile] = useState<File | null>(null);
+    const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+    const [generatedAudioUrl, setGeneratedAudioUrl] = useState<string | null>(null); // URL from TTS API (already uploaded)
 
     // Audio preview state
     const [isPlayingPreview, setIsPlayingPreview] = useState(false);
@@ -130,6 +132,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
         setAudioBlob(null);
         setAudioFile(null);
         setAudioType('record');
+        setGeneratedAudioUrl(null);
         setCategory('');
         setBatchImages([]);
         setStep(1);
@@ -320,6 +323,53 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
         }
     };
 
+    const handleGenerateAudio = async () => {
+        if (!label.trim()) {
+            toast.error('Please enter a label first');
+            return;
+        }
+
+        setIsGeneratingAudio(true);
+        stopAudioPreview();
+
+        try {
+            const res = await fetch('/api/generate-audio', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: label.trim(),
+                    languageCode: 'en-US'
+                })
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Generation failed');
+            }
+
+            const data = await res.json();
+
+            // Store the URL (already uploaded to Vercel Blob by the API)
+            setGeneratedAudioUrl(data.url);
+
+            // Fetch the audio URL and convert to blob for preview consistency
+            const audioResponse = await fetch(data.url);
+            const blob = await audioResponse.blob();
+
+            setAudioBlob(blob);
+            setAudioType('generate');
+            toast.success('Audio generated!');
+        } catch (error) {
+            console.error('TTS Error:', error);
+            const message = error instanceof Error ? error.message : 'Failed to generate audio';
+            toast.error(message === 'TTS service not configured'
+                ? 'Text-to-speech is not available. Please record audio instead.'
+                : 'Failed to generate audio. Please try recording instead.');
+        } finally {
+            setIsGeneratingAudio(false);
+        }
+    };
+
     const uploadFile = async (file: Blob, filename: string, timeoutMs = 30000): Promise<string> => {
         const startTime = Date.now();
         const fileSize = (file.size / 1024).toFixed(2);
@@ -465,7 +515,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
         }
 
         // Regular mode validation
-        const hasAudio = audioType === 'record' ? !!audioBlob : !!audioFile;
+        const hasAudio = (audioType === 'record' || audioType === 'generate') ? !!audioBlob : !!audioFile;
         const hasImage = !!imageFile || (editCard && !!imagePreview);
         const hasAudioOrExisting = hasAudio || (editCard && !audioBlob && !audioFile);
 
@@ -496,12 +546,17 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                         console.log(`[Frontend-CardOp-${operationId}] Audio upload completed`);
                         return url;
                     })
-                    : (audioType === 'upload' && audioFile)
-                        ? uploadFile(audioFile, audioFile.name).then(url => {
-                            console.log(`[Frontend-CardOp-${operationId}] Audio upload completed`);
+                    : (audioType === 'generate' && generatedAudioUrl)
+                        ? Promise.resolve(generatedAudioUrl).then(url => {
+                            console.log(`[Frontend-CardOp-${operationId}] Using generated audio URL`);
                             return url;
                         })
-                        : Promise.resolve(editCard?.audioUrl || '')
+                        : (audioType === 'upload' && audioFile)
+                            ? uploadFile(audioFile, audioFile.name).then(url => {
+                                console.log(`[Frontend-CardOp-${operationId}] Audio upload completed`);
+                                return url;
+                            })
+                            : Promise.resolve(editCard?.audioUrl || '')
             ]);
 
             console.log(`[Frontend-CardOp-${operationId}] All uploads completed in ${Date.now() - uploadsStart}ms`);
@@ -589,7 +644,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
         if (step === 2) return !!imageFile || (editCard && !!imagePreview);
         // For step 3, we allow saving if we have audio OR if we are editing and have existing audio (implicit)
         // Check local state first, then editCard fallback
-        const hasAudioState = (audioType === 'record' && !!audioBlob) || (audioType === 'upload' && !!audioFile);
+        const hasAudioState = ((audioType === 'record' || audioType === 'generate') && !!audioBlob) || (audioType === 'upload' && !!audioFile);
         if (step === 3) return hasAudioState || (!!editCard?.audioUrl);
 
         return false;
@@ -950,6 +1005,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                                         onClick={() => {
                                                             setAudioBlob(null);
                                                             setAudioFile(null);
+                                                            setGeneratedAudioUrl(null);
                                                             stopAudioPreview();
                                                         }}
                                                         className="text-sm text-red-500 font-medium hover:underline"
@@ -974,6 +1030,37 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                                             }} />
                                                         </div>
                                                     </div>
+
+                                                    <div className="relative">
+                                                        <div className="absolute inset-0 flex items-center">
+                                                            <span className="w-full border-t border-gray-200 dark:border-gray-700" />
+                                                        </div>
+                                                        <div className="relative flex justify-center text-xs uppercase">
+                                                            <span className="bg-white dark:bg-slate-900 px-2 text-gray-500">Or</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Text-to-Speech Generation */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleGenerateAudio}
+                                                        disabled={!label.trim() || isGeneratingAudio}
+                                                        className="flex items-center justify-center gap-3 p-4 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border-2 border-dashed border-emerald-200 dark:border-emerald-700 hover:border-emerald-400 dark:hover:border-emerald-500 hover:from-emerald-100 hover:to-teal-100 dark:hover:from-emerald-900/30 dark:hover:to-teal-900/30 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        {isGeneratingAudio ? (
+                                                            <Loader2 className="w-5 h-5 text-emerald-500 animate-spin" />
+                                                        ) : (
+                                                            <Sparkles className="w-5 h-5 text-emerald-500 group-hover:text-emerald-600 transition-colors" />
+                                                        )}
+                                                        <div className="text-left">
+                                                            <span className="font-semibold text-emerald-700 dark:text-emerald-300 group-hover:text-emerald-800 dark:group-hover:text-emerald-200">
+                                                                {isGeneratingAudio ? 'Generating...' : 'Generate from Text'}
+                                                            </span>
+                                                            <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70">
+                                                                {label.trim() ? `Speak "${label.trim().length > 20 ? label.trim().slice(0, 20) + '...' : label.trim()}"` : 'Enter a label first'}
+                                                            </p>
+                                                        </div>
+                                                    </button>
 
                                                     <div className="relative">
                                                         <div className="absolute inset-0 flex items-center">
