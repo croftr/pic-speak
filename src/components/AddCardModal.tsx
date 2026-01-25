@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import { X, Image as ImageIcon, Check, Loader2, Mic, Upload, Music, Sparkles, Play, Pause, Volume2, Crop, Camera } from 'lucide-react';
+import { X, Image as ImageIcon, Check, Loader2, Mic, Upload, Music, Sparkles, Play, Pause, Volume2, Crop, Camera, ChevronRight, ChevronLeft, ArrowRight, ArrowLeft } from 'lucide-react';
 import AudioRecorder from './AudioRecorder';
 const ImageCropModal = dynamic(() => import('./ImageCropModal'), {
     loading: () => null
@@ -52,6 +52,10 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     // Audio preview state
     const [isPlayingPreview, setIsPlayingPreview] = useState(false);
     const audioPreviewRef = useRef<HTMLAudioElement | null>(null);
+
+    // Stepper State
+    const [step, setStep] = useState(1);
+    const totalSteps = 3;
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -128,6 +132,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
         setAudioType('record');
         setCategory('');
         setBatchImages([]);
+        setStep(1);
         stopAudioPreview();
         stopCamera();
     }, [stopCamera]);
@@ -569,6 +574,27 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
         }
     };
 
+    const nextStep = () => {
+        if (step < totalSteps) setStep(step + 1);
+    };
+
+    const prevStep = () => {
+        if (step > 1) setStep(step - 1);
+    };
+
+    const canProceed = () => {
+        if (batchMode) return batchImages.length > 0;
+
+        if (step === 1) return !!label;
+        if (step === 2) return !!imageFile || (editCard && !!imagePreview);
+        // For step 3, we allow saving if we have audio OR if we are editing and have existing audio (implicit)
+        // Check local state first, then editCard fallback
+        const hasAudioState = (audioType === 'record' && !!audioBlob) || (audioType === 'upload' && !!audioFile);
+        if (step === 3) return hasAudioState || (!!editCard?.audioUrl);
+
+        return false;
+    };
+
     return (
         <>
             {showCropModal && imageToCrop && (
@@ -579,404 +605,451 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                 />
             )}
 
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden glass-card max-h-[90vh] overflow-y-auto">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="bg-white dark:bg-slate-900 w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-lg sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+
                     {/* Header */}
-                    <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
-                        <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
-                            {batchMode ? 'Batch Upload Cards' : editCard ? 'Edit Pic Speak' : 'New Pic Speak'}
-                        </h2>
+                    <div className="flex items-center justify-between p-4 px-6 border-b border-gray-100 dark:border-gray-800 shrink-0">
+                        <div className="flex flex-col">
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                                {batchMode ? 'Batch Upload' : editCard ? 'Edit Card' : 'New Card'}
+                            </h2>
+                            {!batchMode && (
+                                <div className="flex items-center gap-1 mt-1">
+                                    {[1, 2, 3].map((s) => (
+                                        <div
+                                            key={s}
+                                            className={clsx(
+                                                "h-1.5 rounded-full transition-all duration-300",
+                                                s === step ? "w-8 bg-primary" : s < step ? "w-4 bg-primary/40" : "w-2 bg-gray-200 dark:bg-gray-700"
+                                            )}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                         <button
                             onClick={onClose}
                             className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
                         >
-                            <X className="w-6 h-6" />
+                            <X className="w-6 h-6 text-gray-500" />
                         </button>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                        {batchMode ? (
-                            <>
-                                {/* Batch Upload Info */}
-                                <div className="space-y-3">
+                    {/* Content Area - Scrollable */}
+                    <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
+                        <form id="add-card-form" onSubmit={handleSubmit} className="space-y-6 h-full flex flex-col">
+
+                            {/* BATCH MODE UI */}
+                            {batchMode ? (
+                                <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                                     <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
-                                        <h3 className="font-bold text-blue-900 dark:text-blue-200 mb-2">Batch Upload Mode</h3>
+                                        <h3 className="font-bold text-blue-900 dark:text-blue-200 mb-2">Batch Mode</h3>
                                         <p className="text-sm text-blue-700 dark:text-blue-300">
-                                            Select multiple images to create cards quickly. All cards will be created with the title "New Card" and no audio. You can edit each card later to add custom titles and audio.
+                                            Select multiple images to create cards quickly.
                                         </p>
                                     </div>
-                                </div>
 
-                                {/* Batch Image Upload */}
-                                <div className="space-y-3">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Select Images
-                                    </label>
-                                    <div
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="relative w-full min-h-48 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors overflow-hidden bg-gray-50 dark:bg-slate-800"
-                                    >
-                                        {batchImages.length > 0 ? (
-                                            <div className="w-full p-4">
-                                                <div className="text-center mb-4">
-                                                    <ImageIcon className="w-10 h-10 text-primary mx-auto mb-2" />
-                                                    <p className="text-sm font-medium text-primary">{batchImages.length} image{batchImages.length > 1 ? 's' : ''} selected</p>
-                                                    <p className="text-xs text-gray-500 mt-1">Tap to change</p>
+                                    {/* Batch Image Upload */}
+                                    <div className="space-y-3">
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Select Images
+                                        </label>
+                                        <div
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className="relative w-full min-h-48 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors overflow-hidden bg-gray-50 dark:bg-slate-800"
+                                        >
+                                            {batchImages.length > 0 ? (
+                                                <div className="w-full p-4">
+                                                    <div className="text-center mb-4">
+                                                        <ImageIcon className="w-10 h-10 text-primary mx-auto mb-2" />
+                                                        <p className="text-sm font-medium text-primary">{batchImages.length} images selected</p>
+                                                        <p className="text-xs text-gray-500 mt-1">Tap to change</p>
+                                                    </div>
+                                                    <div className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto">
+                                                        {batchImages.map((file, idx) => (
+                                                            <div key={idx} className="aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                                                                <img
+                                                                    src={URL.createObjectURL(file)}
+                                                                    alt={`Preview ${idx + 1}`}
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                            </div>
+                                                        ))}
+                                                    </div>
                                                 </div>
-                                                <div className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto">
-                                                    {batchImages.map((file, idx) => (
-                                                        <div key={idx} className="aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-                                                            <img
-                                                                src={URL.createObjectURL(file)}
-                                                                alt={`Preview ${idx + 1}`}
-                                                                className="w-full h-full object-cover"
-                                                            />
-                                                        </div>
-                                                    ))}
+                                            ) : (
+                                                <div className="text-center p-4">
+                                                    <Upload className="w-10 h-10 text-gray-400 mx-auto mb-2" />
+                                                    <p className="text-sm text-gray-500">Tap to select images</p>
                                                 </div>
-                                            </div>
-                                        ) : (
-                                            <div className="text-center p-4">
-                                                <Upload className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-                                                <p className="text-sm text-gray-500">Tap to select multiple images</p>
-                                                <p className="text-xs text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple files</p>
-                                            </div>
-                                        )}
-                                        <input
-                                            ref={fileInputRef}
-                                            type="file"
-                                            accept="image/*"
-                                            multiple
-                                            className="hidden"
-                                            onChange={handleImageChange}
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Progress Tracking */}
-                                {uploadProgress.total > 0 && (
-                                    <div className="space-y-2 bg-gradient-to-r from-primary/10 to-secondary/10 dark:from-primary/20 dark:to-secondary/20 rounded-xl p-4 border border-primary/20">
-                                        <div className="flex justify-between text-sm mb-1">
-                                            <span className="font-medium text-gray-700 dark:text-gray-200">Uploading images...</span>
-                                            <span className="font-bold text-primary">{uploadProgress.current} / {uploadProgress.total}</span>
-                                        </div>
-                                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden shadow-inner">
-                                            <div
-                                                className="bg-gradient-to-r from-primary to-secondary h-3 rounded-full transition-all duration-300 ease-out shadow-lg"
-                                                style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+                                            )}
+                                            <input
+                                                ref={fileInputRef}
+                                                type="file"
+                                                accept="image/*"
+                                                multiple
+                                                className="hidden"
+                                                onChange={handleImageChange}
                                             />
                                         </div>
                                     </div>
-                                )}
-                            </>
-                        ) : (
-                            <>
-                                {/* Label Input */}
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        What does it say?
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={label}
-                                        onChange={(e) => setLabel(e.target.value)}
-                                        placeholder="e.g., Apple, Hungry, Yes"
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium text-lg"
-                                        required
-                                    />
-                                </div>
 
-                                {/* Category Input */}
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Category <span className="text-gray-400 font-normal">(optional)</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        list="category-suggestions"
-                                        value={category}
-                                        onChange={(e) => setCategory(e.target.value)}
-                                        placeholder="e.g., Food, Actions, Feelings"
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                                    />
-                                    <datalist id="category-suggestions">
-                                        {existingCategories.map((cat) => (
-                                            <option key={cat} value={cat} />
-                                        ))}
-                                    </datalist>
-                                    <p className="text-[10px] text-gray-400 px-1">
-                                        Group cards together for easy filtering
-                                    </p>
-                                </div>
-                            </>
-                        )}
-
-                        {/* Image Upload - Only show in non-batch mode */}
-                        {!batchMode && (
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Picture
-                                    </label>
-
-                                {/* Image Toggle Switch */}
-                                <div className="flex bg-gray-100 dark:bg-slate-800 rounded-lg p-1">
-                                    <button
-                                        type="button"
-                                        onClick={() => setImageType('upload')}
-                                        className={clsx(
-                                            "px-3 py-1 rounded-md text-sm font-medium transition-all",
-                                            imageType === 'upload'
-                                                ? "bg-white dark:bg-slate-700 shadow-sm text-primary"
-                                                : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                                        )}
-                                    >
-                                        Upload
-                                    </button>
-                                    {hasCamera && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setImageType('camera')}
-                                            className={clsx(
-                                                "px-3 py-1 rounded-md text-sm font-medium transition-all flex items-center gap-1",
-                                                imageType === 'camera'
-                                                    ? "bg-white dark:bg-slate-700 shadow-sm text-primary"
-                                                    : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                                            )}
-                                        >
-                                            <Camera className="w-4 h-4" />
-                                            Camera
-                                        </button>
-                                    )}
-                                    <button
-                                        type="button"
-                                        onClick={() => setImageType('generate')}
-                                        className={clsx(
-                                            "px-3 py-1 rounded-md text-sm font-medium transition-all",
-                                            imageType === 'generate'
-                                                ? "bg-white dark:bg-slate-700 shadow-sm text-primary"
-                                                : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                                        )}
-                                    >
-                                        Generate AI
-                                    </button>
-                                </div>
-                            </div>
-
-                            {imageType === 'upload' ? (
-                                <div
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className={clsx(
-                                        "relative w-full h-48 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors overflow-hidden bg-gray-50 dark:bg-slate-800",
-                                        imagePreview ? "border-solid border-primary" : ""
-                                    )}
-                                >
-                                    {imagePreview ? (
-                                        <img src={imagePreview} alt="Preview" className="w-full h-full object-contain" />
-                                    ) : (
-                                        <div className="text-center p-4">
-                                            <ImageIcon className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-                                            <p className="text-sm text-gray-500">Tap to upload image</p>
-                                        </div>
-                                    )}
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={handleImageChange}
-                                    />
-                                </div>
-                            ) : imageType === 'camera' ? (
-                                <div className="space-y-3">
-                                    <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden bg-black">
-                                        {/* Always render video element so ref is available */}
-                                        <video
-                                            ref={videoRef}
-                                            autoPlay
-                                            playsInline
-                                            muted
-                                            className={`w-full h-full object-cover ${isCameraActive ? '' : 'hidden'}`}
-                                        />
-
-                                        {/* Loading overlay */}
-                                        {!isCameraActive && (
-                                            <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
-                                                <Camera className="w-16 h-16 mb-4 opacity-50" />
-                                                <p className="text-sm opacity-75">Camera initializing...</p>
+                                    {/* Progress Tracking */}
+                                    {uploadProgress.total > 0 && (
+                                        <div className="space-y-2 bg-gradient-to-r from-primary/10 to-secondary/10 dark:from-primary/20 dark:to-secondary/20 rounded-xl p-4 border border-primary/20">
+                                            <div className="flex justify-between text-sm mb-1">
+                                                <span className="font-medium text-gray-700 dark:text-gray-200">Uploading...</span>
+                                                <span className="font-bold text-primary">{uploadProgress.current} / {uploadProgress.total}</span>
                                             </div>
-                                        )}
-
-                                        {/* Capture button */}
-                                        {isCameraActive && (
-                                            <button
-                                                type="button"
-                                                onClick={capturePhoto}
-                                                className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-16 h-16 bg-white rounded-full shadow-lg hover:scale-110 transition-transform flex items-center justify-center border-4 border-gray-300"
-                                            >
-                                                <div className="w-12 h-12 bg-white rounded-full border-2 border-gray-400"></div>
-                                            </button>
-                                        )}
-                                    </div>
-                                    {imagePreview && (
-                                        <div className="w-full h-48 rounded-2xl overflow-hidden border-2 border-primary">
-                                            <img src={imagePreview} alt="Captured" className="w-full h-full object-contain bg-gray-50 dark:bg-slate-800" />
+                                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden shadow-inner">
+                                                <div
+                                                    className="bg-gradient-to-r from-primary to-secondary h-3 rounded-full transition-all duration-300 ease-out shadow-lg"
+                                                    style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+                                                />
+                                            </div>
                                         </div>
                                     )}
                                 </div>
                             ) : (
-                                <div className="space-y-3">
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            value={generationPrompt}
-                                            onChange={(e) => setGenerationPrompt(e.target.value)}
-                                            placeholder="Describe image (e.g. 'cartoon red apple')"
-                                            className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={handleGenerateImage}
-                                            disabled={isGenerating || !generationPrompt.trim()}
-                                            className="px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 disabled:opacity-50 transition-colors"
-                                        >
-                                            {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-                                        </button>
-                                    </div>
-                                    <div className="relative w-full h-48 rounded-2xl border border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-slate-800">
-                                        {imagePreview ? (
-                                            <img src={imagePreview} alt="Generated Preview" className="w-full h-full object-contain" />
-                                        ) : (
-                                            <div className="text-center p-4 text-gray-400">
-                                                <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                                                <p className="text-xs">Preview will appear here</p>
+                                /* STEPPER UI */
+                                <>
+                                    {/* STEP 1: DETAILS */}
+                                    {step === 1 && (
+                                        <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-300">
+                                            <div className="text-center space-y-2 mb-8">
+                                                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">What is it?</h3>
+                                                <p className="text-gray-500 dark:text-gray-400">Give your card a name and category</p>
                                             </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-                            </div>
-                        )}
 
-                        {/* Audio Input Section - Only show in non-batch mode */}
-                        {!batchMode && (
-                            <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Sound
-                                </label>
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                                                        Card Label
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={label}
+                                                        onChange={(e) => setLabel(e.target.value)}
+                                                        placeholder="e.g., Apple, Hungry, Yes"
+                                                        className="w-full px-5 py-4 rounded-2xl border-2 border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-slate-800 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-bold text-xl text-center"
+                                                        required
+                                                        autoFocus
+                                                    />
+                                                </div>
 
-                                {/* Toggle Switch */}
-                                <div className="flex bg-gray-100 dark:bg-slate-800 rounded-lg p-1">
-                                    <button
-                                        type="button"
-                                        onClick={() => setAudioType('record')}
-                                        className={clsx(
-                                            "px-3 py-1 rounded-md text-sm font-medium transition-all",
-                                            audioType === 'record'
-                                                ? "bg-white dark:bg-slate-700 shadow-sm text-primary"
-                                                : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                                        )}
-                                    >
-                                        Record
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setAudioType('upload')}
-                                        className={clsx(
-                                            "px-3 py-1 rounded-md text-sm font-medium transition-all",
-                                            audioType === 'upload'
-                                                ? "bg-white dark:bg-slate-700 shadow-sm text-primary"
-                                                : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                                        )}
-                                    >
-                                        Upload
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="p-4 rounded-2xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-gray-700 transition-all">
-                                {audioType === 'record' ? (
-                                    <AudioRecorder onRecordingComplete={setAudioBlob} />
-                                ) : (
-                                    <div
-                                        onClick={() => audioInputRef.current?.click()}
-                                        className={clsx(
-                                            "w-full h-32 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors bg-white dark:bg-slate-900",
-                                            audioFile ? "border-solid border-primary/50 bg-primary/5" : ""
-                                        )}
-                                    >
-                                        {audioFile ? (
-                                            <div className="text-center p-4 animate-in fade-in zoom-in">
-                                                <Music className="w-8 h-8 text-primary mx-auto mb-2" />
-                                                <p className="text-sm font-medium text-primary">{audioFile.name}</p>
-                                                <p className="text-xs text-gray-500 mt-1">Tap to change</p>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                        Category (Optional)
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        list="category-suggestions"
+                                                        value={category}
+                                                        onChange={(e) => setCategory(e.target.value)}
+                                                        placeholder="Select or type..."
+                                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                                                    />
+                                                    <datalist id="category-suggestions">
+                                                        {existingCategories.map((cat) => (
+                                                            <option key={cat} value={cat} />
+                                                        ))}
+                                                    </datalist>
+                                                </div>
                                             </div>
-                                        ) : (
-                                            <div className="text-center p-4">
-                                                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                                                <p className="text-sm text-gray-500">Tap to upload audio file</p>
-                                                <p className="text-xs text-gray-400 mt-1">MP3, WAV, etc</p>
-                                            </div>
-                                        )}
-                                        <input
-                                            ref={audioInputRef}
-                                            type="file"
-                                            accept="audio/*"
-                                            className="hidden"
-                                            onChange={handleAudioFileChange}
-                                        />
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Audio Preview Button */}
-                            {(audioBlob || audioFile) && (
-                                <button
-                                    type="button"
-                                    onClick={toggleAudioPreview}
-                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-accent to-primary text-white rounded-xl font-bold hover:opacity-90 transition-all transform hover:scale-[1.02]"
-                                >
-                                    {isPlayingPreview ? (
-                                        <>
-                                            <Pause className="w-5 h-5" />
-                                            Pause Preview
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Play className="w-5 h-5" />
-                                            Preview Audio
-                                        </>
+                                        </div>
                                     )}
-                                </button>
-                            )}
-                            </div>
-                        )}
 
-                        {/* Footer */}
-                        <div className="pt-4 flex justify-end gap-3">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="px-6 py-3 rounded-xl font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800 transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={batchMode ? (isSubmitting || batchImages.length === 0) : (isSubmitting || !label || (!imageFile && !editCard) || (!editCard && (audioType === 'record' ? !audioBlob : !audioFile)))}
-                                className={clsx(
-                                    "px-8 py-3 rounded-xl font-bold text-white shadow-lg transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2",
-                                    (batchMode ? (isSubmitting || batchImages.length === 0) : (isSubmitting || !label || (!imageFile && !editCard) || (!editCard && (audioType === 'record' ? !audioBlob : !audioFile))))
-                                        ? "bg-gray-400 cursor-not-allowed"
-                                        : "bg-gradient-to-r from-primary to-accent hover:shadow-primary/25"
+                                    {/* STEP 2: IMAGE */}
+                                    {step === 2 && (
+                                        <div className="space-y-4 animate-in fade-in slide-in-from-right-8 duration-300 flex flex-col h-full">
+                                            <div className="text-center space-y-1 mb-2">
+                                                <h3 className="text-xl font-bold text-gray-900 dark:text-white">What does it look like?</h3>
+                                            </div>
+
+                                            {/* Preview Area */}
+                                            {(imagePreview || imageType === 'camera' || isGenerating) && (
+                                                <div className="relative w-full rounded-2xl overflow-hidden bg-gray-100 dark:bg-slate-800 border-2 border-gray-100 dark:border-slate-700 flex-1 min-h-[300px] flex flex-col">
+
+                                                    {isCameraActive ? (
+                                                        /* Camera View */
+                                                        <div className="relative w-full h-full flex flex-col">
+                                                            <video
+                                                                ref={videoRef}
+                                                                autoPlay
+                                                                playsInline
+                                                                muted
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={capturePhoto}
+                                                                className="absolute bottom-6 left-1/2 transform -translate-x-1/2 w-16 h-16 bg-white rounded-full shadow-lg hover:scale-110 transition-transform flex items-center justify-center border-4 border-gray-300 z-10"
+                                                            >
+                                                                <div className="w-12 h-12 bg-white rounded-full border-2 border-gray-400"></div>
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={stopCamera}
+                                                                className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full backdrop-blur-md"
+                                                            >
+                                                                <X className="w-5 h-5" />
+                                                            </button>
+                                                        </div>
+                                                    ) : isGenerating ? (
+                                                        /* Generation View */
+                                                        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-4">
+                                                            <Loader2 className="w-12 h-12 text-primary animate-spin" />
+                                                            <p className="text-gray-500 font-medium">Creating your image...</p>
+                                                        </div>
+                                                    ) : (
+                                                        /* Image Preview */
+                                                        <div className="relative w-full h-full group">
+                                                            <img
+                                                                src={imagePreview || ''}
+                                                                alt="Card Preview"
+                                                                className="w-full h-full object-contain"
+                                                            />
+                                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setImagePreview(null);
+                                                                        setImageType('upload');
+                                                                        setHasCamera(true); // Re-check?
+                                                                    }}
+                                                                    className="px-6 py-2 bg-white text-black rounded-full font-bold transform scale-95 group-hover:scale-100 transition-transform"
+                                                                >
+                                                                    Change Image
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* Source Selection (Only if no image selected yet) */}
+                                            {(!imagePreview && !isCameraActive && !isGenerating) && (
+                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
+                                                    {/* Upload Option */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => fileInputRef.current?.click()}
+                                                        className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-gray-50 dark:bg-slate-800 border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-primary hover:bg-primary/5 transition-all group"
+                                                    >
+                                                        <div className="w-12 h-12 rounded-full bg-white dark:bg-slate-700 shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform text-primary">
+                                                            <Upload className="w-6 h-6" />
+                                                        </div>
+                                                        <span className="font-bold text-gray-700 dark:text-gray-200">Upload Photo</span>
+                                                        <input
+                                                            ref={fileInputRef}
+                                                            type="file"
+                                                            accept="image/*"
+                                                            className="hidden"
+                                                            onChange={handleImageChange}
+                                                        />
+                                                    </button>
+
+                                                    {/* Camera Option */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setImageType('camera');
+                                                            startCamera();
+                                                        }}
+                                                        className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-gray-50 dark:bg-slate-800 border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-primary hover:bg-primary/5 transition-all group"
+                                                    >
+                                                        <div className="w-12 h-12 rounded-full bg-white dark:bg-slate-700 shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform text-blue-500">
+                                                            <Camera className="w-6 h-6" />
+                                                        </div>
+                                                        <span className="font-bold text-gray-700 dark:text-gray-200">Take Photo</span>
+                                                    </button>
+
+                                                    {/* Generate Option */}
+                                                    <div className="col-span-1 sm:col-span-1">
+                                                        {!imageType.startsWith('gen') ? (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setImageType('generate')}
+                                                                className="w-full h-full flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-gray-50 dark:bg-slate-800 border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-primary hover:bg-primary/5 transition-all group"
+                                                            >
+                                                                <div className="w-12 h-12 rounded-full bg-white dark:bg-slate-700 shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform text-purple-500">
+                                                                    <Sparkles className="w-6 h-6" />
+                                                                </div>
+                                                                <div className="text-center">
+                                                                    <span className="block font-bold text-gray-700 dark:text-gray-200">AI Generate</span>
+                                                                    <span className="text-xs text-purple-500 font-medium">Magic</span>
+                                                                </div>
+                                                            </button>
+                                                        ) : (
+                                                            /* Mini Generation Form */
+                                                            <div className="w-full h-full flex flex-col gap-2 p-3 rounded-2xl bg-purple-50 dark:bg-purple-900/20 border-2 border-purple-100 dark:border-purple-800">
+                                                                <textarea
+                                                                    value={generationPrompt}
+                                                                    onChange={(e) => setGenerationPrompt(e.target.value)}
+                                                                    placeholder="Describe it..."
+                                                                    className="w-full flex-1 p-2 bg-white dark:bg-slate-900 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                                                    autoFocus
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={handleGenerateImage}
+                                                                    disabled={!generationPrompt.trim()}
+                                                                    className="w-full py-2 bg-purple-600 text-white rounded-lg text-sm font-bold shadow-sm hover:bg-purple-700 disabled:opacity-50"
+                                                                >
+                                                                    Create
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* STEP 3: AUDIO */}
+                                    {step === 3 && (
+                                        <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-300">
+                                            <div className="text-center space-y-2 mb-4">
+                                                <h3 className="text-xl font-bold text-gray-900 dark:text-white">What does it sound like?</h3>
+                                                <p className="text-gray-500 dark:text-gray-400">Add sound to make your card speak</p>
+                                            </div>
+
+                                            {/* If we have audio, show player */}
+                                            {(audioBlob || audioFile || editCard?.audioUrl) ? (
+                                                <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-xl border border-gray-100 dark:border-gray-700 text-center space-y-6">
+                                                    <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto">
+                                                        <Music className="w-10 h-10" />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-bold text-lg mb-1">{audioFile?.name || 'Voice Recording'}</h4>
+                                                        <p className="text-sm text-gray-500">Audio ready to use</p>
+                                                    </div>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={toggleAudioPreview}
+                                                        className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-bold hover:scale-[1.02] transition-transform"
+                                                    >
+                                                        {isPlayingPreview ? (
+                                                            <>
+                                                                <Pause className="w-5 h-5 fill-current" />
+                                                                <span>Pause</span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Play className="w-5 h-5 fill-current" />
+                                                                <span>Play Sound</span>
+                                                            </>
+                                                        )}
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setAudioBlob(null);
+                                                            setAudioFile(null);
+                                                            stopAudioPreview();
+                                                        }}
+                                                        className="text-sm text-red-500 font-medium hover:underline"
+                                                    >
+                                                        Remove & Record New
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                /* Audio Selection Sources */
+                                                <div className="grid grid-cols-1 gap-4">
+
+                                                    {/* Recorder */}
+                                                    <div className="bg-white dark:bg-slate-800 rounded-2xl border-2 border-gray-100 dark:border-gray-700 overflow-hidden">
+                                                        <div className="bg-gray-50 dark:bg-slate-800/50 p-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-center gap-2">
+                                                            <Mic className="w-4 h-4 text-red-500" />
+                                                            <span className="font-bold text-sm text-gray-700 dark:text-gray-300">Voice Recorder</span>
+                                                        </div>
+                                                        <div className="p-6">
+                                                            <AudioRecorder onRecordingComplete={(blob) => {
+                                                                setAudioBlob(blob);
+                                                                setAudioType('record');
+                                                            }} />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="relative">
+                                                        <div className="absolute inset-0 flex items-center">
+                                                            <span className="w-full border-t border-gray-200 dark:border-gray-700" />
+                                                        </div>
+                                                        <div className="relative flex justify-center text-xs uppercase">
+                                                            <span className="bg-white dark:bg-slate-900 px-2 text-gray-500">Or</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* File Upload */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => audioInputRef.current?.click()}
+                                                        className="flex items-center justify-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-slate-800 border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-primary hover:bg-primary/5 transition-all group"
+                                                    >
+                                                        <Upload className="w-5 h-5 text-gray-400 group-hover:text-primary transition-colors" />
+                                                        <span className="font-semibold text-gray-600 dark:text-gray-300 group-hover:text-primary">Upload Audio File</span>
+                                                        <input
+                                                            ref={audioInputRef}
+                                                            type="file"
+                                                            accept="audio/*"
+                                                            className="hidden"
+                                                            onChange={(e) => {
+                                                                handleAudioFileChange(e);
+                                                                setAudioType('upload');
+                                                            }}
+                                                        />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
+                            <div className="mt-auto pt-6 flex gap-3">
+                                {!batchMode && step > 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={prevStep}
+                                        className="flex-none px-4 py-3 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 transition-colors"
+                                    >
+                                        <ChevronLeft className="w-6 h-6" />
+                                    </button>
                                 )}
-                            >
-                                {isSubmitting ? <Loader2 className="animate-spin w-5 h-5" /> : <Check className="w-5 h-5" />}
-                                {batchMode ? `Create ${batchImages.length} Card${batchImages.length !== 1 ? 's' : ''}` : editCard ? 'Update Card' : 'Save Card'}
-                            </button>
-                        </div>
-                    </form>
+
+                                {(!batchMode && step < totalSteps) ? (
+                                    <button
+                                        type="button"
+                                        onClick={nextStep}
+                                        disabled={!canProceed()}
+                                        className="flex-1 px-6 py-3 rounded-xl font-bold text-white bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-primary/20 transition-all flex items-center justify-center gap-2"
+                                    >
+                                        Next Step
+                                        <ChevronRight className="w-5 h-5" />
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="submit"
+                                        disabled={isSubmitting || !canProceed()}
+                                        className={clsx(
+                                            "flex-1 px-8 py-3 rounded-xl font-bold text-white shadow-lg transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2",
+                                            (isSubmitting || !canProceed())
+                                                ? "bg-gray-400 cursor-not-allowed"
+                                                : "bg-gradient-to-r from-primary to-accent hover:shadow-primary/25"
+                                        )}
+                                    >
+                                        {isSubmitting ? <Loader2 className="animate-spin w-5 h-5" /> : <Check className="w-5 h-5" />}
+                                        {batchMode ? `Create ${batchImages.length} Cards` : editCard ? 'Update Card' : 'Finish & Save'}
+                                    </button>
+                                )}
+                            </div>
+
+                        </form>
+                    </div>
                 </div>
             </div>
         </>

@@ -138,7 +138,7 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
 
     const handleCardAdded = (newCard: Card) => {
         // Only update the real state - optimistic state will sync automatically
-        setCards(prev => [...prev, newCard]);
+        setCards(prev => [newCard, ...prev]);
     };
 
     const handleCardUpdated = (updatedCard: Card) => {

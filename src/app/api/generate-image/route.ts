@@ -23,7 +23,7 @@ export async function POST(request: Request) {
         }
 
         const apiKey = process.env.GOOGLE_API_KEY;
-        console.log(`check me out [${apiKey}]`);
+
         if (!apiKey) {
             console.error('GOOGLE_API_KEY is not set');
             return NextResponse.json(
@@ -34,10 +34,23 @@ export async function POST(request: Request) {
 
         const client = new GoogleGenAI({ apiKey });
 
+        // Wrap user prompt with PECS-appropriate instructions
+        const pecsPrompt = `Create a simple, clear cartoon-style illustration suitable for a PECS (Picture Exchange Communication System) card for children. The image should be:
+- Simple and easy to understand at a glance
+- Cartoon or clipart style (not realistic or photographic)
+- Bold, clear outlines
+- Bright, friendly colors
+- Single subject on a clean, simple background
+- No text or words in the image
+
+Subject to illustrate: ${prompt}`;
+
+        console.log('Enhanced PECS prompt:', pecsPrompt);
+
         // @ts-ignore
         const response = await client.models.generateImages({
             model: 'models/imagen-4.0-generate-001',
-            prompt,
+            prompt: pecsPrompt,
             config: {
                 numberOfImages: 1,
                 aspectRatio: "1:1"
