@@ -12,7 +12,8 @@
       "Bash(npm run tsx:*)",
       "Bash(dir:*)",
       "Bash(findstr:*)",
-      "Bash(powershell -Command \"Get-Content ''C:\\\\Users\\\\rob\\\\projects\\\\pic-speak\\\\src\\\\app\\\\board\\\\[id]\\\\page.tsx'' | Select-Object -Last 30\")"
+      "Bash(powershell -Command \"Get-Content ''C:\\\\Users\\\\rob\\\\projects\\\\pic-speak\\\\src\\\\app\\\\board\\\\[id]\\\\page.tsx'' | Select-Object -Last 30\")",
+      "Bash(npm run lint:*)"
     ]
   }
 }

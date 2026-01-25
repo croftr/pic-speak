@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { getBoards } from '@/lib/storage';
+import { getBoards, getPublicBoards } from '@/lib/storage';
 import { Board } from '@/types';
 import MyBoardsClient from '@/components/MyBoardsClient';
 import { redirect } from 'next/navigation';
@@ -21,12 +21,23 @@ async function getTemplateBoards(): Promise<Board[]> {
     return boards;
 }
 
+async function fetchPublicBoards(): Promise<Board[]> {
+    // Fetch all public boards that can be used as templates
+    const boards = await getPublicBoards();
+    return boards;
+}
+
 export default async function MyBoardsPage() {
     // Fetch data on server in parallel
-    const [userBoards, templateBoards] = await Promise.all([
+    const [userBoards, templateBoards, publicBoards] = await Promise.all([
         getUserBoards(),
-        getTemplateBoards()
+        getTemplateBoards(),
+        fetchPublicBoards()
     ]);
 
-    return <MyBoardsClient initialBoards={userBoards} initialTemplateBoards={templateBoards} />;
+    return <MyBoardsClient
+        initialBoards={userBoards}
+        initialTemplateBoards={templateBoards}
+        initialPublicBoards={publicBoards}
+    />;
 }

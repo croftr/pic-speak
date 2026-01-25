@@ -18,10 +18,16 @@ CREATE TABLE IF NOT EXISTS cards (
     color TEXT DEFAULT '#6366f1',
     "order" INTEGER DEFAULT 0,
     type TEXT NOT NULL DEFAULT 'Thing',
+    template_key TEXT,
+    source_board_id TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE
 );
+
+-- Migration: Add source_board_id column to existing cards table
+-- Run this if upgrading from an older schema:
+-- ALTER TABLE cards ADD COLUMN IF NOT EXISTS source_board_id TEXT;
 
 -- Indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_boards_user_id ON boards(user_id);

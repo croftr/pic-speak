@@ -8,6 +8,7 @@ export interface Card {
   order?: number;
   category?: string; // Optional free-text category for filtering cards (e.g., "Food", "Actions", "Feelings")
   templateKey?: string; // If set, this card references a template and cannot be edited
+  sourceBoardId?: string; // If set, this card was inherited from a public board template and cannot be edited
 }
 
 export interface Board {

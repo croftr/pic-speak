@@ -4,7 +4,7 @@ import { Card } from '@/types';
 import { useState, useRef } from 'react';
 import { Volume2 } from 'lucide-react';
 import { clsx } from 'clsx';
-import { Trash2, Pencil, GripVertical, Copy, Sparkles, MoreVertical } from 'lucide-react';
+import { Trash2, Pencil, GripVertical, Copy, Sparkles, MoreVertical, Link } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import ConfirmDialog from './ConfirmDialog';
@@ -28,8 +28,10 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
-    // Template cards cannot be edited
+    // Template cards and cards inherited from public boards cannot be edited
     const isTemplateCard = !!card.templateKey;
+    const isInheritedCard = !!card.sourceBoardId;
+    const canEdit = !isTemplateCard && !isInheritedCard;
 
     const {
         attributes,
@@ -106,7 +108,7 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
                                             <Copy className="w-4 h-4" />
                                             Copy / Move
                                         </button>
-                                        {!isTemplateCard && (
+                                        {canEdit && (
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -176,6 +178,13 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
                         <div className="absolute top-1 right-1 z-10 px-1.5 py-0.5 bg-gradient-to-r from-amber-400 to-orange-500 rounded-md flex items-center gap-0.5">
                             <Sparkles className="w-2.5 h-2.5 text-white" />
                             <span className="text-[9px] font-bold text-white uppercase tracking-wide">Template</span>
+                        </div>
+                    )}
+                    {/* Inherited card badge (from public board template) */}
+                    {isInheritedCard && !isTemplateCard && (
+                        <div className="absolute top-1 right-1 z-10 px-1.5 py-0.5 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-md flex items-center gap-0.5">
+                            <Link className="w-2.5 h-2.5 text-white" />
+                            <span className="text-[9px] font-bold text-white uppercase tracking-wide">Inherited</span>
                         </div>
                     )}
                     {/* Helper layout for centering image */}

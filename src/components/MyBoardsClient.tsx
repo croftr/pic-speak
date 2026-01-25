@@ -10,11 +10,13 @@ import { toast } from 'sonner';
 interface MyBoardsClientProps {
     initialBoards: Board[];
     initialTemplateBoards: Board[];
+    initialPublicBoards?: Board[];
 }
 
-export default function MyBoardsClient({ initialBoards, initialTemplateBoards }: MyBoardsClientProps) {
+export default function MyBoardsClient({ initialBoards, initialTemplateBoards, initialPublicBoards = [] }: MyBoardsClientProps) {
     const [boards, setBoards] = useState<Board[]>(initialBoards);
     const [templateBoards] = useState<Board[]>(initialTemplateBoards);
+    const [publicBoards] = useState<Board[]>(initialPublicBoards);
 
     const router = useRouter();
 
@@ -23,6 +25,13 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards }:
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [newBoardName, setNewBoardName] = useState('');
     const [newBoardDesc, setNewBoardDesc] = useState('');
+    const [selectedTemplateBoardId, setSelectedTemplateBoardId] = useState<string>('');
+
+    // Combine system templates and public boards for template selection
+    const availableTemplates = [...templateBoards, ...publicBoards.filter(pb =>
+        // Exclude system template boards that are already in templateBoards
+        !templateBoards.some(tb => tb.id === pb.id)
+    )];
 
     // Template clone state
     const [isCloningTemplate, setIsCloningTemplate] = useState(false);
@@ -36,24 +45,52 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards }:
 
         setIsCreating(true);
         try {
-            const res = await fetch('/api/boards', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: newBoardName,
-                    description: newBoardDesc
-                })
-            });
+            // If a template is selected, use the clone-template endpoint
+            if (selectedTemplateBoardId) {
+                const res = await fetch('/api/boards/clone-template', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        templateBoardId: selectedTemplateBoardId,
+                        newBoardName: newBoardName,
+                        newBoardDesc: newBoardDesc
+                    })
+                });
 
-            if (res.ok) {
-                const newBoard = await res.json();
-                setBoards([...boards, newBoard]);
-                setNewBoardName('');
-                setNewBoardDesc('');
-                setShowCreateForm(false);
-                toast.success('Board created successfully!');
+                if (res.ok) {
+                    const { board, cardCount } = await res.json();
+                    setBoards([...boards, board]);
+                    setNewBoardName('');
+                    setNewBoardDesc('');
+                    setSelectedTemplateBoardId('');
+                    setShowCreateForm(false);
+                    toast.success(`Board created with ${cardCount} cards from template!`);
+                    router.push(`/board/${board.id}`);
+                } else {
+                    toast.error('Failed to create board from template');
+                }
             } else {
-                toast.error('Failed to create board');
+                // Create an empty board
+                const res = await fetch('/api/boards', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: newBoardName,
+                        description: newBoardDesc
+                    })
+                });
+
+                if (res.ok) {
+                    const newBoard = await res.json();
+                    setBoards([...boards, newBoard]);
+                    setNewBoardName('');
+                    setNewBoardDesc('');
+                    setSelectedTemplateBoardId('');
+                    setShowCreateForm(false);
+                    toast.success('Board created successfully!');
+                } else {
+                    toast.error('Failed to create board');
+                }
             }
         } catch (error) {
             console.error(error);
@@ -149,10 +186,38 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards }:
                                         placeholder="What is this board for?"
                                     />
                                 </div>
+                                {availableTemplates.length > 0 && (
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">
+                                            Start from Template (Optional)
+                                        </label>
+                                        <select
+                                            value={selectedTemplateBoardId}
+                                            onChange={(e) => setSelectedTemplateBoardId(e.target.value)}
+                                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800 focus:ring-2 focus:ring-primary/50 outline-none"
+                                        >
+                                            <option value="">Start with empty board</option>
+                                            {availableTemplates.map((template) => (
+                                                <option key={template.id} value={template.id}>
+                                                    {template.name}
+                                                    {template.creatorName && template.userId !== 'system' ? ` (by ${template.creatorName})` : ''}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {selectedTemplateBoardId && (
+                                            <p className="mt-2 text-xs text-gray-500">
+                                                Cards from the template will be copied to your board. You can add your own cards and delete inherited ones.
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
                                 <div className="pt-4 flex justify-end gap-3">
                                     <button
                                         type="button"
-                                        onClick={() => setShowCreateForm(false)}
+                                        onClick={() => {
+                                            setShowCreateForm(false);
+                                            setSelectedTemplateBoardId('');
+                                        }}
                                         className="px-6 py-3 font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
                                     >
                                         Cancel
@@ -162,7 +227,7 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards }:
                                         disabled={isCreating || !newBoardName.trim()}
                                         className="px-8 py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 disabled:opacity-50 transition-colors"
                                     >
-                                        {isCreating ? 'Creating...' : 'Create Board'}
+                                        {isCreating ? 'Creating...' : selectedTemplateBoardId ? 'Create from Template' : 'Create Board'}
                                     </button>
                                 </div>
                             </form>

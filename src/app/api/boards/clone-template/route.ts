@@ -12,7 +12,7 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json();
-        const { templateBoardId, newBoardName } = body;
+        const { templateBoardId, newBoardName, newBoardDesc } = body;
 
         if (!templateBoardId || !newBoardName) {
             return NextResponse.json(
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
             id: newBoardId,
             userId,
             name: newBoardName,
-            description: `Based on ${templateBoard.name}`,
+            description: newBoardDesc || `Based on ${templateBoard.name}`,
             createdAt: new Date().toISOString(),
             isPublic: false,
             creatorName,
@@ -61,11 +61,14 @@ export async function POST(request: Request) {
         const templateCards = await getCards(templateBoardId);
 
         // Clone all cards to new board, preserving their original order
+        // Mark non-template cards with sourceBoardId so they can be identified as inherited
         const cardsToInsert: Card[] = templateCards.map(templateCard => ({
             ...templateCard,
             id: crypto.randomUUID(),
             boardId: newBoardId,
-            // Template cards keep their templateKey, regular cards get full data
+            // Template cards keep their templateKey, regular cards get sourceBoardId
+            // sourceBoardId marks cards as inherited from a public board (cannot edit, can delete)
+            sourceBoardId: templateCard.templateKey ? undefined : templateBoardId,
         }));
 
         if (cardsToInsert.length > 0) {

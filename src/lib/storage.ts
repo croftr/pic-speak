@@ -12,6 +12,7 @@ type CardRow = {
     order?: number;
     type?: string; // Maps to 'category' in the app - optional free-text field
     template_key?: string;
+    source_board_id?: string; // If set, this card was inherited from a public board template
     created_at?: string;
     updated_at?: string;
 };
@@ -167,7 +168,8 @@ export async function getCards(boardId?: string): Promise<Card[]> {
                 audioUrl: row.audio_url,
                 color: row.color,
                 order: row.order,
-                category: row.type || undefined // DB column is 'type', app uses 'category'
+                category: row.type || undefined, // DB column is 'type', app uses 'category'
+                sourceBoardId: row.source_board_id || undefined
             };
         });
     } catch (error) {
@@ -205,11 +207,11 @@ export async function addCard(card: Card): Promise<void> {
             );
         } else {
             // Regular user card - store all data at order 0 (top of board)
-            // Note: 'category' maps to 'type' column in database
+            // Note: 'category' maps to 'type' column in database (NOT NULL with default 'Thing')
             console.log(`[DB-AddCard] Inserting user card: ${card.label}`);
             await client.query(
                 'INSERT INTO cards (id, board_id, label, image_url, audio_url, color, "order", type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-                [card.id, card.boardId, card.label, card.imageUrl, card.audioUrl, card.color || '#6366f1', 0, card.category || null]
+                [card.id, card.boardId, card.label, card.imageUrl, card.audioUrl, card.color || '#6366f1', 0, card.category || 'Thing']
             );
         }
 
@@ -309,16 +311,17 @@ export async function batchAddCards(cards: Card[], preserveOrder: boolean = fals
                     card.audioUrl,
                     card.color || '#6366f1',
                     order,
-                    card.category || null // 'category' maps to 'type' column in DB
+                    card.category || 'Thing', // 'category' maps to 'type' column in DB (NOT NULL)
+                    card.sourceBoardId || null // Track inherited cards from public boards
                 );
                 regularPlaceholders.push(
-                    `($${paramIndex}, $${paramIndex + 1}, $${paramIndex + 2}, $${paramIndex + 3}, $${paramIndex + 4}, $${paramIndex + 5}, $${paramIndex + 6}, $${paramIndex + 7})`
+                    `($${paramIndex}, $${paramIndex + 1}, $${paramIndex + 2}, $${paramIndex + 3}, $${paramIndex + 4}, $${paramIndex + 5}, $${paramIndex + 6}, $${paramIndex + 7}, $${paramIndex + 8})`
                 );
-                paramIndex += 8;
+                paramIndex += 9;
             });
 
             await client.query(
-                `INSERT INTO cards (id, board_id, label, image_url, audio_url, color, "order", type) VALUES ${regularPlaceholders.join(',')}`,
+                `INSERT INTO cards (id, board_id, label, image_url, audio_url, color, "order", type, source_board_id) VALUES ${regularPlaceholders.join(',')}`,
                 regularValues
             );
         }
@@ -336,10 +339,10 @@ export async function batchAddCards(cards: Card[], preserveOrder: boolean = fals
 export async function updateCard(updatedCard: Card): Promise<void> {
     const client = await getDbClient();
     try {
-        // Note: 'category' maps to 'type' column in database
+        // Note: 'category' maps to 'type' column in database (NOT NULL with default 'Thing')
         await client.query(
             'UPDATE cards SET label = $1, image_url = $2, audio_url = $3, color = $4, type = $5, board_id = $6, updated_at = CURRENT_TIMESTAMP WHERE id = $7',
-            [updatedCard.label, updatedCard.imageUrl, updatedCard.audioUrl, updatedCard.color || '#6366f1', updatedCard.category || null, updatedCard.boardId, updatedCard.id]
+            [updatedCard.label, updatedCard.imageUrl, updatedCard.audioUrl, updatedCard.color || '#6366f1', updatedCard.category || 'Thing', updatedCard.boardId, updatedCard.id]
         );
     } catch (error) {
         console.error('Error updating card:', error);
