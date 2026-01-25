@@ -13,16 +13,30 @@ const UPLOAD_TIMEOUT_MS = 25000;
 function getTTSClient(): TextToSpeechClient {
     const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID;
     const clientEmail = process.env.GOOGLE_CLOUD_CLIENT_EMAIL;
-    const privateKey = process.env.GOOGLE_CLOUD_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    let privateKey = process.env.GOOGLE_CLOUD_PRIVATE_KEY;
+    const privateKeyBase64 = process.env.GOOGLE_CLOUD_PRIVATE_KEY_BASE64;
 
-    if (!projectId || !clientEmail || !privateKey) {
+    if (!projectId || !clientEmail || (!privateKey && !privateKeyBase64)) {
         throw new Error('Google Cloud TTS credentials not configured');
+    }
+
+    // Support base64-encoded private key (recommended for Vercel)
+    if (privateKeyBase64) {
+        privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf-8');
+    } else if (privateKey) {
+        // Handle different formats of the private key:
+        // 1. If wrapped in quotes, remove them
+        if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+            privateKey = privateKey.slice(1, -1);
+        }
+        // 2. Replace escaped newlines with actual newlines
+        privateKey = privateKey.replace(/\\n/g, '\n');
     }
 
     return new TextToSpeechClient({
         credentials: {
             client_email: clientEmail,
-            private_key: privateKey,
+            private_key: privateKey!,
         },
         projectId,
     });

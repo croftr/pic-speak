@@ -50,6 +50,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     const [audioFile, setAudioFile] = useState<File | null>(null);
     const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
     const [generatedAudioUrl, setGeneratedAudioUrl] = useState<string | null>(null); // URL from TTS API (already uploaded)
+    const [wantsNewAudio, setWantsNewAudio] = useState(false); // User wants to replace existing audio
 
     // Audio preview state
     const [isPlayingPreview, setIsPlayingPreview] = useState(false);
@@ -60,6 +61,10 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     const totalSteps = 3;
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Track recent step transitions to prevent accidental form submission
+    const justTransitionedRef = useRef(false);
+    const [isTransitioning, setIsTransitioning] = useState(false);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const audioInputRef = useRef<HTMLInputElement>(null);
@@ -133,9 +138,12 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
         setAudioFile(null);
         setAudioType('record');
         setGeneratedAudioUrl(null);
+        setWantsNewAudio(false);
         setCategory('');
         setBatchImages([]);
         setStep(1);
+        justTransitionedRef.current = false;
+        setIsTransitioning(false);
         stopAudioPreview();
         stopCamera();
     }, [stopCamera]);
@@ -265,15 +273,25 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     };
 
     const toggleAudioPreview = () => {
-        const audioSource = audioBlob || audioFile;
-        if (!audioSource) return;
-
         if (isPlayingPreview && audioPreviewRef.current) {
             stopAudioPreview();
             return;
         }
 
-        const audioUrl = URL.createObjectURL(audioSource);
+        // Determine audio source: local blob/file, generated URL, or existing card URL
+        let audioUrl: string | null = null;
+        if (audioBlob) {
+            audioUrl = URL.createObjectURL(audioBlob);
+        } else if (audioFile) {
+            audioUrl = URL.createObjectURL(audioFile);
+        } else if (generatedAudioUrl) {
+            audioUrl = generatedAudioUrl;
+        } else if (editCard?.audioUrl) {
+            audioUrl = editCard.audioUrl;
+        }
+
+        if (!audioUrl) return;
+
         const audio = new Audio(audioUrl);
 
         audio.onended = () => {
@@ -418,6 +436,18 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Prevent submission if we just transitioned steps (prevents accidental double-submit)
+        if (justTransitionedRef.current || isTransitioning) {
+            console.log('[AddCardModal] Blocked submission - just transitioned steps');
+            return;
+        }
+
+        // Only allow submission from step 3 (or batch mode)
+        if (!batchMode && step !== totalSteps) {
+            console.log('[AddCardModal] Blocked submission - not on final step');
+            return;
+        }
 
         // Batch mode validation
         if (batchMode) {
@@ -630,7 +660,17 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     };
 
     const nextStep = () => {
-        if (step < totalSteps) setStep(step + 1);
+        if (step < totalSteps) {
+            // Set flag to prevent accidental form submission right after step transition
+            justTransitionedRef.current = true;
+            setIsTransitioning(true);
+            setStep(step + 1);
+            // Clear the flag after a short delay
+            setTimeout(() => {
+                justTransitionedRef.current = false;
+                setIsTransitioning(false);
+            }, 200);
+        }
     };
 
     const prevStep = () => {
@@ -642,10 +682,12 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
 
         if (step === 1) return !!label;
         if (step === 2) return !!imageFile || (editCard && !!imagePreview);
-        // For step 3, we allow saving if we have audio OR if we are editing and have existing audio (implicit)
+        // For step 3, we allow saving if we have audio OR if we are editing and have existing audio (and not replacing it)
         // Check local state first, then editCard fallback
         const hasAudioState = ((audioType === 'record' || audioType === 'generate') && !!audioBlob) || (audioType === 'upload' && !!audioFile);
-        if (step === 3) return hasAudioState || (!!editCard?.audioUrl);
+        // If user clicked "Remove & Record New", they need to provide new audio
+        const canUseExistingAudio = !!editCard?.audioUrl && !wantsNewAudio;
+        if (step === 3) return hasAudioState || canUseExistingAudio;
 
         return false;
     };
@@ -693,7 +735,17 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
 
                     {/* Content Area - Scrollable */}
                     <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
-                        <form id="add-card-form" onSubmit={handleSubmit} className="space-y-6 h-full flex flex-col">
+                        <form
+                            id="add-card-form"
+                            onSubmit={handleSubmit}
+                            className="space-y-6 h-full flex flex-col"
+                            onKeyDown={(e) => {
+                                // Prevent Enter key from submitting form unless on final step
+                                if (e.key === 'Enter' && !batchMode && step !== totalSteps) {
+                                    e.preventDefault();
+                                }
+                            }}
+                        >
 
                             {/* BATCH MODE UI */}
                             {batchMode ? (
@@ -971,8 +1023,8 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                                 <p className="text-gray-500 dark:text-gray-400">Add sound to make your card speak</p>
                                             </div>
 
-                                            {/* If we have audio, show player */}
-                                            {(audioBlob || audioFile || editCard?.audioUrl) ? (
+                                            {/* If we have audio (and user hasn't clicked to replace it), show player */}
+                                            {(audioBlob || audioFile || (editCard?.audioUrl && !wantsNewAudio)) ? (
                                                 <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-xl border border-gray-100 dark:border-gray-700 text-center space-y-6">
                                                     <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto">
                                                         <Music className="w-10 h-10" />
@@ -1006,6 +1058,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                                             setAudioBlob(null);
                                                             setAudioFile(null);
                                                             setGeneratedAudioUrl(null);
+                                                            setWantsNewAudio(true);
                                                             stopAudioPreview();
                                                         }}
                                                         className="text-sm text-red-500 font-medium hover:underline"
@@ -1111,7 +1164,11 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                 {(!batchMode && step < totalSteps) ? (
                                     <button
                                         type="button"
-                                        onClick={nextStep}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            nextStep();
+                                        }}
                                         disabled={!canProceed()}
                                         className="flex-1 px-6 py-3 rounded-xl font-bold text-white bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-primary/20 transition-all flex items-center justify-center gap-2"
                                     >
@@ -1121,10 +1178,10 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                 ) : (
                                     <button
                                         type="submit"
-                                        disabled={isSubmitting || !canProceed()}
+                                        disabled={isSubmitting || !canProceed() || isTransitioning}
                                         className={clsx(
                                             "flex-1 px-8 py-3 rounded-xl font-bold text-white shadow-lg transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2",
-                                            (isSubmitting || !canProceed())
+                                            (isSubmitting || !canProceed() || isTransitioning)
                                                 ? "bg-gray-400 cursor-not-allowed"
                                                 : "bg-gradient-to-r from-primary to-accent hover:shadow-primary/25"
                                         )}
