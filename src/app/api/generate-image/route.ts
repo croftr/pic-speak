@@ -1,16 +1,19 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { auth } from '@clerk/nextjs/server';
-import { log } from 'console';
+
 
 export async function POST(request: Request) {
+    console.log('Received request to generate image');
     const { userId } = await auth();
     if (!userId) {
         return new NextResponse("Unauthorized", { status: 401 });
     }
-
+    console.log('User authenticated:', userId);
     try {
         const { prompt } = await request.json();
+
+        console.log('Generating image for prompt:', prompt);
 
         if (!prompt) {
             return NextResponse.json(
