@@ -377,6 +377,28 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
             setAudioBlob(blob);
             setAudioType('generate');
             toast.success('Audio generated!');
+
+            // Auto-play the generated audio so user hears it immediately
+            const audioUrl = URL.createObjectURL(blob);
+            const audio = new Audio(audioUrl);
+
+            audio.onended = () => {
+                setIsPlayingPreview(false);
+                audioPreviewRef.current = null;
+            };
+
+            audio.onerror = () => {
+                // Silent fail for auto-play - user can still manually play
+                setIsPlayingPreview(false);
+                audioPreviewRef.current = null;
+            };
+
+            audioPreviewRef.current = audio;
+            setIsPlayingPreview(true);
+            audio.play().catch(() => {
+                // Auto-play may be blocked by browser, that's OK
+                setIsPlayingPreview(false);
+            });
         } catch (error) {
             console.error('TTS Error:', error);
             const message = error instanceof Error ? error.message : 'Failed to generate audio';
@@ -1150,7 +1172,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                 </>
                             )}
 
-                            <div className="mt-auto pt-6 flex gap-3">
+                            <div className={clsx("pt-6 flex gap-3", step !== 1 && "mt-auto")}>
                                 {!batchMode && step > 1 && (
                                     <button
                                         type="button"
