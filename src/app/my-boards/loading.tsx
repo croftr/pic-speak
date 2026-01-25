@@ -17,29 +17,6 @@ export default function MyBoardsLoading() {
                     </div>
                 </header>
 
-                {/* Template Boards Section Skeleton */}
-                <div className="mb-12">
-                    <div className="flex items-center gap-2 mb-6">
-                        <Sparkles className="w-6 h-6 text-amber-500 opacity-50" />
-                        <div className="h-8 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                        {[1, 2].map(i => (
-                            <div
-                                key={i}
-                                className="p-5 sm:p-6 md:p-8 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl sm:rounded-3xl border-2 border-amber-200 dark:border-amber-800 shadow-sm"
-                            >
-                                <div className="h-7 sm:h-8 bg-amber-200/50 dark:bg-amber-700/30 rounded-lg mb-2 sm:mb-3 w-3/4 animate-pulse"></div>
-                                <div className="space-y-2 mb-4 sm:mb-6">
-                                    <div className="h-4 bg-amber-200/50 dark:bg-amber-700/30 rounded w-full animate-pulse"></div>
-                                    <div className="h-4 bg-amber-200/50 dark:bg-amber-700/30 rounded w-5/6 animate-pulse"></div>
-                                </div>
-                                <div className="h-12 bg-gradient-to-r from-amber-400 to-orange-400 rounded-xl opacity-50 animate-pulse"></div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
                 {/* My Boards Section Skeleton */}
                 <div className="mb-6">
                     <div className="h-8 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
