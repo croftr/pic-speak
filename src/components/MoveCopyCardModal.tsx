@@ -78,7 +78,7 @@ export default function MoveCopyCardModal({ isOpen, onClose, onSuccess, card, cu
                         audioUrl: card.audioUrl,
                         boardId: selectedBoardId,
                         color: card.color,
-                        type: card.type
+                        category: card.category
                     })
                 });
 
@@ -160,7 +160,7 @@ export default function MoveCopyCardModal({ isOpen, onClose, onSuccess, card, cu
                             </div>
                             <div className="flex-1">
                                 <p className="font-bold text-gray-900 dark:text-white">{card.label}</p>
-                                <p className="text-xs text-gray-500">{card.type}</p>
+                                {card.category && <p className="text-xs text-gray-500">{card.category}</p>}
                             </div>
                         </div>
                     </div>

@@ -21,9 +21,9 @@ interface AddCardModalProps {
     batchMode?: boolean;
 }
 
-export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdated, boardId, editCard, batchMode = false }: AddCardModalProps) {
+export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdated, boardId, editCard, batchMode = false, existingCategories = [] }: AddCardModalProps & { existingCategories?: string[] }) {
     const [label, setLabel] = useState('');
-    const [cardType, setCardType] = useState<'Thing' | 'Word'>('Thing');
+    const [category, setCategory] = useState('');
 
     // Image State
     const [imageType, setImageType] = useState<'upload' | 'camera' | 'generate'>('upload');
@@ -126,7 +126,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
         setAudioBlob(null);
         setAudioFile(null);
         setAudioType('record');
-        setCardType('Thing');
+        setCategory('');
         setBatchImages([]);
         stopAudioPreview();
         stopCamera();
@@ -156,7 +156,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     useEffect(() => {
         if (editCard && isOpen) {
             setLabel(editCard.label);
-            setCardType(editCard.type || 'Thing');
+            setCategory(editCard.category || '');
             setImagePreview(editCard.imageUrl);
             // Mark that we already have image/audio (existing URLs)
         } else if (!isOpen) {
@@ -422,8 +422,8 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                     label: '', // Empty label - user will edit later
                                     imageUrl: c.imageUrl,
                                     audioUrl: '', // Empty audio - user will edit later
-                                    color: '#6366f1',
-                                    type: 'Thing'
+                                    color: '#6366f1'
+                                    // No category for batch uploads - user will edit later
                                 }))
                             })
                         });
@@ -513,7 +513,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                         imageUrl,
                         audioUrl,
                         color: editCard.color || '#6366f1',
-                        type: cardType
+                        category: category || undefined
                     })
                 });
 
@@ -539,7 +539,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                         audioUrl,
                         boardId,
                         color: '#6366f1',
-                        type: cardType
+                        category: category || undefined
                     })
                 });
 
@@ -686,41 +686,26 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                     />
                                 </div>
 
-                                {/* Card Type Selector */}
-                                <div className="space-y-3">
+                                {/* Category Input */}
+                                <div className="space-y-2">
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Card Type
+                                        Category <span className="text-gray-400 font-normal">(optional)</span>
                                     </label>
-                                    <div className="flex bg-gray-100 dark:bg-slate-800 rounded-xl p-1.5">
-                                        <button
-                                            type="button"
-                                            onClick={() => setCardType('Thing')}
-                                            className={clsx(
-                                                "flex-1 py-2.5 rounded-lg text-sm font-bold transition-all transform active:scale-95",
-                                                cardType === 'Thing'
-                                                    ? "bg-white dark:bg-slate-700 shadow-md text-primary"
-                                                    : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                                            )}
-                                        >
-                                            Thing
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setCardType('Word')}
-                                            className={clsx(
-                                                "flex-1 py-2.5 rounded-lg text-sm font-bold transition-all transform active:scale-95",
-                                                cardType === 'Word'
-                                                    ? "bg-white dark:bg-slate-700 shadow-md text-primary"
-                                                    : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                                            )}
-                                        >
-                                            Word
-                                        </button>
-                                    </div>
+                                    <input
+                                        type="text"
+                                        list="category-suggestions"
+                                        value={category}
+                                        onChange={(e) => setCategory(e.target.value)}
+                                        placeholder="e.g., Food, Actions, Feelings"
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                                    />
+                                    <datalist id="category-suggestions">
+                                        {existingCategories.map((cat) => (
+                                            <option key={cat} value={cat} />
+                                        ))}
+                                    </datalist>
                                     <p className="text-[10px] text-gray-400 px-1">
-                                        {cardType === 'Thing'
-                                            ? "Represent objects, people, or actions with pictures."
-                                            : "Represent abstract concepts or conjunctions."}
+                                        Group cards together for easy filtering
                                     </p>
                                 </div>
                             </>

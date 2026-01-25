@@ -35,7 +35,7 @@ export async function POST(request: Request) {
             imageUrl: cardData.imageUrl,
             audioUrl: cardData.audioUrl || '',
             color: cardData.color || '#6366f1',
-            type: cardData.type || 'Thing',
+            category: cardData.category || undefined, // Optional free-text category
             order: cardData.order ?? index
         }));
 

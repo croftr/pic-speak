@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { auth } from '@clerk/nextjs/server';
+import { log } from 'console';
 
 export async function POST(request: Request) {
     const { userId } = await auth();
@@ -19,6 +20,7 @@ export async function POST(request: Request) {
         }
 
         const apiKey = process.env.GOOGLE_API_KEY;
+        console.log('Using GOOGLE_API_KEY:', apiKey ? 'set' : 'not set');
         if (!apiKey) {
             console.error('GOOGLE_API_KEY is not set');
             return NextResponse.json(

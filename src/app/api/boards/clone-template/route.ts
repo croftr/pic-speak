@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth, clerkClient } from '@clerk/nextjs/server';
-import { addBoard, getCards, addCard, getBoard } from '@/lib/storage';
+import { addBoard, getCards, batchAddCards, getBoard } from '@/lib/storage';
 import { Board, Card } from '@/types';
 
 export async function POST(request: Request) {
@@ -60,16 +60,16 @@ export async function POST(request: Request) {
         // Get all cards from template
         const templateCards = await getCards(templateBoardId);
 
-        // Clone all cards to new board
-        for (const templateCard of templateCards) {
-            const newCard: Card = {
-                ...templateCard,
-                id: crypto.randomUUID(),
-                boardId: newBoardId,
-                // Template cards keep their templateKey, regular cards get full data
-            };
+        // Clone all cards to new board, preserving their original order
+        const cardsToInsert: Card[] = templateCards.map(templateCard => ({
+            ...templateCard,
+            id: crypto.randomUUID(),
+            boardId: newBoardId,
+            // Template cards keep their templateKey, regular cards get full data
+        }));
 
-            await addCard(newCard);
+        if (cardsToInsert.length > 0) {
+            await batchAddCards(cardsToInsert, true); // preserveOrder = true
         }
 
         return NextResponse.json({

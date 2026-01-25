@@ -76,14 +76,14 @@ export async function POST(request: Request) {
         const body = await request.json();
         console.log(`[CreateCard-${requestId}] Request body parsed in ${Date.now() - parseStart}ms`);
 
-        const { label, imageUrl, audioUrl, color, boardId, type } = body;
+        const { label, imageUrl, audioUrl, color, boardId, category } = body;
 
         console.log(`[CreateCard-${requestId}] Card details:`, {
             label: label || 'Untitled',
             boardId,
             hasImage: !!imageUrl,
             hasAudio: !!audioUrl,
-            type: type || 'Thing'
+            category: category || '(none)'
         });
 
         // BoardID and imageUrl are mandatory, audioUrl is optional for batch uploads
@@ -123,7 +123,7 @@ export async function POST(request: Request) {
             imageUrl,
             audioUrl,
             color: color || 'var(--primary)',
-            type: type || 'Thing',
+            category: category || undefined, // Optional free-text category
         };
 
         console.log(`[CreateCard-${requestId}] Creating card with ID: ${cardId}`);

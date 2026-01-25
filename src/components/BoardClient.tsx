@@ -92,7 +92,7 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
 
     // Search/Filter state
     const [searchTerm, setSearchTerm] = useState('');
-    const [typeFilter, setTypeFilter] = useState<'All' | 'Thing' | 'Word'>('All');
+    const [categoryFilter, setCategoryFilter] = useState<string>('All');
 
     // Keyboard navigation state
     const [focusedCardIndex, setFocusedCardIndex] = useState<number>(-1);
@@ -271,17 +271,18 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
         }
     };
 
-    // Filter cards based on search term and type
+    // Filter cards based on search term and category
     // Use optimisticCards for instant UI updates
     const displayCards = optimisticCards;
-    const hasThings = displayCards.some(c => c.type === 'Thing');
-    const hasWords = displayCards.some(c => c.type === 'Word');
-    const showTypeFilter = hasThings && hasWords;
+
+    // Get unique categories from cards (excluding empty/undefined)
+    const existingCategories = [...new Set(displayCards.map(c => c.category).filter((c): c is string => !!c))];
+    const showCategoryFilter = existingCategories.length > 0;
 
     const filteredCards = displayCards.filter(card => {
         const matchesSearch = card.label.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesType = typeFilter === 'All' || card.type === typeFilter;
-        return matchesSearch && matchesType;
+        const matchesCategory = categoryFilter === 'All' || card.category === categoryFilter;
+        return matchesSearch && matchesCategory;
     });
 
     const handleDragEnd = async (event: DragEndEvent) => {
@@ -657,24 +658,38 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
                 </div>
             )}
 
-            {/* Type Filter - Only show if both types exist */}
-            {showTypeFilter && (
+            {/* Category Filter - Only show if categories exist */}
+            {showCategoryFilter && (
                 <div className="max-w-7xl mx-auto mb-6 flex justify-center">
                     <div className="bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm p-1 rounded-2xl border border-gray-200 dark:border-gray-800 flex gap-1 shadow-sm overflow-x-auto max-w-full">
-                        {(['All', 'Thing', 'Word'] as const).map((type) => (
+                        <button
+                            onClick={() => setCategoryFilter('All')}
+                            className={clsx(
+                                "px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all transform active:scale-95 whitespace-nowrap",
+                                categoryFilter === 'All'
+                                    ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105"
+                                    : "text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800"
+                            )}
+                        >
+                            All
+                            <span className="ml-2 opacity-50 text-[10px]">
+                                ({displayCards.length})
+                            </span>
+                        </button>
+                        {existingCategories.map((cat) => (
                             <button
-                                key={type}
-                                onClick={() => setTypeFilter(type)}
+                                key={cat}
+                                onClick={() => setCategoryFilter(cat)}
                                 className={clsx(
                                     "px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all transform active:scale-95 whitespace-nowrap",
-                                    typeFilter === type
+                                    categoryFilter === cat
                                         ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105"
                                         : "text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800"
                                 )}
                             >
-                                {type === 'All' ? 'Everything' : type}
+                                {cat}
                                 <span className="ml-2 opacity-50 text-[10px]">
-                                    ({type === 'All' ? displayCards.length : displayCards.filter(c => c.type === type).length})
+                                    ({displayCards.filter(c => c.category === cat).length})
                                 </span>
                             </button>
                         ))}
@@ -784,6 +799,7 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
                 boardId={boardId}
                 editCard={editingCard}
                 batchMode={isBatchMode}
+                existingCategories={existingCategories}
             />
 
             {/* Move/Copy Modal */}

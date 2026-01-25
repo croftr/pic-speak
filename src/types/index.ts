@@ -6,7 +6,7 @@ export interface Card {
   audioUrl: string;
   color?: string;
   order?: number;
-  type: 'Thing' | 'Word';
+  category?: string; // Optional free-text category for filtering cards (e.g., "Food", "Actions", "Feelings")
   templateKey?: string; // If set, this card references a template and cannot be edited
 }
 

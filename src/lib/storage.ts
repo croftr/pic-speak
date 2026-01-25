@@ -10,7 +10,7 @@ type CardRow = {
     audio_url: string;
     color?: string;
     order?: number;
-    type: 'Thing' | 'Word';
+    type?: string; // Maps to 'category' in the app - optional free-text field
     template_key?: string;
     created_at?: string;
     updated_at?: string;
@@ -72,24 +72,24 @@ const STARTER_BOARDS: Board[] = [
 
 // Template card definitions - these are referenced by templateKey and never stored in DB
 const TEMPLATE_CARDS_REGISTRY: Record<string, Omit<Card, 'id' | 'boardId' | 'order'>> = {
-    'tpl-yes': { label: 'Yes', imageUrl: '/prebuilt/yes.png', audioUrl: '/prebuilt/yes.mp3', type: 'Word', templateKey: 'tpl-yes' },
-    'tpl-no': { label: 'No', imageUrl: '/prebuilt/no.png', audioUrl: '/prebuilt/no.mp3', type: 'Word', templateKey: 'tpl-no' },
-    'tpl-hello': { label: 'Hello', imageUrl: '/prebuilt/hello.png', audioUrl: '/prebuilt/hello.mp3', type: 'Word', templateKey: 'tpl-hello' },
-    'tpl-bye': { label: 'Bye', imageUrl: '/prebuilt/bye.png', audioUrl: '/prebuilt/bye.mp3', type: 'Word', templateKey: 'tpl-bye' },
-    'tpl-thank-you': { label: 'Thank You', imageUrl: '/prebuilt/thank_you.png', audioUrl: '/prebuilt/thank_you.mp3', type: 'Word', templateKey: 'tpl-thank-you' },
-    'tpl-please': { label: 'Please', imageUrl: '/prebuilt/please.png', audioUrl: '/prebuilt/please.mp3', type: 'Word', templateKey: 'tpl-please' },
-    'tpl-computer': { label: 'Computer', imageUrl: '/prebuilt/computer.png', audioUrl: '/prebuilt/computer.mp3', type: 'Thing', templateKey: 'tpl-computer' },
-    'tpl-tablet': { label: 'Tablet', imageUrl: '/prebuilt/tablet.png', audioUrl: '/prebuilt/tablet.mp3', type: 'Thing', templateKey: 'tpl-tablet' },
-    'tpl-mobile-phone': { label: 'Mobile Phone', imageUrl: '/prebuilt/mobile_phone.png', audioUrl: '/prebuilt/mobile_phone.mp3', type: 'Thing', templateKey: 'tpl-mobile-phone' },
-    'tpl-bed': { label: 'Bed', imageUrl: '/prebuilt/bed.png', audioUrl: '/prebuilt/bed.mp3', type: 'Thing', templateKey: 'tpl-bed' },
-    'tpl-toilet': { label: 'Toilet', imageUrl: '/prebuilt/toilet.png', audioUrl: '/prebuilt/toilet.mp3', type: 'Thing', templateKey: 'tpl-toilet' },
-    'tpl-brush-teeth': { label: 'Brush Teeth', imageUrl: '/prebuilt/brush_teeth.png', audioUrl: '/prebuilt/brush_teeth.mp3', type: 'Thing', templateKey: 'tpl-brush-teeth' },
-    'tpl-school': { label: 'School', imageUrl: '/prebuilt/school.png', audioUrl: '/prebuilt/school.wav', type: 'Thing', templateKey: 'tpl-school' },
-    'tpl-juice': { label: 'Juice', imageUrl: '/prebuilt/juice.png', audioUrl: '/prebuilt/juice.wav', type: 'Thing', templateKey: 'tpl-juice' },
-    'tpl-chocolate': { label: 'Chocolate', imageUrl: '/prebuilt/chocolate.png', audioUrl: '/prebuilt/chocolate.wav', type: 'Thing', templateKey: 'tpl-chocolate' },
-    'tpl-sweets': { label: 'Sweets', imageUrl: '/prebuilt/sweets.png', audioUrl: '/prebuilt/sweets.wav', type: 'Thing', templateKey: 'tpl-sweets' },
-    'tpl-cake': { label: 'Cake', imageUrl: '/prebuilt/cake.png', audioUrl: '/prebuilt/cake.wav', type: 'Thing', templateKey: 'tpl-cake' },
-    'tpl-apple': { label: 'Apple', imageUrl: '/prebuilt/apple.png', audioUrl: '/prebuilt/apple.wav', type: 'Thing', templateKey: 'tpl-apple' },
+    'tpl-yes': { label: 'Yes', imageUrl: '/prebuilt/yes.png', audioUrl: '/prebuilt/yes.mp3', category: 'Word', templateKey: 'tpl-yes' },
+    'tpl-no': { label: 'No', imageUrl: '/prebuilt/no.png', audioUrl: '/prebuilt/no.mp3', category: 'Word', templateKey: 'tpl-no' },
+    'tpl-hello': { label: 'Hello', imageUrl: '/prebuilt/hello.png', audioUrl: '/prebuilt/hello.mp3', category: 'Word', templateKey: 'tpl-hello' },
+    'tpl-bye': { label: 'Bye', imageUrl: '/prebuilt/bye.png', audioUrl: '/prebuilt/bye.mp3', category: 'Word', templateKey: 'tpl-bye' },
+    'tpl-thank-you': { label: 'Thank You', imageUrl: '/prebuilt/thank_you.png', audioUrl: '/prebuilt/thank_you.mp3', category: 'Word', templateKey: 'tpl-thank-you' },
+    'tpl-please': { label: 'Please', imageUrl: '/prebuilt/please.png', audioUrl: '/prebuilt/please.mp3', category: 'Word', templateKey: 'tpl-please' },
+    'tpl-computer': { label: 'Computer', imageUrl: '/prebuilt/computer.png', audioUrl: '/prebuilt/computer.mp3', category: 'Thing', templateKey: 'tpl-computer' },
+    'tpl-tablet': { label: 'Tablet', imageUrl: '/prebuilt/tablet.png', audioUrl: '/prebuilt/tablet.mp3', category: 'Thing', templateKey: 'tpl-tablet' },
+    'tpl-mobile-phone': { label: 'Mobile Phone', imageUrl: '/prebuilt/mobile_phone.png', audioUrl: '/prebuilt/mobile_phone.mp3', category: 'Thing', templateKey: 'tpl-mobile-phone' },
+    'tpl-bed': { label: 'Bed', imageUrl: '/prebuilt/bed.png', audioUrl: '/prebuilt/bed.mp3', category: 'Thing', templateKey: 'tpl-bed' },
+    'tpl-toilet': { label: 'Toilet', imageUrl: '/prebuilt/toilet.png', audioUrl: '/prebuilt/toilet.mp3', category: 'Thing', templateKey: 'tpl-toilet' },
+    'tpl-brush-teeth': { label: 'Brush Teeth', imageUrl: '/prebuilt/brush_teeth.png', audioUrl: '/prebuilt/brush_teeth.mp3', category: 'Thing', templateKey: 'tpl-brush-teeth' },
+    'tpl-school': { label: 'School', imageUrl: '/prebuilt/school.png', audioUrl: '/prebuilt/school.wav', category: 'Thing', templateKey: 'tpl-school' },
+    'tpl-juice': { label: 'Juice', imageUrl: '/prebuilt/juice.png', audioUrl: '/prebuilt/juice.wav', category: 'Thing', templateKey: 'tpl-juice' },
+    'tpl-chocolate': { label: 'Chocolate', imageUrl: '/prebuilt/chocolate.png', audioUrl: '/prebuilt/chocolate.wav', category: 'Thing', templateKey: 'tpl-chocolate' },
+    'tpl-sweets': { label: 'Sweets', imageUrl: '/prebuilt/sweets.png', audioUrl: '/prebuilt/sweets.wav', category: 'Thing', templateKey: 'tpl-sweets' },
+    'tpl-cake': { label: 'Cake', imageUrl: '/prebuilt/cake.png', audioUrl: '/prebuilt/cake.wav', category: 'Thing', templateKey: 'tpl-cake' },
+    'tpl-apple': { label: 'Apple', imageUrl: '/prebuilt/apple.png', audioUrl: '/prebuilt/apple.wav', category: 'Thing', templateKey: 'tpl-apple' },
 };
 
 // Export for use in other modules
@@ -99,24 +99,24 @@ export function getTemplateCard(templateKey: string): Omit<Card, 'id' | 'boardId
 
 const STARTER_CARDS: Record<string, Card[]> = {
     'starter-template': [
-        { id: 'sbp-1', boardId: 'starter-template', label: 'Yes', imageUrl: '/prebuilt/yes.png', audioUrl: '/prebuilt/yes.mp3', type: 'Word', order: 0, templateKey: 'tpl-yes' },
-        { id: 'sbp-2', boardId: 'starter-template', label: 'No', imageUrl: '/prebuilt/no.png', audioUrl: '/prebuilt/no.mp3', type: 'Word', order: 1, templateKey: 'tpl-no' },
-        { id: 'sbp-3', boardId: 'starter-template', label: 'Hello', imageUrl: '/prebuilt/hello.png', audioUrl: '/prebuilt/hello.mp3', type: 'Word', order: 2, templateKey: 'tpl-hello' },
-        { id: 'sbp-4', boardId: 'starter-template', label: 'Bye', imageUrl: '/prebuilt/bye.png', audioUrl: '/prebuilt/bye.mp3', type: 'Word', order: 3, templateKey: 'tpl-bye' },
-        { id: 'sbp-5', boardId: 'starter-template', label: 'Thank You', imageUrl: '/prebuilt/thank_you.png', audioUrl: '/prebuilt/thank_you.mp3', type: 'Word', order: 4, templateKey: 'tpl-thank-you' },
-        { id: 'sbp-6', boardId: 'starter-template', label: 'Please', imageUrl: '/prebuilt/please.png', audioUrl: '/prebuilt/please.mp3', type: 'Word', order: 5, templateKey: 'tpl-please' },
-        { id: 'sbp-7', boardId: 'starter-template', label: 'Computer', imageUrl: '/prebuilt/computer.png', audioUrl: '/prebuilt/computer.mp3', type: 'Thing', order: 6, templateKey: 'tpl-computer' },
-        { id: 'sbp-8', boardId: 'starter-template', label: 'Tablet', imageUrl: '/prebuilt/tablet.png', audioUrl: '/prebuilt/tablet.mp3', type: 'Thing', order: 7, templateKey: 'tpl-tablet' },
-        { id: 'sbp-9', boardId: 'starter-template', label: 'Mobile Phone', imageUrl: '/prebuilt/mobile_phone.png', audioUrl: '/prebuilt/mobile_phone.mp3', type: 'Thing', order: 8, templateKey: 'tpl-mobile-phone' },
-        { id: 'sbp-10', boardId: 'starter-template', label: 'Bed', imageUrl: '/prebuilt/bed.png', audioUrl: '/prebuilt/bed.mp3', type: 'Thing', order: 9, templateKey: 'tpl-bed' },
-        { id: 'sbp-11', boardId: 'starter-template', label: 'Toilet', imageUrl: '/prebuilt/toilet.png', audioUrl: '/prebuilt/toilet.mp3', type: 'Thing', order: 10, templateKey: 'tpl-toilet' },
-        { id: 'sbp-12', boardId: 'starter-template', label: 'Brush Teeth', imageUrl: '/prebuilt/brush_teeth.png', audioUrl: '/prebuilt/brush_teeth.mp3', type: 'Thing', order: 11, templateKey: 'tpl-brush-teeth' },
-        { id: 'sbp-13', boardId: 'starter-template', label: 'School', imageUrl: '/prebuilt/school.png', audioUrl: '/prebuilt/school.wav', type: 'Thing', order: 12, templateKey: 'tpl-school' },
-        { id: 'sbp-14', boardId: 'starter-template', label: 'Juice', imageUrl: '/prebuilt/juice.png', audioUrl: '/prebuilt/juice.wav', type: 'Thing', order: 13, templateKey: 'tpl-juice' },
-        { id: 'sbp-15', boardId: 'starter-template', label: 'Chocolate', imageUrl: '/prebuilt/chocolate.png', audioUrl: '/prebuilt/chocolate.wav', type: 'Thing', order: 14, templateKey: 'tpl-chocolate' },
-        { id: 'sbp-16', boardId: 'starter-template', label: 'Sweets', imageUrl: '/prebuilt/sweets.png', audioUrl: '/prebuilt/sweets.wav', type: 'Thing', order: 15, templateKey: 'tpl-sweets' },
-        { id: 'sbp-17', boardId: 'starter-template', label: 'Cake', imageUrl: '/prebuilt/cake.png', audioUrl: '/prebuilt/cake.wav', type: 'Thing', order: 16, templateKey: 'tpl-cake' },
-        { id: 'sbp-18', boardId: 'starter-template', label: 'Apple', imageUrl: '/prebuilt/apple.png', audioUrl: '/prebuilt/apple.wav', type: 'Thing', order: 17, templateKey: 'tpl-apple' },
+        { id: 'sbp-1', boardId: 'starter-template', label: 'Yes', imageUrl: '/prebuilt/yes.png', audioUrl: '/prebuilt/yes.mp3', category: 'Word', order: 0, templateKey: 'tpl-yes' },
+        { id: 'sbp-2', boardId: 'starter-template', label: 'No', imageUrl: '/prebuilt/no.png', audioUrl: '/prebuilt/no.mp3', category: 'Word', order: 1, templateKey: 'tpl-no' },
+        { id: 'sbp-3', boardId: 'starter-template', label: 'Hello', imageUrl: '/prebuilt/hello.png', audioUrl: '/prebuilt/hello.mp3', category: 'Word', order: 2, templateKey: 'tpl-hello' },
+        { id: 'sbp-4', boardId: 'starter-template', label: 'Bye', imageUrl: '/prebuilt/bye.png', audioUrl: '/prebuilt/bye.mp3', category: 'Word', order: 3, templateKey: 'tpl-bye' },
+        { id: 'sbp-5', boardId: 'starter-template', label: 'Thank You', imageUrl: '/prebuilt/thank_you.png', audioUrl: '/prebuilt/thank_you.mp3', category: 'Word', order: 4, templateKey: 'tpl-thank-you' },
+        { id: 'sbp-6', boardId: 'starter-template', label: 'Please', imageUrl: '/prebuilt/please.png', audioUrl: '/prebuilt/please.mp3', category: 'Word', order: 5, templateKey: 'tpl-please' },
+        { id: 'sbp-7', boardId: 'starter-template', label: 'Computer', imageUrl: '/prebuilt/computer.png', audioUrl: '/prebuilt/computer.mp3', category: 'Thing', order: 6, templateKey: 'tpl-computer' },
+        { id: 'sbp-8', boardId: 'starter-template', label: 'Tablet', imageUrl: '/prebuilt/tablet.png', audioUrl: '/prebuilt/tablet.mp3', category: 'Thing', order: 7, templateKey: 'tpl-tablet' },
+        { id: 'sbp-9', boardId: 'starter-template', label: 'Mobile Phone', imageUrl: '/prebuilt/mobile_phone.png', audioUrl: '/prebuilt/mobile_phone.mp3', category: 'Thing', order: 8, templateKey: 'tpl-mobile-phone' },
+        { id: 'sbp-10', boardId: 'starter-template', label: 'Bed', imageUrl: '/prebuilt/bed.png', audioUrl: '/prebuilt/bed.mp3', category: 'Thing', order: 9, templateKey: 'tpl-bed' },
+        { id: 'sbp-11', boardId: 'starter-template', label: 'Toilet', imageUrl: '/prebuilt/toilet.png', audioUrl: '/prebuilt/toilet.mp3', category: 'Thing', order: 10, templateKey: 'tpl-toilet' },
+        { id: 'sbp-12', boardId: 'starter-template', label: 'Brush Teeth', imageUrl: '/prebuilt/brush_teeth.png', audioUrl: '/prebuilt/brush_teeth.mp3', category: 'Thing', order: 11, templateKey: 'tpl-brush-teeth' },
+        { id: 'sbp-13', boardId: 'starter-template', label: 'School', imageUrl: '/prebuilt/school.png', audioUrl: '/prebuilt/school.wav', category: 'Thing', order: 12, templateKey: 'tpl-school' },
+        { id: 'sbp-14', boardId: 'starter-template', label: 'Juice', imageUrl: '/prebuilt/juice.png', audioUrl: '/prebuilt/juice.wav', category: 'Thing', order: 13, templateKey: 'tpl-juice' },
+        { id: 'sbp-15', boardId: 'starter-template', label: 'Chocolate', imageUrl: '/prebuilt/chocolate.png', audioUrl: '/prebuilt/chocolate.wav', category: 'Thing', order: 14, templateKey: 'tpl-chocolate' },
+        { id: 'sbp-16', boardId: 'starter-template', label: 'Sweets', imageUrl: '/prebuilt/sweets.png', audioUrl: '/prebuilt/sweets.wav', category: 'Thing', order: 15, templateKey: 'tpl-sweets' },
+        { id: 'sbp-17', boardId: 'starter-template', label: 'Cake', imageUrl: '/prebuilt/cake.png', audioUrl: '/prebuilt/cake.wav', category: 'Thing', order: 16, templateKey: 'tpl-cake' },
+        { id: 'sbp-18', boardId: 'starter-template', label: 'Apple', imageUrl: '/prebuilt/apple.png', audioUrl: '/prebuilt/apple.wav', category: 'Thing', order: 17, templateKey: 'tpl-apple' },
     ]
 };
 
@@ -153,12 +153,12 @@ export async function getCards(boardId?: string): Promise<Card[]> {
                     audioUrl: template.audioUrl,
                     color: row.color,
                     order: row.order,
-                    type: template.type,
+                    category: template.category,
                     templateKey: row.template_key
                 };
             }
 
-            // Regular user-created card
+            // Regular user-created card - map 'type' column to 'category'
             return {
                 id: row.id,
                 boardId: row.board_id,
@@ -167,7 +167,7 @@ export async function getCards(boardId?: string): Promise<Card[]> {
                 audioUrl: row.audio_url,
                 color: row.color,
                 order: row.order,
-                type: row.type || 'Thing'
+                category: row.type || undefined // DB column is 'type', app uses 'category'
             };
         });
     } catch (error) {
@@ -184,26 +184,42 @@ export async function addCard(card: Card): Promise<void> {
 
     const client = await getDbClient();
     try {
+        await client.query('BEGIN');
+
         const queryStart = Date.now();
+
+        // Shift all existing cards' order by 1 to make room at position 0
+        // This ensures the newest card appears first
+        await client.query(
+            'UPDATE cards SET "order" = "order" + 1 WHERE board_id = $1',
+            [card.boardId]
+        );
+        console.log(`[DB-AddCard] Shifted existing card orders for board ${card.boardId}`);
+
         // If this is a template card, only store the template key and minimal data
         if (card.templateKey) {
             console.log(`[DB-AddCard] Inserting template card with key: ${card.templateKey}`);
             await client.query(
                 'INSERT INTO cards (id, board_id, template_key, "order", color) VALUES ($1, $2, $3, $4, $5)',
-                [card.id, card.boardId, card.templateKey, card.order || 0, card.color || '#6366f1']
+                [card.id, card.boardId, card.templateKey, 0, card.color || '#6366f1']
             );
         } else {
-            // Regular user card - store all data
+            // Regular user card - store all data at order 0 (top of board)
+            // Note: 'category' maps to 'type' column in database
             console.log(`[DB-AddCard] Inserting user card: ${card.label}`);
             await client.query(
                 'INSERT INTO cards (id, board_id, label, image_url, audio_url, color, "order", type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-                [card.id, card.boardId, card.label, card.imageUrl, card.audioUrl, card.color || '#6366f1', card.order || 0, card.type || 'Thing']
+                [card.id, card.boardId, card.label, card.imageUrl, card.audioUrl, card.color || '#6366f1', 0, card.category || null]
             );
         }
+
+        await client.query('COMMIT');
+
         const queryTime = Date.now() - queryStart;
         const totalTime = Date.now() - startTime;
         console.log(`[DB-AddCard] SUCCESS! Query: ${queryTime}ms, Total: ${totalTime}ms`);
     } catch (error) {
+        await client.query('ROLLBACK');
         const totalTime = Date.now() - startTime;
         console.error(`[DB-AddCard] FAILED after ${totalTime}ms for card ${card.id}:`, error);
         console.error(`[DB-AddCard] Error details:`, {
@@ -221,12 +237,25 @@ export async function addCard(card: Card): Promise<void> {
     }
 }
 
-export async function batchAddCards(cards: Card[]): Promise<void> {
+export async function batchAddCards(cards: Card[], preserveOrder: boolean = false): Promise<void> {
     if (cards.length === 0) return;
 
     const client = await getDbClient();
     try {
         await client.query('BEGIN');
+
+        // Get the boardId from the first card (all cards should be for the same board)
+        const boardId = cards[0].boardId;
+
+        // Shift all existing cards' order by the count of new cards to make room at the top
+        // This ensures the newest cards appear first (unless preserveOrder is true)
+        if (!preserveOrder) {
+            await client.query(
+                'UPDATE cards SET "order" = "order" + $1 WHERE board_id = $2',
+                [cards.length, boardId]
+            );
+            console.log(`[DB-BatchAddCards] Shifted existing card orders by ${cards.length} for board ${boardId}`);
+        }
 
         // Separate template cards from regular cards
         const templateCards = cards.filter(c => c.templateKey);
@@ -238,12 +267,14 @@ export async function batchAddCards(cards: Card[]): Promise<void> {
             const templatePlaceholders: string[] = [];
             let paramIndex = 1;
 
-            templateCards.forEach((card) => {
+            templateCards.forEach((card, index) => {
+                // Use provided order if preserveOrder, otherwise assign sequential orders starting at 0
+                const order = preserveOrder ? (card.order || 0) : index;
                 templateValues.push(
                     card.id,
                     card.boardId,
                     card.templateKey,
-                    card.order || 0,
+                    order,
                     card.color || '#6366f1'
                 );
                 templatePlaceholders.push(
@@ -264,7 +295,12 @@ export async function batchAddCards(cards: Card[]): Promise<void> {
             const regularPlaceholders: string[] = [];
             let paramIndex = 1;
 
-            regularCards.forEach((card) => {
+            // Calculate starting index for regular cards (after template cards if not preserving order)
+            const templateCount = preserveOrder ? 0 : templateCards.length;
+
+            regularCards.forEach((card, index) => {
+                // Use provided order if preserveOrder, otherwise assign sequential orders
+                const order = preserveOrder ? (card.order || 0) : (templateCount + index);
                 regularValues.push(
                     card.id,
                     card.boardId,
@@ -272,8 +308,8 @@ export async function batchAddCards(cards: Card[]): Promise<void> {
                     card.imageUrl,
                     card.audioUrl,
                     card.color || '#6366f1',
-                    card.order || 0,
-                    card.type || 'Thing'
+                    order,
+                    card.category || null // 'category' maps to 'type' column in DB
                 );
                 regularPlaceholders.push(
                     `($${paramIndex}, $${paramIndex + 1}, $${paramIndex + 2}, $${paramIndex + 3}, $${paramIndex + 4}, $${paramIndex + 5}, $${paramIndex + 6}, $${paramIndex + 7})`
@@ -300,9 +336,10 @@ export async function batchAddCards(cards: Card[]): Promise<void> {
 export async function updateCard(updatedCard: Card): Promise<void> {
     const client = await getDbClient();
     try {
+        // Note: 'category' maps to 'type' column in database
         await client.query(
             'UPDATE cards SET label = $1, image_url = $2, audio_url = $3, color = $4, type = $5, board_id = $6, updated_at = CURRENT_TIMESTAMP WHERE id = $7',
-            [updatedCard.label, updatedCard.imageUrl, updatedCard.audioUrl, updatedCard.color || '#6366f1', updatedCard.type || 'Thing', updatedCard.boardId, updatedCard.id]
+            [updatedCard.label, updatedCard.imageUrl, updatedCard.audioUrl, updatedCard.color || '#6366f1', updatedCard.category || null, updatedCard.boardId, updatedCard.id]
         );
     } catch (error) {
         console.error('Error updating card:', error);
