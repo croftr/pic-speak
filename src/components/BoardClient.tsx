@@ -21,7 +21,7 @@ const ConfirmDialog = dynamic(() => import('@/components/ConfirmDialog'), {
     loading: () => null
 });
 import { Card, Board } from '@/types';
-import { Plus, Upload, ArrowLeft, Save, Loader2, Search, X, Trash2, Share2, Check, User, Pencil } from 'lucide-react';
+import { Plus, Upload, ArrowLeft, Save, Loader2, Search, X, Trash2, Share2, Check, User, Pencil, MoreHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -103,6 +103,12 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
 
     // Share button state
     const [isCopied, setIsCopied] = useState(false);
+
+    // Board settings panel state (collapsed by default on mobile)
+    const [isSettingsExpanded, setIsSettingsExpanded] = useState(false);
+
+    // More options menu state for secondary actions
+    const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
 
     // Swipe gesture ref
     const gridRef = useRef<HTMLDivElement>(null);
@@ -467,38 +473,88 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
     }, [isEditing, filteredCards, focusedCardIndex]);
 
     return (
-        <main className="min-h-screen p-2 sm:p-4 md:p-8 relative pb-32">
+        <main className={`min-h-screen p-2 sm:p-4 md:p-8 relative ${isEditing ? 'pb-28 sm:pb-32' : 'pb-8'}`}>
             {/* Header */}
             <header className={`max-w-7xl mx-auto mb-4 md:mb-6 sticky top-16 sm:top-[4.5rem] z-40 transition-transform duration-300 ${isHeaderVisible ? 'translate-y-0' : '-translate-y-[150%]'
                 }`}>
                 {isEditing ? (
-                    // EDIT MODE - Compact Sticky Header
-                    <div className="flex items-center justify-between gap-3 p-3 sm:p-4 glass rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-lg border border-white/20">
-                        <div className="flex items-center gap-3 min-w-0">
+                    // EDIT MODE - Clean, minimal header
+                    <div className="flex items-center justify-between gap-2 p-2 sm:p-3 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-md border border-gray-100 dark:border-gray-800">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
                             <Link
-                                href="/my-boards"
-                                className="p-2 sm:p-2.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-colors flex items-center justify-center text-gray-600 dark:text-gray-300 flex-shrink-0"
-                                title="Exit Edit Mode"
+                                href={`/board/${board?.id}`}
+                                className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors flex items-center justify-center text-gray-600 dark:text-gray-300 flex-shrink-0 touch-manipulation"
+                                title="Done Editing"
                             >
-                                <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+                                <ArrowLeft className="w-5 h-5" />
                             </Link>
-                            <h1 className="font-bold text-lg sm:text-xl text-gray-900 dark:text-white truncate">
-                                Edit Board
-                            </h1>
+                            <button
+                                onClick={() => setIsSettingsExpanded(!isSettingsExpanded)}
+                                className="flex items-center gap-2 min-w-0 flex-1 p-1.5 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-lg transition-colors touch-manipulation"
+                            >
+                                <span className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white truncate">
+                                    {editName || 'Untitled Board'}
+                                </span>
+                                {isSettingsExpanded ? (
+                                    <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                ) : (
+                                    <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                )}
+                            </button>
                         </div>
 
-                        <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                            {/* More options menu for secondary actions */}
+                            <div className="relative">
+                                <button
+                                    onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+                                    className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-gray-500 dark:text-gray-400 touch-manipulation"
+                                    title="More options"
+                                >
+                                    <MoreHorizontal className="w-5 h-5" />
+                                </button>
+                                {isMoreMenuOpen && (
+                                    <>
+                                        <div
+                                            className="fixed inset-0 z-[60]"
+                                            onClick={() => setIsMoreMenuOpen(false)}
+                                        />
+                                        <div className="absolute right-0 top-full mt-1 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-1.5 min-w-[180px] z-[61] animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                                            <button
+                                                onClick={() => {
+                                                    handleBatchUpload();
+                                                    setIsMoreMenuOpen(false);
+                                                }}
+                                                className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg transition-colors text-left"
+                                            >
+                                                <Upload className="w-4 h-4" />
+                                                Batch Upload
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setIsDeleteDialogOpen(true);
+                                                    setIsMoreMenuOpen(false);
+                                                }}
+                                                className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors text-left"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                                Delete Board
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                             <button
                                 onClick={handleSaveBoard}
                                 disabled={isSaving}
-                                className="bg-primary text-white px-4 py-2 sm:py-2.5 rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-primary/90 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+                                className="bg-primary text-white px-3 py-2 rounded-lg font-semibold shadow-md hover:shadow-lg hover:bg-primary/90 transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed text-sm touch-manipulation"
                             >
                                 {isSaving ? (
                                     <Loader2 className="w-4 h-4 animate-spin" />
                                 ) : (
-                                    <Save className="w-4 h-4" />
+                                    <Check className="w-4 h-4" />
                                 )}
-                                <span>Save</span>
+                                <span className="hidden sm:inline">Save</span>
                             </button>
                         </div>
                     </div>
@@ -573,82 +629,81 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
                 )}
             </header>
 
-            {/* Board Settings Form - Edit Mode Only - Placed in normal flow */}
-            {isEditing && (
-                <div className="max-w-7xl mx-auto mb-6 px-1">
-                    <div className="bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm rounded-3xl p-4 sm:p-6 border border-gray-100 dark:border-gray-800 shadow-sm space-y-5">
-                        <div className="grid gap-5 md:grid-cols-2">
-                            {/* Board Name Input */}
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide px-1">
-                                    Board Name
-                                </label>
-                                <input
-                                    value={editName}
-                                    onChange={(e) => setEditName(e.target.value)}
-                                    className="w-full text-lg font-bold bg-white dark:bg-slate-800 border-2 border-gray-200 dark:border-gray-700 focus:border-primary rounded-xl px-4 py-3 outline-none text-gray-900 dark:text-white placeholder-gray-400 transition-colors"
-                                    placeholder="Enter board name..."
-                                />
-                            </div>
-
-                            {/* Description Input */}
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide px-1">
-                                    Description (Optional)
-                                </label>
-                                <input
-                                    value={editDesc}
-                                    onChange={(e) => setEditDesc(e.target.value)}
-                                    className="w-full text-base bg-white dark:bg-slate-800 border-2 border-gray-200 dark:border-gray-700 focus:border-primary rounded-xl px-4 py-3.5 outline-none text-gray-700 dark:text-gray-300 placeholder-gray-400 transition-colors"
-                                    placeholder="Add a description..."
-                                />
-                            </div>
-                        </div>
-
-                        {/* Toggles & Actions */}
-                        <div className="flex flex-col sm:flex-row gap-4 pt-2">
-                            <label className="flex items-center gap-3 p-3.5 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-xl cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex-1">
-                                <input
-                                    type="checkbox"
-                                    checked={isPublic}
-                                    onChange={(e) => setIsPublic(e.target.checked)}
-                                    className="w-5 h-5 rounded border-2 border-blue-300 dark:border-blue-700 text-primary focus:ring-primary focus:ring-2 cursor-pointer flex-shrink-0"
-                                />
-                                <div className="flex-1">
-                                    <span className="block text-sm font-bold text-gray-900 dark:text-white">Public Board</span>
-                                    <span className="block text-xs text-gray-500 dark:text-gray-400">Others can view with link</span>
-                                </div>
+            {/* Board Settings Panel - Collapsible in Edit Mode */}
+            {isEditing && isSettingsExpanded && (
+                <div className="max-w-7xl mx-auto mb-4 px-1 animate-in slide-in-from-top-2 duration-200">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-gray-200 dark:border-gray-700 shadow-sm space-y-3">
+                        {/* Board Name Input */}
+                        <div>
+                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 px-0.5">
+                                Board Name
                             </label>
-
-                            <button
-                                onClick={() => setIsDeleteDialogOpen(true)}
-                                className="flex items-center justify-center gap-2 p-3.5 text-red-600 bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-xl font-bold text-sm hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors sm:flex-none sm:px-6"
-                                title="Delete Board"
-                            >
-                                <Trash2 className="w-5 h-5" />
-                                <span>Delete Board</span>
-                            </button>
+                            <input
+                                value={editName}
+                                onChange={(e) => setEditName(e.target.value)}
+                                className="w-full text-base font-semibold bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-gray-700 focus:border-primary focus:ring-1 focus:ring-primary/30 rounded-lg px-3 py-2.5 outline-none text-gray-900 dark:text-white placeholder-gray-400 transition-all"
+                                placeholder="Enter board name..."
+                            />
                         </div>
+
+                        {/* Description Input */}
+                        <div>
+                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 px-0.5">
+                                Description <span className="text-gray-400">(optional)</span>
+                            </label>
+                            <input
+                                value={editDesc}
+                                onChange={(e) => setEditDesc(e.target.value)}
+                                className="w-full text-sm bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-gray-700 focus:border-primary focus:ring-1 focus:ring-primary/30 rounded-lg px-3 py-2.5 outline-none text-gray-700 dark:text-gray-300 placeholder-gray-400 transition-all"
+                                placeholder="Add a description..."
+                            />
+                        </div>
+
+                        {/* Public Toggle - Compact */}
+                        <label className="flex items-center gap-3 p-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors">
+                            <input
+                                type="checkbox"
+                                checked={isPublic}
+                                onChange={(e) => setIsPublic(e.target.checked)}
+                                className="w-4 h-4 rounded border-2 border-gray-300 dark:border-gray-600 text-primary focus:ring-primary focus:ring-2 cursor-pointer flex-shrink-0"
+                            />
+                            <div className="flex-1 min-w-0">
+                                <span className="block text-sm font-medium text-gray-900 dark:text-white">Public Board</span>
+                                <span className="block text-xs text-gray-500 dark:text-gray-400">Share with anyone via link</span>
+                            </div>
+                            {isPublic && (
+                                <button
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        handleShare();
+                                    }}
+                                    className="p-1.5 text-primary hover:bg-primary/10 rounded-md transition-colors flex-shrink-0"
+                                    title="Copy share link"
+                                >
+                                    {isCopied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+                                </button>
+                            )}
+                        </label>
                     </div>
                 </div>
             )}
 
-            {/* Search Bar - Only show when cards exist and in edit mode */}
-            {isEditing && displayCards.length > 0 && (
-                <div className="max-w-7xl mx-auto mb-4 sm:mb-6">
+            {/* Search Bar - Only show when there are many cards */}
+            {isEditing && displayCards.length > 6 && (
+                <div className="max-w-7xl mx-auto mb-3 sm:mb-4 px-1">
                     <div className="relative">
-                        <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <input
                             type="text"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             placeholder="Search cards..."
-                            className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2.5 sm:py-3 text-sm sm:text-base bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 rounded-xl sm:rounded-2xl focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
+                            className="w-full pl-9 pr-9 py-2 text-sm bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-1 focus:ring-primary/50 focus:border-primary outline-none transition-all"
                         />
                         {searchTerm && (
                             <button
                                 onClick={() => setSearchTerm('')}
-                                className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                                className="absolute right-2.5 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-full transition-colors"
                                 aria-label="Clear search"
                             >
                                 <X className="w-4 h-4 text-gray-400" />
@@ -660,37 +715,31 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
 
             {/* Category Filter - Only show if categories exist */}
             {showCategoryFilter && (
-                <div className="max-w-7xl mx-auto mb-6 flex justify-center">
-                    <div className="bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm p-1 rounded-2xl border border-gray-200 dark:border-gray-800 flex gap-1 shadow-sm overflow-x-auto max-w-full">
+                <div className="max-w-7xl mx-auto mb-4 sm:mb-6 px-1">
+                    <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
                         <button
                             onClick={() => setCategoryFilter('All')}
                             className={clsx(
-                                "px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all transform active:scale-95 whitespace-nowrap",
+                                "px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all active:scale-95 whitespace-nowrap flex-shrink-0",
                                 categoryFilter === 'All'
-                                    ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105"
-                                    : "text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800"
+                                    ? "bg-primary text-white shadow-md"
+                                    : "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700"
                             )}
                         >
-                            All
-                            <span className="ml-2 opacity-50 text-[10px]">
-                                ({displayCards.length})
-                            </span>
+                            All ({displayCards.length})
                         </button>
                         {existingCategories.map((cat) => (
                             <button
                                 key={cat}
                                 onClick={() => setCategoryFilter(cat)}
                                 className={clsx(
-                                    "px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all transform active:scale-95 whitespace-nowrap",
+                                    "px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all active:scale-95 whitespace-nowrap flex-shrink-0",
                                     categoryFilter === cat
-                                        ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105"
-                                        : "text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800"
+                                        ? "bg-primary text-white shadow-md"
+                                        : "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700"
                                 )}
                             >
-                                {cat}
-                                <span className="ml-2 opacity-50 text-[10px]">
-                                    ({displayCards.filter(c => c.category === cat).length})
-                                </span>
+                                {cat} ({displayCards.filter(c => c.category === cat).length})
                             </button>
                         ))}
                     </div>
@@ -700,14 +749,23 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
             {/* Grid */}
             <div ref={gridRef} className="max-w-7xl mx-auto">
                 {displayCards.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center p-12 text-center rounded-3xl border-2 border-dashed border-gray-300 dark:border-gray-700 bg-white/50 dark:bg-slate-800/50">
-                        <div className="p-6 bg-gray-100 dark:bg-slate-700 rounded-full mb-6 animate-float">
-                            <Plus className="w-12 h-12 text-gray-400" />
+                    <div className="flex flex-col items-center justify-center p-8 sm:p-12 text-center rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-700 bg-white/50 dark:bg-slate-800/50">
+                        <div className="p-4 sm:p-6 bg-gradient-to-br from-primary/10 to-accent/10 rounded-full mb-4 sm:mb-6">
+                            <Plus className="w-10 h-10 sm:w-12 sm:h-12 text-primary" />
                         </div>
-                        <h3 className="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-2">No Cards Yet</h3>
-                        <p className="text-gray-500 max-w-md">
-                            Tap the + button below to create your first picture card for {board?.name}!
+                        <h3 className="text-xl sm:text-2xl font-bold text-gray-700 dark:text-gray-200 mb-2">No Cards Yet</h3>
+                        <p className="text-gray-500 text-sm sm:text-base max-w-sm mb-6">
+                            Start building your communication board by adding picture cards
                         </p>
+                        {isEditing && (
+                            <button
+                                onClick={() => setIsModalOpen(true)}
+                                className="flex items-center gap-2 px-5 py-3 bg-primary text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:bg-primary/90 transition-all touch-manipulation"
+                            >
+                                <Plus className="w-5 h-5" />
+                                <span>Add Your First Card</span>
+                            </button>
+                        )}
                     </div>
                 ) : filteredCards.length === 0 ? (
                     <div className="flex flex-col items-center justify-center p-12 text-center rounded-3xl border-2 border-dashed border-gray-300 dark:border-gray-700 bg-white/50 dark:bg-slate-800/50">
@@ -766,26 +824,16 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
                 </div>
             )}
 
-            {/* Floating Action Buttons - Only in Edit Mode */}
+            {/* Floating Add Card Button - Only in Edit Mode */}
             {isEditing && (
-                <div className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-40 flex flex-col gap-4 sm:gap-5">
-                    {/* Batch Upload Button */}
-                    <button
-                        onClick={handleBatchUpload}
-                        className="p-4 sm:p-5 bg-gradient-to-r from-secondary to-primary text-white rounded-2xl shadow-2xl hover:shadow-secondary/50 transition-all transform hover:scale-105 active:scale-95 group touch-manipulation min-w-[60px] min-h-[60px] sm:min-w-[64px] sm:min-h-[64px] flex items-center justify-center"
-                        aria-label="Batch Upload Cards"
-                        title="Batch Upload Multiple Images"
-                    >
-                        <Upload className="w-6 h-6 sm:w-7 sm:h-7" />
-                    </button>
-
-                    {/* Add Card Button - Primary Action */}
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 sm:left-auto sm:right-6 sm:translate-x-0 sm:bottom-8 z-40">
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="p-5 sm:p-6 bg-gradient-to-r from-primary to-accent text-white rounded-2xl shadow-2xl hover:shadow-primary/50 transition-all transform hover:scale-105 active:scale-95 group touch-manipulation min-w-[68px] min-h-[68px] sm:min-w-[72px] sm:min-h-[72px] flex items-center justify-center ring-4 ring-white/20"
+                        className="flex items-center gap-2 px-6 py-4 sm:px-8 sm:py-5 bg-gradient-to-r from-primary via-primary to-accent text-white rounded-full shadow-2xl shadow-primary/30 hover:shadow-primary/50 transition-all transform hover:scale-105 active:scale-95 group touch-manipulation"
                         aria-label="Add New Card"
                     >
-                        <Plus className="w-8 h-8 sm:w-9 sm:h-9 group-hover:rotate-90 transition-transform duration-300" />
+                        <Plus className="w-6 h-6 sm:w-7 sm:h-7 group-hover:rotate-90 transition-transform duration-300" />
+                        <span className="font-bold text-base sm:text-lg">Add Card</span>
                     </button>
                 </div>
             )}
