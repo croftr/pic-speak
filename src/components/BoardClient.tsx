@@ -21,14 +21,10 @@ const ConfirmDialog = dynamic(() => import('@/components/ConfirmDialog'), {
     loading: () => null
 });
 import { Card, Board } from '@/types';
-import { Plus, Upload, ArrowLeft, Save, Loader2, Search, X, Trash2, Share2, Check, User, Pencil, MoreHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Upload, ArrowLeft, Loader2, Search, X, Trash2, Share2, Check, MoreHorizontal, ChevronDown, ChevronUp, Grid3X3, Grid2X2, LayoutGrid } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-const SettingsMenu = dynamic(() => import('@/components/SettingsMenu'), {
-    loading: () => <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
-});
 import { useSettings } from '@/contexts/SettingsContext';
 import { useSwipeRef } from '@/hooks/useSwipe';
 import {
@@ -62,7 +58,7 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
     const router = useRouter();
     const searchParams = useSearchParams();
     const requestedEdit = searchParams.get('edit') === 'true';
-    const { cardSize: userCardSize } = useSettings();
+    const { cardSize: userCardSize, setCardSize } = useSettings();
 
     const [cards, setCards] = useState<Card[]>(initialCards);
     const [optimisticCards, addOptimisticCard] = useOptimistic(
@@ -559,72 +555,35 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
                         </div>
                     </div>
                 ) : (
-                    // VIEW MODE - Compact and streamlined
-                    <div className="flex items-center justify-between gap-3 px-2 py-1.5 rounded-lg bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm shadow-sm border border-gray-100 dark:border-gray-800">
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                    // VIEW MODE - Ultra clean for focus on cards
+                    <div className="flex items-center justify-between gap-2 px-1.5 py-1 rounded-lg bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm">
+                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
                             <Link
                                 href="/my-boards"
                                 className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors flex-shrink-0 touch-manipulation"
-                                title="Back to My Boards"
+                                title="Back"
                             >
-                                <ArrowLeft className="w-5 h-5" />
+                                <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                             </Link>
-                            <div className="flex-1 min-w-0">
-                                <h1 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white truncate">
-                                    {board?.name || 'Loading...'}
-                                </h1>
-                                {board?.isPublic && board?.creatorName && !isOwner && (
-                                    <div className="flex items-center gap-1.5 mt-0.5">
-                                        {board.creatorImageUrl ? (
-                                            <div className="relative w-3.5 h-3.5 rounded-full overflow-hidden">
-                                                <Image
-                                                    src={board.creatorImageUrl}
-                                                    alt={board.creatorName}
-                                                    fill
-                                                    sizes="14px"
-                                                    className="object-cover"
-                                                />
-                                            </div>
-                                        ) : (
-                                            <div className="w-3.5 h-3.5 rounded-full bg-primary/10 flex items-center justify-center">
-                                                <User className="w-2 h-2 text-primary" />
-                                            </div>
-                                        )}
-                                        <span className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
-                                            by {board.creatorName}
-                                        </span>
-                                        <span className="text-gray-300 dark:text-gray-700 text-[10px]">•</span>
-                                        <Link
-                                            href={`/?creator=${board.userId}`}
-                                            className="text-[10px] text-primary hover:underline whitespace-nowrap"
-                                        >
-                                            View more
-                                        </Link>
-                                    </div>
-                                )}
-                            </div>
+                            <h1 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white truncate">
+                                {board?.name || 'Loading...'}
+                            </h1>
                         </div>
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                            {board?.isPublic && (
-                                <button
-                                    onClick={handleShare}
-                                    className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg transition-all touch-manipulation"
-                                    title="Share Board"
-                                >
-                                    {isCopied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
-                                </button>
-                            )}
-                            {(isOwner || isAdmin) && !isStarterBoard && (
-                                <Link
-                                    href={`/board/${board?.id}?edit=true`}
-                                    className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-600 dark:text-gray-400 rounded-lg transition-all touch-manipulation"
-                                    title="Edit Board"
-                                >
-                                    <Pencil className="w-4 h-4" />
-                                </Link>
-                            )}
-                            <SettingsMenu />
-                        </div>
+                        {/* Card size toggle - cycles through sizes */}
+                        <button
+                            onClick={() => {
+                                const sizes: ('small' | 'medium' | 'large')[] = ['small', 'medium', 'large'];
+                                const currentIndex = sizes.indexOf(userCardSize);
+                                const nextIndex = (currentIndex + 1) % sizes.length;
+                                setCardSize(sizes[nextIndex]);
+                            }}
+                            className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors touch-manipulation"
+                            title={`Card size: ${userCardSize}`}
+                        >
+                            {userCardSize === 'small' && <Grid3X3 className="w-5 h-5 text-gray-500 dark:text-gray-400" />}
+                            {userCardSize === 'medium' && <Grid2X2 className="w-5 h-5 text-gray-500 dark:text-gray-400" />}
+                            {userCardSize === 'large' && <LayoutGrid className="w-5 h-5 text-gray-500 dark:text-gray-400" />}
+                        </button>
                     </div>
                 )}
             </header>
