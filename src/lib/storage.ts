@@ -210,8 +210,8 @@ export async function addCard(card: Card): Promise<void> {
             // Note: 'category' maps to 'type' column in database (NOT NULL with default 'Thing')
             console.log(`[DB-AddCard] Inserting user card: ${card.label}`);
             await client.query(
-                'INSERT INTO cards (id, board_id, label, image_url, audio_url, color, "order", type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-                [card.id, card.boardId, card.label, card.imageUrl, card.audioUrl, card.color || '#6366f1', 0, card.category || 'Thing']
+                'INSERT INTO cards (id, board_id, label, image_url, audio_url, color, "order", type, source_board_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
+                [card.id, card.boardId, card.label, card.imageUrl, card.audioUrl, card.color || '#6366f1', 0, card.category || 'Thing', card.sourceBoardId || null]
             );
         }
 

@@ -2,9 +2,12 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import { X, Image as ImageIcon, Check, Loader2, Mic, Upload, Music, Sparkles, Play, Pause, Volume2, Crop, Camera, ChevronRight, ChevronLeft, ArrowRight, ArrowLeft } from 'lucide-react';
+import { X, Image as ImageIcon, Check, Loader2, Mic, Upload, Music, Sparkles, Play, Pause, Volume2, Crop, Camera, ChevronRight, ChevronLeft, ArrowRight, ArrowLeft, Globe } from 'lucide-react';
 import AudioRecorder from './AudioRecorder';
 const ImageCropModal = dynamic(() => import('./ImageCropModal'), {
+    loading: () => null
+});
+const PublicCardPickerModal = dynamic(() => import('./PublicCardPickerModal'), {
     loading: () => null
 });
 import { clsx } from 'clsx';
@@ -43,6 +46,9 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     // Crop state
     const [showCropModal, setShowCropModal] = useState(false);
     const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+
+    // Public card picker state
+    const [showPublicCardPicker, setShowPublicCardPicker] = useState(false);
 
     // Audio State
     const [audioType, setAudioType] = useState<'record' | 'upload' | 'generate'>('record');
@@ -724,6 +730,21 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                 />
             )}
 
+            {showPublicCardPicker ? (
+                <PublicCardPickerModal
+                    isOpen={showPublicCardPicker}
+                    onClose={() => {
+                        setShowPublicCardPicker(false);
+                        onClose();
+                    }}
+                    onBack={() => setShowPublicCardPicker(false)}
+                    onCardSelected={(card) => {
+                        onCardAdded(card);
+                        onClose();
+                    }}
+                    boardId={boardId}
+                />
+            ) : (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
                 <div className="bg-white dark:bg-slate-900 w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-lg sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col">
 
@@ -886,6 +907,32 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                                     </datalist>
                                                 </div>
                                             </div>
+
+                                            {/* Divider */}
+                                            <div className="relative py-2">
+                                                <div className="absolute inset-0 flex items-center">
+                                                    <span className="w-full border-t border-gray-200 dark:border-gray-700" />
+                                                </div>
+                                                <div className="relative flex justify-center text-xs uppercase">
+                                                    <span className="bg-white dark:bg-slate-900 px-3 text-gray-400 font-medium">Or</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Browse Public Cards Option */}
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPublicCardPicker(true)}
+                                                className="w-full flex items-center justify-center gap-4 p-5 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-2 border-blue-200 dark:border-blue-800 hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-lg hover:shadow-blue-500/10 transition-all group"
+                                            >
+                                                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-500 shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                    <Globe className="w-7 h-7 text-white" />
+                                                </div>
+                                                <div className="text-left flex-1">
+                                                    <span className="block font-bold text-lg text-gray-900 dark:text-white">Browse Public Cards</span>
+                                                    <span className="text-sm text-blue-600 dark:text-blue-400">Pick from community boards</span>
+                                                </div>
+                                                <ChevronRight className="w-5 h-5 text-blue-400 group-hover:translate-x-1 transition-transform" />
+                                            </button>
                                         </div>
                                     )}
 
@@ -1000,7 +1047,10 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                                         {!imageType.startsWith('gen') ? (
                                                             <button
                                                                 type="button"
-                                                                onClick={() => setImageType('generate')}
+                                                                onClick={() => {
+                                                                    setImageType('generate');
+                                                                    setGenerationPrompt(label);
+                                                                }}
                                                                 className="w-full h-full flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-gray-50 dark:bg-slate-800 border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-primary hover:bg-primary/5 transition-all group"
                                                             >
                                                                 <div className="w-12 h-12 rounded-full bg-white dark:bg-slate-700 shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform text-purple-500">
@@ -1218,6 +1268,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                     </div>
                 </div>
             </div>
+            )}
         </>
     );
 }

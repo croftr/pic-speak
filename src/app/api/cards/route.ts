@@ -76,7 +76,7 @@ export async function POST(request: Request) {
         const body = await request.json();
         console.log(`[CreateCard-${requestId}] Request body parsed in ${Date.now() - parseStart}ms`);
 
-        const { label, imageUrl, audioUrl, color, boardId, category } = body;
+        const { label, imageUrl, audioUrl, color, boardId, category, sourceBoardId } = body;
 
         console.log(`[CreateCard-${requestId}] Card details:`, {
             label: label || 'Untitled',
@@ -124,6 +124,7 @@ export async function POST(request: Request) {
             audioUrl,
             color: color || 'var(--primary)',
             category: category || undefined, // Optional free-text category
+            sourceBoardId: sourceBoardId || undefined, // Track if card was copied from a public board
         };
 
         console.log(`[CreateCard-${requestId}] Creating card with ID: ${cardId}`);
