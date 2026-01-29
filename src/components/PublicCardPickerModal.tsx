@@ -263,10 +263,15 @@ export default function PublicCardPickerModal({ isOpen, onClose, onBack, onCardS
                                 {filteredCards.map((card) => (
                                     <div
                                         key={card.id}
-                                        className="relative group rounded-2xl overflow-hidden border-2 border-gray-100 dark:border-gray-800 hover:border-primary transition-all bg-white dark:bg-slate-800"
+                                        className="relative rounded-2xl overflow-hidden border-2 border-gray-100 dark:border-gray-800 bg-white dark:bg-slate-800"
                                     >
-                                        {/* Card Image */}
-                                        <div className="aspect-square relative">
+                                        {/* Card Image - tap to play audio */}
+                                        <button
+                                            type="button"
+                                            onClick={() => playAudio(card)}
+                                            disabled={!card.audioUrl}
+                                            className="aspect-square relative w-full block"
+                                        >
                                             {card.imageUrl.startsWith('http') ? (
                                                 <Image
                                                     src={card.imageUrl}
@@ -283,48 +288,47 @@ export default function PublicCardPickerModal({ isOpen, onClose, onBack, onCardS
                                                 />
                                             )}
 
-                                            {/* Overlay on hover */}
-                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                                {card.audioUrl && (
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            playAudio(card);
-                                                        }}
-                                                        className={clsx(
-                                                            "p-2 rounded-full transition-colors",
-                                                            playingAudioId === card.id
-                                                                ? "bg-primary text-white"
-                                                                : "bg-white/90 text-gray-700 hover:bg-white"
-                                                        )}
-                                                    >
-                                                        <Volume2 className="w-5 h-5" />
-                                                    </button>
-                                                )}
-                                                <button
-                                                    onClick={() => handleAddCard(card)}
-                                                    disabled={isAddingCard}
-                                                    className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors disabled:opacity-50"
-                                                >
-                                                    {isAddingCard ? (
-                                                        <Loader2 className="w-5 h-5 animate-spin" />
-                                                    ) : (
-                                                        <Check className="w-5 h-5" />
-                                                    )}
-                                                </button>
-                                            </div>
-                                        </div>
+                                            {/* Audio playing indicator */}
+                                            {playingAudioId === card.id && (
+                                                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                                    <div className="bg-primary text-white p-3 rounded-full">
+                                                        <Volume2 className="w-6 h-6" />
+                                                    </div>
+                                                </div>
+                                            )}
 
-                                        {/* Card Label */}
-                                        <div className="p-2 text-center">
-                                            <p className="font-bold text-sm text-gray-900 dark:text-white truncate">
+                                            {/* Sound icon hint */}
+                                            {card.audioUrl && playingAudioId !== card.id && (
+                                                <div className="absolute top-2 right-2 bg-black/50 text-white p-1.5 rounded-full">
+                                                    <Volume2 className="w-3 h-3" />
+                                                </div>
+                                            )}
+                                        </button>
+
+                                        {/* Card Label & Add Button */}
+                                        <div className="p-2">
+                                            <p className="font-bold text-sm text-gray-900 dark:text-white truncate text-center">
                                                 {card.label}
                                             </p>
                                             {card.category && (
-                                                <p className="text-xs text-gray-500 truncate">
+                                                <p className="text-xs text-gray-500 truncate text-center mb-2">
                                                     {card.category}
                                                 </p>
                                             )}
+                                            <button
+                                                onClick={() => handleAddCard(card)}
+                                                disabled={isAddingCard}
+                                                className="w-full mt-1 py-2 px-3 bg-green-500 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-1.5 active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                {isAddingCard ? (
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    <>
+                                                        <Check className="w-4 h-4" />
+                                                        Select
+                                                    </>
+                                                )}
+                                            </button>
                                         </div>
                                     </div>
                                 ))}
