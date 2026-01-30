@@ -190,8 +190,13 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     // Handle camera lifecycle - start when entering camera mode, stop when leaving
     useEffect(() => {
         if (imageType === 'camera' && isOpen && !isCameraActive) {
-            // Start camera when entering camera mode
-            startCamera();
+            // Wait a tick for the video element to be mounted before starting camera
+            const timeoutId = setTimeout(() => {
+                if (videoRef.current) {
+                    startCamera();
+                }
+            }, 50);
+            return () => clearTimeout(timeoutId);
         } else if (imageType !== 'camera' || !isOpen) {
             // Stop camera when switching away or closing modal
             stopCamera();
@@ -947,7 +952,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                             {(imagePreview || imageType === 'camera' || isGenerating) && (
                                                 <div className="relative w-full rounded-2xl overflow-hidden bg-gray-100 dark:bg-slate-800 border-2 border-gray-100 dark:border-slate-700 flex-1 min-h-[300px] flex flex-col">
 
-                                                    {isCameraActive ? (
+                                                    {imageType === 'camera' ? (
                                                         /* Camera View */
                                                         <div className="relative w-full h-full flex flex-col">
                                                             <video
@@ -957,10 +962,16 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                                                 muted
                                                                 className="w-full h-full object-cover"
                                                             />
+                                                            {!isCameraActive && (
+                                                                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-slate-800">
+                                                                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                                                                </div>
+                                                            )}
                                                             <button
                                                                 type="button"
                                                                 onClick={capturePhoto}
-                                                                className="absolute bottom-6 left-1/2 transform -translate-x-1/2 w-16 h-16 bg-white rounded-full shadow-lg hover:scale-110 transition-transform flex items-center justify-center border-4 border-gray-300 z-10"
+                                                                disabled={!isCameraActive}
+                                                                className="absolute bottom-6 left-1/2 transform -translate-x-1/2 w-16 h-16 bg-white rounded-full shadow-lg hover:scale-110 transition-transform flex items-center justify-center border-4 border-gray-300 z-10 disabled:opacity-50"
                                                             >
                                                                 <div className="w-12 h-12 bg-white rounded-full border-2 border-gray-400"></div>
                                                             </button>
@@ -1032,7 +1043,8 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                                         type="button"
                                                         onClick={() => {
                                                             setImageType('camera');
-                                                            startCamera();
+                                                            // Don't call startCamera() here - the useEffect will handle it
+                                                            // once the video element is mounted
                                                         }}
                                                         className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-gray-50 dark:bg-slate-800 border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-primary hover:bg-primary/5 transition-all group"
                                                     >
