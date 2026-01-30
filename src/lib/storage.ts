@@ -27,6 +27,8 @@ type BoardRow = {
     is_public?: boolean;
     creator_name?: string;
     creator_image_url?: string;
+    owner_email?: string;
+    email_notifications_enabled?: boolean;
 };
 
 // Create a connection pool for better performance
@@ -405,7 +407,9 @@ export async function getBoards(userId: string): Promise<Board[]> {
             createdAt: row.created_at,
             isPublic: row.is_public || false,
             creatorName: row.creator_name,
-            creatorImageUrl: row.creator_image_url
+            creatorImageUrl: row.creator_image_url,
+            ownerEmail: row.owner_email,
+            emailNotificationsEnabled: row.email_notifications_enabled ?? true
         }));
     } catch (error) {
         console.error('Error getting boards:', error);
@@ -419,8 +423,8 @@ export async function addBoard(board: Board): Promise<void> {
     const client = await getDbClient();
     try {
         await client.query(
-            'INSERT INTO boards (id, user_id, name, description, created_at, is_public, creator_name, creator_image_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-            [board.id, board.userId, board.name, board.description || '', board.createdAt, board.isPublic || false, board.creatorName, board.creatorImageUrl]
+            'INSERT INTO boards (id, user_id, name, description, created_at, is_public, creator_name, creator_image_url, owner_email, email_notifications_enabled) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
+            [board.id, board.userId, board.name, board.description || '', board.createdAt, board.isPublic || false, board.creatorName, board.creatorImageUrl, board.ownerEmail || null, board.emailNotificationsEnabled ?? true]
         );
     } catch (error) {
         console.error('Error adding board:', error);
@@ -466,7 +470,9 @@ export async function getBoard(id: string): Promise<Board | undefined> {
             createdAt: row.created_at,
             isPublic: row.is_public || false,
             creatorName: row.creator_name,
-            creatorImageUrl: row.creator_image_url
+            creatorImageUrl: row.creator_image_url,
+            ownerEmail: row.owner_email,
+            emailNotificationsEnabled: row.email_notifications_enabled ?? true
         };
     } catch (error) {
         const totalTime = Date.now() - startTime;
@@ -481,8 +487,8 @@ export async function updateBoard(updatedBoard: Board): Promise<void> {
     const client = await getDbClient();
     try {
         await client.query(
-            'UPDATE boards SET name = $1, description = $2, is_public = $3, creator_name = $4, creator_image_url = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6',
-            [updatedBoard.name, updatedBoard.description || '', updatedBoard.isPublic || false, updatedBoard.creatorName, updatedBoard.creatorImageUrl, updatedBoard.id]
+            'UPDATE boards SET name = $1, description = $2, is_public = $3, creator_name = $4, creator_image_url = $5, owner_email = $6, email_notifications_enabled = $7, updated_at = CURRENT_TIMESTAMP WHERE id = $8',
+            [updatedBoard.name, updatedBoard.description || '', updatedBoard.isPublic || false, updatedBoard.creatorName, updatedBoard.creatorImageUrl, updatedBoard.ownerEmail || null, updatedBoard.emailNotificationsEnabled ?? true, updatedBoard.id]
         );
     } catch (error) {
         console.error('Error updating board:', error);
@@ -520,7 +526,9 @@ export async function getPublicBoards(): Promise<Board[]> {
             createdAt: row.created_at,
             isPublic: row.is_public || false,
             creatorName: row.creator_name,
-            creatorImageUrl: row.creator_image_url
+            creatorImageUrl: row.creator_image_url,
+            ownerEmail: row.owner_email,
+            emailNotificationsEnabled: row.email_notifications_enabled ?? true
         }));
 
         return [...STARTER_BOARDS, ...dbBoards];

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { addComment, getCommentsByBoard } from '@/lib/storage';
+import { addComment, getCommentsByBoard, getBoard, getBoardCommentCount } from '@/lib/storage';
+import { sendCommentNotification } from '@/lib/email';
 
 // Get all comments for a board
 export async function GET(
@@ -55,6 +56,21 @@ export async function POST(
             commenterName,
             commenterImageUrl
         );
+
+        // Send email notification to board owner (async, don't await)
+        const board = await getBoard(boardId);
+        if (board && board.ownerEmail && board.emailNotificationsEnabled && board.userId !== userId) {
+            // Don't notify if user comments on their own board
+            const commentCount = await getBoardCommentCount(boardId);
+            sendCommentNotification(
+                board.ownerEmail,
+                board.name,
+                boardId,
+                commenterName,
+                content.trim(),
+                commentCount
+            ).catch(err => console.error('[Comment] Failed to send notification:', err));
+        }
 
         return NextResponse.json(comment, { status: 201 });
     } catch (error) {

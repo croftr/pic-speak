@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getBoard, updateBoard, deleteBoard } from '@/lib/storage';
-import { auth } from '@clerk/nextjs/server';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import { checkIsAdmin } from '@/lib/admin';
 
 export async function GET(
@@ -58,13 +58,33 @@ export async function PUT(
 
     try {
         const body = await request.json();
-        const { name, description, isPublic } = body;
+        const { name, description, isPublic, emailNotificationsEnabled } = body;
+
+        // Determine if we need to fetch user email (when making board public for the first time)
+        let ownerEmail = existingBoard.ownerEmail;
+        const isBecomingPublic = isPublic === true && !existingBoard.isPublic;
+
+        if (isBecomingPublic && !ownerEmail) {
+            // Fetch user's email from Clerk when making board public
+            try {
+                const client = await clerkClient();
+                const user = await client.users.getUser(userId);
+                ownerEmail = user.emailAddresses?.[0]?.emailAddress || undefined;
+            } catch (error) {
+                console.error('Error fetching user email from Clerk:', error);
+                // Continue without email if Clerk fails
+            }
+        }
 
         const updatedBoard = {
             ...existingBoard,
             name: name || existingBoard.name,
             description: description !== undefined ? description : existingBoard.description,
-            isPublic: isPublic !== undefined ? isPublic : existingBoard.isPublic
+            isPublic: isPublic !== undefined ? isPublic : existingBoard.isPublic,
+            ownerEmail,
+            emailNotificationsEnabled: emailNotificationsEnabled !== undefined
+                ? emailNotificationsEnabled
+                : existingBoard.emailNotificationsEnabled
         };
 
         await updateBoard(updatedBoard);

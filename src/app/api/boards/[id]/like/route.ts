@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
-import { likeBoardByUser, unlikeBoardByUser, isUserLikedBoard, getBoardLikeCount } from '@/lib/storage';
+import { auth, currentUser } from '@clerk/nextjs/server';
+import { likeBoardByUser, unlikeBoardByUser, isUserLikedBoard, getBoardLikeCount, getBoard } from '@/lib/storage';
+import { sendLikeNotification } from '@/lib/email';
 
 // Toggle like (POST = like, DELETE = unlike)
 export async function POST(
@@ -15,11 +16,25 @@ export async function POST(
     try {
         const { id: boardId } = await context.params;
 
-        // Get user name from Clerk (optional, can pass in body if needed)
-        const userName = "User"; // You can get this from Clerk API or pass in request
+        // Get user details from Clerk
+        const user = await currentUser();
+        const userName = user?.fullName || user?.firstName || 'Someone';
 
         await likeBoardByUser(boardId, userId, userName);
         const likeCount = await getBoardLikeCount(boardId);
+
+        // Send email notification to board owner (async, don't await)
+        const board = await getBoard(boardId);
+        if (board && board.ownerEmail && board.emailNotificationsEnabled && board.userId !== userId) {
+            // Don't notify if user likes their own board
+            sendLikeNotification(
+                board.ownerEmail,
+                board.name,
+                boardId,
+                userName,
+                likeCount
+            ).catch(err => console.error('[Like] Failed to send notification:', err));
+        }
 
         return NextResponse.json({
             liked: true,

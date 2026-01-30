@@ -20,6 +20,8 @@ export interface Board {
   isPublic?: boolean;
   creatorName?: string;
   creatorImageUrl?: string;
+  ownerEmail?: string;
+  emailNotificationsEnabled?: boolean;
   likeCount?: number;
   commentCount?: number;
   isLikedByUser?: boolean;
