@@ -260,6 +260,24 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
         const baseUrl = window.location.origin;
         const shareUrl = `${baseUrl}/board/${board.id}`;
 
+        // Try native share API first (mobile)
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: board.name,
+                    text: board.description || `Check out this PECS board: ${board.name}`,
+                    url: shareUrl,
+                });
+                return;
+            } catch (error) {
+                // User cancelled or share failed, fall back to clipboard
+                if ((error as Error).name === 'AbortError') {
+                    return; // User cancelled, don't show error
+                }
+            }
+        }
+
+        // Fallback to clipboard
         try {
             await navigator.clipboard.writeText(shareUrl);
             setIsCopied(true);
@@ -569,21 +587,37 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
                                 {board?.name || 'Loading...'}
                             </h1>
                         </div>
-                        {/* Card size toggle - cycles through sizes */}
-                        <button
-                            onClick={() => {
-                                const sizes: ('small' | 'medium' | 'large')[] = ['small', 'medium', 'large'];
-                                const currentIndex = sizes.indexOf(userCardSize);
-                                const nextIndex = (currentIndex + 1) % sizes.length;
-                                setCardSize(sizes[nextIndex]);
-                            }}
-                            className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors touch-manipulation"
-                            title={`Card size: ${userCardSize}`}
-                        >
-                            {userCardSize === 'small' && <Grid3X3 className="w-5 h-5 text-gray-500 dark:text-gray-400" />}
-                            {userCardSize === 'medium' && <Grid2X2 className="w-5 h-5 text-gray-500 dark:text-gray-400" />}
-                            {userCardSize === 'large' && <LayoutGrid className="w-5 h-5 text-gray-500 dark:text-gray-400" />}
-                        </button>
+                        <div className="flex items-center gap-1">
+                            {/* Share button - show for public boards */}
+                            {board?.isPublic && (
+                                <button
+                                    onClick={handleShare}
+                                    className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors touch-manipulation"
+                                    title="Share board"
+                                >
+                                    {isCopied ? (
+                                        <Check className="w-5 h-5 text-green-500" />
+                                    ) : (
+                                        <Share2 className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                                    )}
+                                </button>
+                            )}
+                            {/* Card size toggle - cycles through sizes */}
+                            <button
+                                onClick={() => {
+                                    const sizes: ('small' | 'medium' | 'large')[] = ['small', 'medium', 'large'];
+                                    const currentIndex = sizes.indexOf(userCardSize);
+                                    const nextIndex = (currentIndex + 1) % sizes.length;
+                                    setCardSize(sizes[nextIndex]);
+                                }}
+                                className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors touch-manipulation"
+                                title={`Card size: ${userCardSize}`}
+                            >
+                                {userCardSize === 'small' && <Grid3X3 className="w-5 h-5 text-gray-500 dark:text-gray-400" />}
+                                {userCardSize === 'medium' && <Grid2X2 className="w-5 h-5 text-gray-500 dark:text-gray-400" />}
+                                {userCardSize === 'large' && <LayoutGrid className="w-5 h-5 text-gray-500 dark:text-gray-400" />}
+                            </button>
+                        </div>
                     </div>
                 )}
             </header>
