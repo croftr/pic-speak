@@ -434,9 +434,9 @@ export async function addBoard(board: Board): Promise<void> {
     }
 }
 
-export async function getBoard(id: string): Promise<Board | undefined> {
+export async function getBoard(id: string, retryOnNotFound: boolean = false): Promise<Board | undefined> {
     const startTime = Date.now();
-    console.log(`[DB-GetBoard] Looking up board: ${id}`);
+    console.log(`[DB-GetBoard] Looking up board: ${id}${retryOnNotFound ? ' (with retry)' : ''}`);
 
     const starterBoard = STARTER_BOARDS.find(b => b.id === id);
     if (starterBoard) {
@@ -447,11 +447,26 @@ export async function getBoard(id: string): Promise<Board | undefined> {
     const client = await getDbClient();
     try {
         const queryStart = Date.now();
-        const result = await client.query<BoardRow>(
+        let result = await client.query<BoardRow>(
             'SELECT * FROM boards WHERE id = $1 LIMIT 1',
             [id]
         );
-        const queryTime = Date.now() - queryStart;
+        let queryTime = Date.now() - queryStart;
+
+        // If not found and retry is enabled, wait briefly and try again
+        // This handles Postgres read replica lag on Vercel
+        if (result.rows.length === 0 && retryOnNotFound) {
+            console.log(`[DB-GetBoard] Board not found on first attempt, retrying after 500ms (replica lag workaround)...`);
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            const retryStart = Date.now();
+            result = await client.query<BoardRow>(
+                'SELECT * FROM boards WHERE id = $1 LIMIT 1',
+                [id]
+            );
+            queryTime += Date.now() - retryStart;
+            console.log(`[DB-GetBoard] Retry completed (found: ${result.rows.length > 0})`);
+        }
 
         if (result.rows.length === 0) {
             console.log(`[DB-GetBoard] Board not found (query: ${queryTime}ms)`);

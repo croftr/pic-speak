@@ -21,8 +21,8 @@ export async function POST(request: Request) {
             );
         }
 
-        // Verify user owns the board
-        const board = await getBoard(boardId);
+        // Verify user owns the board (retry on not found to handle replica lag)
+        const board = await getBoard(boardId, true);
         if (!board || board.userId !== userId) {
             return new NextResponse("Unauthorized", { status: 403 });
         }
