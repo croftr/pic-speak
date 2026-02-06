@@ -188,42 +188,37 @@ export async function addCard(card: Card): Promise<void> {
 
     const client = await getDbClient();
     try {
-        await client.query('BEGIN');
-
         const queryStart = Date.now();
 
-        // Shift all existing cards' order by 1 to make room at position 0
-        // This ensures the newest card appears first
-        await client.query(
-            'UPDATE cards SET "order" = "order" + 1 WHERE board_id = $1',
+        // Get the current minimum order value for this board, then insert below it.
+        // This avoids updating every existing card's order on each insert.
+        const minResult = await client.query(
+            'SELECT COALESCE(MIN("order"), 0) - 1 AS new_order FROM cards WHERE board_id = $1',
             [card.boardId]
         );
-        console.log(`[DB-AddCard] Shifted existing card orders for board ${card.boardId}`);
+        const newOrder = minResult.rows[0].new_order;
 
         // If this is a template card, only store the template key and minimal data
         if (card.templateKey) {
             console.log(`[DB-AddCard] Inserting template card with key: ${card.templateKey}`);
             await client.query(
                 'INSERT INTO cards (id, board_id, template_key, "order", color) VALUES ($1, $2, $3, $4, $5)',
-                [card.id, card.boardId, card.templateKey, 0, card.color || '#6366f1']
+                [card.id, card.boardId, card.templateKey, newOrder, card.color || '#6366f1']
             );
         } else {
-            // Regular user card - store all data at order 0 (top of board)
+            // Regular user card - insert at lowest order (top of board)
             // Note: 'category' maps to 'type' column in database (NOT NULL with default 'Thing')
             console.log(`[DB-AddCard] Inserting user card: ${card.label}`);
             await client.query(
                 'INSERT INTO cards (id, board_id, label, image_url, audio_url, color, "order", type, source_board_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
-                [card.id, card.boardId, card.label, card.imageUrl, card.audioUrl, card.color || '#6366f1', 0, card.category || 'Thing', card.sourceBoardId || null]
+                [card.id, card.boardId, card.label, card.imageUrl, card.audioUrl, card.color || '#6366f1', newOrder, card.category || 'Thing', card.sourceBoardId || null]
             );
         }
-
-        await client.query('COMMIT');
 
         const queryTime = Date.now() - queryStart;
         const totalTime = Date.now() - startTime;
         console.log(`[DB-AddCard] SUCCESS! Query: ${queryTime}ms, Total: ${totalTime}ms`);
     } catch (error) {
-        await client.query('ROLLBACK');
         const totalTime = Date.now() - startTime;
         console.error(`[DB-AddCard] FAILED after ${totalTime}ms for card ${card.id}:`, error);
         console.error(`[DB-AddCard] Error details:`, {
@@ -251,14 +246,15 @@ export async function batchAddCards(cards: Card[], preserveOrder: boolean = fals
         // Get the boardId from the first card (all cards should be for the same board)
         const boardId = cards[0].boardId;
 
-        // Shift all existing cards' order by the count of new cards to make room at the top
-        // This ensures the newest cards appear first (unless preserveOrder is true)
+        // Get the current minimum order so we can insert below it without shifting existing cards
+        let baseOrder = 0;
         if (!preserveOrder) {
-            await client.query(
-                'UPDATE cards SET "order" = "order" + $1 WHERE board_id = $2',
-                [cards.length, boardId]
+            const minResult = await client.query(
+                'SELECT COALESCE(MIN("order"), 0) AS min_order FROM cards WHERE board_id = $1',
+                [boardId]
             );
-            console.log(`[DB-BatchAddCards] Shifted existing card orders by ${cards.length} for board ${boardId}`);
+            // New cards get orders: min-N, min-N+1, ..., min-1 (newest batch at top, preserving batch internal order)
+            baseOrder = minResult.rows[0].min_order - cards.length;
         }
 
         // Separate template cards from regular cards
@@ -272,8 +268,7 @@ export async function batchAddCards(cards: Card[], preserveOrder: boolean = fals
             let paramIndex = 1;
 
             templateCards.forEach((card, index) => {
-                // Use provided order if preserveOrder, otherwise assign sequential orders starting at 0
-                const order = preserveOrder ? (card.order || 0) : index;
+                const order = preserveOrder ? (card.order || 0) : (baseOrder + index);
                 templateValues.push(
                     card.id,
                     card.boardId,
@@ -299,12 +294,11 @@ export async function batchAddCards(cards: Card[], preserveOrder: boolean = fals
             const regularPlaceholders: string[] = [];
             let paramIndex = 1;
 
-            // Calculate starting index for regular cards (after template cards if not preserving order)
+            // Regular cards continue the sequence after template cards
             const templateCount = preserveOrder ? 0 : templateCards.length;
 
             regularCards.forEach((card, index) => {
-                // Use provided order if preserveOrder, otherwise assign sequential orders
-                const order = preserveOrder ? (card.order || 0) : (templateCount + index);
+                const order = preserveOrder ? (card.order || 0) : (baseOrder + templateCount + index);
                 regularValues.push(
                     card.id,
                     card.boardId,
@@ -367,21 +361,25 @@ export async function deleteCard(id: string): Promise<void> {
 }
 
 export async function updateCardOrders(boardId: string, cardOrders: { id: string; order: number }[]): Promise<void> {
+    if (cardOrders.length === 0) return;
+
     const client = await getDbClient();
     try {
-        // Use a transaction to update all orders atomically
-        await client.query('BEGIN');
-
+        // Build a single UPDATE using unnest() to batch all order changes in one query
+        const ids: string[] = [];
+        const orders: number[] = [];
         for (const { id, order } of cardOrders) {
-            await client.query(
-                'UPDATE cards SET "order" = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND board_id = $3',
-                [order, id, boardId]
-            );
+            ids.push(id);
+            orders.push(order);
         }
 
-        await client.query('COMMIT');
+        await client.query(
+            `UPDATE cards SET "order" = v.new_order, updated_at = CURRENT_TIMESTAMP
+             FROM unnest($1::text[], $2::int[]) AS v(card_id, new_order)
+             WHERE cards.id = v.card_id AND cards.board_id = $3`,
+            [ids, orders, boardId]
+        );
     } catch (error) {
-        await client.query('ROLLBACK');
         console.error('Error updating card orders:', error);
         throw error;
     } finally {
