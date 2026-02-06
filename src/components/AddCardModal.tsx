@@ -421,13 +421,81 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
         }
     };
 
-    const uploadFile = async (file: Blob, filename: string, timeoutMs = 30000): Promise<string> => {
+    // Compress an image client-side using canvas before uploading.
+    // This avoids sending multi-MB phone photos over the network —
+    // the server-side Sharp resize becomes a no-op for most images.
+    const compressImage = async (file: Blob, filename: string): Promise<{ blob: Blob; filename: string }> => {
+        // Skip non-image files
+        if (!file.type.startsWith('image/')) {
+            return { blob: file, filename };
+        }
+
+        const MAX_DIM = 800;
+        const QUALITY = 0.85;
+
+        return new Promise((resolve, reject) => {
+            const img = new window.Image();
+            img.onload = () => {
+                URL.revokeObjectURL(objectUrl);
+                try {
+                    let { width, height } = img;
+
+                    // Only resize if larger than target
+                    if (width > MAX_DIM || height > MAX_DIM) {
+                        const ratio = Math.min(MAX_DIM / width, MAX_DIM / height);
+                        width = Math.round(width * ratio);
+                        height = Math.round(height * ratio);
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) {
+                        resolve({ blob: file, filename }); // fallback to original
+                        return;
+                    }
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    canvas.toBlob(
+                        (blob) => {
+                            if (!blob) {
+                                resolve({ blob: file, filename }); // fallback to original
+                                return;
+                            }
+                            const jpgFilename = filename.replace(/\.[^/.]+$/, '.jpg');
+                            const savings = ((file.size - blob.size) / file.size * 100).toFixed(1);
+                            console.log(`[Frontend-Compress] ${(file.size / 1024).toFixed(1)}KB → ${(blob.size / 1024).toFixed(1)}KB (${savings}% smaller, ${width}x${height})`);
+                            resolve({ blob, filename: jpgFilename });
+                        },
+                        'image/jpeg',
+                        QUALITY
+                    );
+                } catch (err) {
+                    console.error('[Frontend-Compress] Failed, using original:', err);
+                    resolve({ blob: file, filename });
+                }
+            };
+            img.onerror = () => {
+                console.error('[Frontend-Compress] Image load failed, using original');
+                URL.revokeObjectURL(img.src);
+                resolve({ blob: file, filename });
+            };
+            const objectUrl = URL.createObjectURL(file);
+            img.src = objectUrl;
+        });
+    };
+
+    const uploadFile = async (file: Blob, filename: string, timeoutMs = 60000): Promise<string> => {
+        // Compress images client-side before uploading
+        const { blob: fileToUpload, filename: finalFilename } = await compressImage(file, filename);
+
         const startTime = Date.now();
-        const fileSize = (file.size / 1024).toFixed(2);
-        console.log(`[Frontend-Upload] Starting upload: ${filename} (${fileSize}KB, type: ${file.type})`);
+        const fileSize = (fileToUpload.size / 1024).toFixed(2);
+        console.log(`[Frontend-Upload] Starting upload: ${finalFilename} (${fileSize}KB, type: ${fileToUpload.type})`);
 
         const formData = new FormData();
-        formData.append('file', file, filename);
+        formData.append('file', fileToUpload, finalFilename);
 
         // Create abort controller for timeout
         const controller = new AbortController();
@@ -1271,7 +1339,11 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                         )}
                                     >
                                         {isSubmitting ? <Loader2 className="animate-spin w-5 h-5" /> : <Check className="w-5 h-5" />}
-                                        {batchMode ? `Create ${batchImages.length} Cards` : editCard ? 'Update Card' : 'Finish & Save'}
+                                        {isSubmitting
+                                            ? (batchMode
+                                                ? `Uploading ${uploadProgress.current}/${uploadProgress.total}...`
+                                                : 'Uploading...')
+                                            : (batchMode ? `Create ${batchImages.length} Cards` : editCard ? 'Update Card' : 'Finish & Save')}
                                     </button>
                                 )}
                             </div>
