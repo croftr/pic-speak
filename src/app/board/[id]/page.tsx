@@ -24,15 +24,19 @@ export default async function BoardPage({ params }: BoardPageProps) {
         redirect('/my-boards');
     }
 
+    const isOwner = board.userId === userId;
+
     // Check if user has access to board (public or owner)
-    if (!board.isPublic && board.userId !== userId) {
+    if (!board.isPublic && !isOwner) {
         redirect('/my-boards');
     }
 
     // Fetch cards and admin status in parallel
+    // Optimization: If user is owner, they have edit rights so we don't need to check admin status
+    // This saves an external API call
     const [cards, isAdmin] = await Promise.all([
         getCards(id),
-        checkIsAdmin()
+        isOwner ? Promise.resolve(false) : checkIsAdmin()
     ]);
 
     // Sort cards by order field
@@ -41,8 +45,6 @@ export default async function BoardPage({ params }: BoardPageProps) {
         const orderB = b.order ?? 9999;
         return orderA - orderB;
     });
-
-    const isOwner = board.userId === userId;
 
     return (
         <BoardClient
