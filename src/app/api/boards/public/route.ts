@@ -1,22 +1,12 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { getPublicBoards, getBoardLikeCount, getBoardCommentCount, isUserLikedBoard } from '@/lib/storage';
+import { getPublicBoardsWithInteractions } from '@/lib/storage';
 
 export async function GET() {
     const { userId } = await auth();
 
     try {
-        const boards = await getPublicBoards();
-
-        // Enrich with interaction counts
-        const enrichedBoards = await Promise.all(
-            boards.map(async (board) => ({
-                ...board,
-                likeCount: await getBoardLikeCount(board.id),
-                commentCount: await getBoardCommentCount(board.id),
-                isLikedByUser: userId ? await isUserLikedBoard(board.id, userId) : false
-            }))
-        );
+        const enrichedBoards = await getPublicBoardsWithInteractions(userId || undefined);
 
         return NextResponse.json(enrichedBoards, {
             headers: {
