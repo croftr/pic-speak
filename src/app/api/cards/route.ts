@@ -95,15 +95,21 @@ export async function POST(request: Request) {
             );
         }
 
-        // Verify board ownership or admin status (run in parallel for speed)
+        // Verify board ownership or admin status
         // Use retryOnNotFound=true to handle Postgres read replica lag on Vercel
         const boardCheckStart = Date.now();
         console.log(`[CreateCard-${requestId}] Checking board ownership for board: ${boardId}`);
-        const [board, isAdmin] = await Promise.all([
-            getBoard(boardId, true),
-            checkIsAdmin()
-        ]);
+
+        // Optimization: Check ownership first to avoid expensive admin check (external API call)
+        const board = await getBoard(boardId, true);
         const isOwner = board && board.userId === userId;
+
+        let isAdmin = false;
+        if (board && !isOwner) {
+            console.log(`[CreateCard-${requestId}] User is not owner, checking admin status...`);
+            isAdmin = await checkIsAdmin();
+        }
+
         console.log(`[CreateCard-${requestId}] Board check completed in ${Date.now() - boardCheckStart}ms (found: ${!!board}, isOwner: ${isOwner}, isAdmin: ${isAdmin})`);
 
         if (!board || (!isOwner && !isAdmin)) {
