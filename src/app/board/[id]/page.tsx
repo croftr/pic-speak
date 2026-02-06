@@ -35,13 +35,6 @@ export default async function BoardPage({ params }: BoardPageProps) {
         checkIsAdmin()
     ]);
 
-    // Sort cards by order field
-    cards.sort((a, b) => {
-        const orderA = a.order ?? 9999;
-        const orderB = b.order ?? 9999;
-        return orderA - orderB;
-    });
-
     const isOwner = board.userId === userId;
 
     return (
