@@ -15,9 +15,10 @@ interface NavCardProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   delay?: number;
   href?: string;
   className?: string;
+  as?: 'button' | 'div';
 }
 
-function NavCard({ icon, label, colorClass, delay = 0, href, className, style, ...props }: NavCardProps) {
+function NavCard({ icon, label, colorClass, delay = 0, href, className, style, as = 'button', ...props }: NavCardProps) {
   const content = (
     <div className="flex flex-col items-center justify-center p-6 h-full w-full pointer-events-none">
       <div className="mb-4 transform transition-transform group-hover:scale-110 duration-300">
@@ -50,10 +51,12 @@ function NavCard({ icon, label, colorClass, delay = 0, href, className, style, .
     );
   }
 
+  const Component = as;
+
   return (
-    <button type="button" className={containerClasses} style={combinedStyle} {...props}>
+    <Component type={as === 'button' ? "button" : undefined} className={containerClasses} style={combinedStyle} {...(props as any)}>
       {content}
-    </button>
+    </Component>
   );
 }
 
@@ -61,6 +64,7 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
@@ -90,6 +94,7 @@ export default function Home() {
           <SignedOut>
             <SignInButton mode="modal">
               <NavCard
+                as="div"
                 icon={<LogIn size={64} className="text-green-500" />}
                 label="Log In"
                 colorClass="border-green-100 dark:border-green-900/30 hover:border-green-300 dark:hover:border-green-700 hover:ring-4 ring-green-400/30"
