@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { UserButton, SignedIn, SignedOut, SignInButton } from '@clerk/nextjs';
+import { Grid, Globe } from 'lucide-react';
 import Image from 'next/image';
 
 export default function GlobalHeader() {
     const [isVisible, setIsVisible] = useState(true);
     const [lastScrollY, setLastScrollY] = useState(0);
+    const pathname = usePathname();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -26,6 +29,8 @@ export default function GlobalHeader() {
         window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
     }, [lastScrollY]);
+
+    const isActive = (path: string) => pathname === path || pathname.startsWith(path + '/');
 
     return (
         <header
@@ -53,10 +58,35 @@ export default function GlobalHeader() {
                         </span>
                     </Link>
 
+                    {/* Desktop Nav Links - hidden on mobile, shown on sm+ */}
+                    <nav className="hidden sm:flex items-center gap-1">
+                        <SignedIn>
+                            <Link
+                                href="/my-boards"
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${isActive('/my-boards')
+                                    ? 'bg-primary/10 text-primary'
+                                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800'
+                                    }`}
+                            >
+                                <Grid className="w-4 h-4" />
+                                My Boards
+                            </Link>
+                        </SignedIn>
+                        <Link
+                            href="/public-boards"
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${isActive('/public-boards')
+                                ? 'bg-primary/10 text-primary'
+                                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800'
+                                }`}
+                        >
+                            <Globe className="w-4 h-4" />
+                            Explore
+                        </Link>
+                    </nav>
+
                     {/* User Menu */}
                     <div className="flex items-center gap-3">
                         <SignedIn>
-
                             <UserButton
                                 appearance={{
                                     elements: {

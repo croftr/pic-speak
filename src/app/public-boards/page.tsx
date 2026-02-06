@@ -35,13 +35,6 @@ function PublicBoardsContent() {
     return (
         <div className="max-w-7xl mx-auto px-6">
             <div className="mb-12">
-                <Link
-                    href="/"
-                    className="inline-flex items-center gap-2 text-gray-500 hover:text-primary transition-colors mb-8 group"
-                >
-                    <ArrowRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" />
-                    Back to Home
-                </Link>
                 <h1 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-4">
                     {creatorFilter ? `Boards by ${displayedBoards[0]?.creatorName || 'Creator'}` : 'Explore Public Boards'}
                 </h1>
@@ -56,9 +49,6 @@ function PublicBoardsContent() {
                 <div className="py-20 text-center">
                     <h2 className="text-2xl font-bold mb-4">No boards found</h2>
                     <p className="text-gray-500 mb-8">Be the first to share a board with the community!</p>
-                    <Link href="/" className="text-primary hover:underline font-medium">
-                        ← Back to home
-                    </Link>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -41,6 +41,7 @@ import { ClerkProvider } from '@clerk/nextjs'
 import { Toaster } from 'sonner'
 import { SettingsProvider } from '@/contexts/SettingsContext'
 import GlobalHeader from '@/components/GlobalHeader'
+import BottomNav from '@/components/BottomNav'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 
 export default function RootLayout({
@@ -56,9 +57,10 @@ export default function RootLayout({
         >
           <SettingsProvider>
             <GlobalHeader />
-            <div className="pt-14 sm:pt-16">
+            <div className="pt-14 pb-16 sm:pt-16 sm:pb-0">
               {children}
             </div>
+            <BottomNav />
             <Toaster position="top-center" richColors />
             <SpeedInsights />
           </SettingsProvider>
