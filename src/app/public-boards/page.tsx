@@ -104,8 +104,6 @@ function PublicBoardsContent() {
                                                 href={`/public-boards?creator=${board.userId}`}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    e.preventDefault();
-                                                    window.location.href = `/public-boards?creator=${board.userId}`;
                                                 }}
                                                 className="text-[10px] text-primary hover:underline"
                                             >
