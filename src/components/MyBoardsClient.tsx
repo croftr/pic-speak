@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Pencil, X, Plus, Sparkles } from 'lucide-react';
+import { Pencil, X, Plus, Sparkles, Play } from 'lucide-react';
 import { Board } from '@/types';
 import { toast } from 'sonner';
 
@@ -353,44 +353,44 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
                         </div>
                     ) : (
                         boards.map((board) => (
-                            <Link
+                            <div
                                 key={board.id}
-                                href={`/board/${board.id}`}
                                 onMouseEnter={() => {
-                                    // Prefetch board data on hover for instant navigation
                                     router.prefetch(`/board/${board.id}`);
                                 }}
-                                className="group relative block p-5 sm:p-6 md:p-8 bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                                className="group relative flex flex-col p-5 sm:p-6 md:p-8 bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                             >
-                                <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
-                                    <button
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            router.push(`/board/${board.id}?edit=true`);
-                                        }}
-                                        className="p-3 sm:p-3.5 md:p-4 bg-primary/10 dark:bg-primary/20 hover:bg-primary text-primary hover:text-white rounded-full shadow-lg transition-all hover:scale-110 active:scale-95 flex items-center justify-center touch-manipulation min-w-[48px] min-h-[48px] sm:min-w-[52px] sm:min-h-[52px]"
-                                        title="Edit Board"
-                                        aria-label={`Edit ${board.name} board`}
-                                    >
-                                        <Pencil className="w-5 h-5 sm:w-5 sm:h-5 md:w-6 md:h-6" />
-                                    </button>
-                                </div>
-
-                                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3 pr-12 sm:pr-16 group-hover:text-primary transition-colors">
+                                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3">
                                     {board.name}
                                 </h3>
                                 <p className="text-gray-500 line-clamp-2 sm:line-clamp-3 text-xs sm:text-sm leading-relaxed mb-3 sm:mb-4 min-h-[3em] sm:min-h-[4.5em]">
                                     {board.description || 'No description provided.'}
                                 </p>
-                                <div className="flex items-center text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                <div className="flex items-center text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 sm:mb-5">
                                     {new Date(board.createdAt).toLocaleDateString(undefined, {
                                         month: 'short',
                                         day: 'numeric',
                                         year: 'numeric'
                                     })}
                                 </div>
-                            </Link>
+                                <div className="flex gap-3 mt-auto">
+                                    <Link
+                                        href={`/board/${board.id}`}
+                                        className="flex-1 bg-primary text-white px-4 py-3 rounded-xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center justify-center gap-2 text-sm sm:text-base touch-manipulation min-h-[48px]"
+                                    >
+                                        <Play className="w-4 h-4 sm:w-5 sm:h-5" />
+                                        Use Board
+                                    </Link>
+                                    <button
+                                        onClick={() => router.push(`/board/${board.id}?edit=true`)}
+                                        className="px-4 py-3 rounded-xl font-bold border-2 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary transition-all flex items-center justify-center gap-2 text-sm sm:text-base touch-manipulation min-h-[48px]"
+                                        aria-label={`Edit ${board.name} board`}
+                                    >
+                                        <Pencil className="w-4 h-4 sm:w-5 sm:h-5" />
+                                        Edit
+                                    </button>
+                                </div>
+                            </div>
                         ))
                     )}
                 </div>
