@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { put } from '@vercel/blob';
 import { TextToSpeechClient } from '@google-cloud/text-to-speech';
+import { rateLimit } from '@/lib/rate-limit';
+
+// 10 TTS generations per minute per user
+const MAX_REQUESTS = 10;
+const WINDOW_MS = 60_000;
 
 // Maximum text length for TTS (PECS labels should be short)
 const MAX_TEXT_LENGTH = 200;
@@ -50,6 +55,10 @@ export async function POST(request: Request) {
     if (!userId) {
         return new NextResponse("Unauthorized", { status: 401 });
     }
+
+    const limited = rateLimit(userId, 'generate-audio', MAX_REQUESTS, WINDOW_MS);
+    if (limited) return limited;
+
     console.log(`[TTS-${requestId}] User authenticated: ${userId}`);
 
     try {

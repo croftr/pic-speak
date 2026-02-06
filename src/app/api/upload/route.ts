@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
 import sharp from 'sharp';
+import { auth } from '@clerk/nextjs/server';
+import { rateLimit } from '@/lib/rate-limit';
+
+// 20 uploads per minute per user
+const MAX_REQUESTS = 20;
+const WINDOW_MS = 60_000;
 
 // Maximum dimensions for PECS images (they don't need to be huge)
 const MAX_IMAGE_WIDTH = 800;
@@ -18,6 +24,14 @@ export async function POST(request: Request) {
     const requestId = crypto.randomUUID().slice(0, 8);
 
     console.log(`[Upload-${requestId}] Started at ${new Date().toISOString()}`);
+
+    const { userId } = await auth();
+    if (!userId) {
+        return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const limited = rateLimit(userId, 'upload', MAX_REQUESTS, WINDOW_MS);
+    if (limited) return limited;
 
     try {
         const formDataStart = Date.now();

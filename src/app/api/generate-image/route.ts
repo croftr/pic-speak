@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { auth } from '@clerk/nextjs/server';
+import { rateLimit } from '@/lib/rate-limit';
 
+// 5 image generations per minute per user
+const MAX_REQUESTS = 5;
+const WINDOW_MS = 60_000;
 
 export async function POST(request: Request) {
     console.log('Received request to generate image');
@@ -9,6 +13,10 @@ export async function POST(request: Request) {
     if (!userId) {
         return new NextResponse("Unauthorized", { status: 401 });
     }
+
+    const limited = rateLimit(userId, 'generate-image', MAX_REQUESTS, WINDOW_MS);
+    if (limited) return limited;
+
     console.log('User authenticated:', userId);
     try {
         const { prompt } = await request.json();
