@@ -82,6 +82,7 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
                                 }}
                                 className="p-2.5 bg-white/90 dark:bg-slate-700/90 backdrop-blur-sm text-gray-700 dark:text-gray-200 rounded-full shadow-lg hover:bg-gray-50 dark:hover:bg-slate-600 transition-all border border-gray-100 dark:border-gray-600 active:scale-95 touch-manipulation w-10 h-10 flex items-center justify-center"
                                 title="Card Options"
+                                aria-label="Card Options"
                             >
                                 <MoreVertical className="w-5 h-5" />
                             </button>
@@ -104,6 +105,7 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
                                                 setIsMenuOpen(false);
                                             }}
                                             className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg transition-colors text-left"
+                                            aria-label="Copy or Move Card"
                                         >
                                             <Copy className="w-4 h-4" />
                                             Copy / Move
@@ -117,6 +119,7 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
                                                     setIsMenuOpen(false);
                                                 }}
                                                 className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors text-left"
+                                            aria-label="Edit Card"
                                             >
                                                 <Pencil className="w-4 h-4" />
                                                 Edit Card
@@ -130,6 +133,7 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
                                                 setIsMenuOpen(false);
                                             }}
                                             className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors text-left"
+                                            aria-label="Delete Card"
                                         >
                                             <Trash2 className="w-4 h-4" />
                                             Delete
@@ -145,6 +149,7 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
                         {...listeners}
                         className="absolute top-2 left-2 z-[5] cursor-grab active:cursor-grabbing touch-manipulation"
                         title="Press and hold to drag"
+                        aria-label="Drag handle"
                     >
                         <div className="p-2.5 bg-white/90 dark:bg-slate-700/90 backdrop-blur-sm text-gray-400 dark:text-gray-400 rounded-full shadow-lg hover:text-primary hover:bg-gray-50 dark:hover:bg-slate-600 transition-all border border-gray-100 dark:border-gray-600 active:scale-95 w-10 h-10 flex items-center justify-center">
                             <GripVertical className="w-5 h-5" />

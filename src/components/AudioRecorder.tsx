@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Mic, Square, Play, RefreshCw, Trash2 } from 'lucide-react';
+import { Mic, Square, Play, RefreshCw } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { toast } from 'sonner';
@@ -13,12 +13,30 @@ interface AudioRecorderProps {
 
 export default function AudioRecorder({ onRecordingComplete, className }: AudioRecorderProps) {
     const [isRecording, setIsRecording] = useState(false);
+    const [recordingTime, setRecordingTime] = useState(0);
     const [audioURL, setAudioURL] = useState<string | null>(null);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<Blob[]>([]);
 
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (isRecording) {
+            interval = setInterval(() => {
+                setRecordingTime((prev) => prev + 1);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [isRecording]);
+
+    const formatTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
     const startRecording = async () => {
         try {
+            setRecordingTime(0);
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             mediaRecorderRef.current = new MediaRecorder(stream);
             chunksRef.current = [];
@@ -62,6 +80,7 @@ export default function AudioRecorder({ onRecordingComplete, className }: AudioR
     };
 
     const resetRecording = () => {
+        setRecordingTime(0);
         setAudioURL(null);
         setIsRecording(false);
     };
@@ -81,6 +100,7 @@ export default function AudioRecorder({ onRecordingComplete, className }: AudioR
                 <button
                     type="button"
                     onClick={isRecording ? stopRecording : startRecording}
+                    aria-label={isRecording ? "Stop recording" : "Start recording"}
                     className={clsx(
                         "p-4 rounded-full transition-all duration-300 shadow-lg",
                         isRecording
@@ -95,6 +115,7 @@ export default function AudioRecorder({ onRecordingComplete, className }: AudioR
                     <button
                         type="button"
                         onClick={playRecording}
+                        aria-label="Play recording"
                         className="p-3 bg-green-500 hover:bg-green-600 text-white rounded-full transition-colors shadow-md"
                     >
                         <Play className="w-5 h-5 fill-current" />
@@ -103,6 +124,7 @@ export default function AudioRecorder({ onRecordingComplete, className }: AudioR
                     <button
                         type="button"
                         onClick={resetRecording}
+                        aria-label="Retake recording"
                         className="p-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-full transition-colors"
                         title="Retake"
                     >
@@ -112,7 +134,7 @@ export default function AudioRecorder({ onRecordingComplete, className }: AudioR
             )}
 
             <p className="text-xs text-muted-foreground font-medium">
-                {isRecording ? "Recording..." : audioURL ? "Recording captured!" : "Tap to record sound"}
+                {isRecording ? `Recording... ${formatTime(recordingTime)}` : audioURL ? "Recording captured!" : "Tap to record sound"}
             </p>
         </div>
     );

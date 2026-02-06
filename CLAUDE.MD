@@ -112,7 +112,7 @@ npm run lint     # Run ESLint
 
 ## File Storage
 
-The project uses a local storage system implemented in `src/lib/storage.ts` for managing boards and cards data.
+The project uses Vercel Storage (Postgres + Blob) for managing boards and cards data. See `ARCHITECTURE.md` for details.
 
 ## Design Philosophy
 
