@@ -39,8 +39,6 @@ export default async function BoardPage({ params }: BoardPageProps) {
         isOwner ? Promise.resolve(false) : checkIsAdmin()
     ]);
 
-    const isOwner = board.userId === userId;
-
     return (
         <BoardClient
             boardId={id}
