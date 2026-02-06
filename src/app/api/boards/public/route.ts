@@ -10,7 +10,7 @@ export async function GET() {
 
         return NextResponse.json(enrichedBoards, {
             headers: {
-                'Cache-Control': 'public, max-age=300, stale-while-revalidate=600'
+                'Cache-Control': 'public, max-age=10, stale-while-revalidate=30'
             }
         });
     } catch (error) {

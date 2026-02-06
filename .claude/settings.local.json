@@ -16,7 +16,8 @@
       "Bash(npm run lint:*)",
       "Bash(ls:*)",
       "Bash(npx dotenv:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(xargs ls:*)"
     ]
   }
 }
