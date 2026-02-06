@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { auth } from '@clerk/nextjs/server';
+import { validateImagePrompt } from '@/lib/validation';
 
 
 export async function POST(request: Request) {
@@ -11,16 +12,20 @@ export async function POST(request: Request) {
     }
     console.log('User authenticated:', userId);
     try {
-        const { prompt } = await request.json();
+        const json = await request.json().catch(() => ({}));
+        const { prompt } = json;
 
-        console.log('Generating image for prompt:', prompt);
-
-        if (!prompt) {
+        const validation = validateImagePrompt(prompt);
+        if (!validation.isValid) {
+            console.warn('Invalid prompt received:', validation.error);
             return NextResponse.json(
-                { error: 'Prompt is required' },
+                { error: validation.error },
                 { status: 400 }
             );
         }
+
+        const cleanPrompt = validation.prompt;
+        console.log('Generating image for prompt:', cleanPrompt);
 
         const apiKey = process.env.GOOGLE_API_KEY;
 
@@ -43,11 +48,11 @@ export async function POST(request: Request) {
 - Single subject on a clean, simple background
 - No text or words in the image
 
-Subject to illustrate: ${prompt}`;
+Subject to illustrate: ${cleanPrompt}`;
 
         console.log('Enhanced PECS prompt:', pecsPrompt);
 
-        // @ts-ignore
+        // @ts-expect-error - specific model configuration might not match strict types
         const response = await client.models.generateImages({
             model: 'models/imagen-4.0-generate-001',
             prompt: pecsPrompt,
