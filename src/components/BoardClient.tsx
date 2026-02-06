@@ -804,13 +804,15 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
                 )}
             </div>
 
-            {/* Like and Comments Section - Only show for public boards when not owner */}
-            {!isOwner && board?.isPublic && (
+            {/* Like and Comments Section - Show for public boards */}
+            {board?.isPublic && (
                 <div className="mt-12 space-y-8 max-w-4xl mx-auto px-4">
-                    {/* Like Button */}
-                    <div className="flex justify-center">
-                        <LikeButton boardId={boardId} size="lg" />
-                    </div>
+                    {/* Like Button - Only show if not owner */}
+                    {!isOwner && (
+                        <div className="flex justify-center">
+                            <LikeButton boardId={boardId} size="lg" />
+                        </div>
+                    )}
 
                     {/* Comments Section */}
                     <CommentsSection boardId={boardId} />
