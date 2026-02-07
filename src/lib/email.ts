@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { logger } from '@/lib/logger';
 
 // Initialize Resend client (will be null if API key not configured)
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -16,8 +17,10 @@ interface EmailOptions {
 }
 
 async function sendEmail(options: EmailOptions): Promise<boolean> {
+    const log = logger.withContext({ to: options.to, subject: options.subject });
+
     if (!resend) {
-        console.log('[Email] Resend not configured, skipping email send');
+        log.debug('Resend not configured, skipping email send');
         return false;
     }
 
@@ -30,14 +33,14 @@ async function sendEmail(options: EmailOptions): Promise<boolean> {
         });
 
         if (error) {
-            console.error('[Email] Failed to send email:', error);
+            log.error('Failed to send email', error);
             return false;
         }
 
-        console.log(`[Email] Sent successfully to ${options.to}`);
+        log.info('Email sent successfully');
         return true;
     } catch (error) {
-        console.error('[Email] Error sending email:', error);
+        log.error('Error sending email', error);
         return false;
     }
 }
