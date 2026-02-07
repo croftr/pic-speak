@@ -14,15 +14,8 @@ Fish (in the category animals)
 Happy (in the category feelings) 
 Sad (in the category feelings) 
 
-High Priority
-4. Refactor BoardClient.tsx
-This is a very large component with many state variables and responsibilities (drag-drop, card CRUD, audio playback, settings). Breaking it into smaller composable pieces (e.g. useBoardCards hook, CardGrid component, BoardToolbar) would improve maintainability.
-
 5. Remove any types
 There are several any types and a @ts-ignore in the codebase (e.g. batch card creation, board update parsing, generate-image/route.ts). Replacing these with proper types catches bugs at compile time.
-
-~~7. Improve public board queries~~ DONE
-getPublicBoardsWithInteractions() refactored to use LEFT JOINs with GROUP BY instead of correlated subqueries. Starter board interaction queries consolidated from 3 separate queries into 1.
 
 Medium Priority
 8. Add environment variable validation at startup
@@ -30,9 +23,6 @@ If a required env var (Clerk keys, Google AI key, database URL) is missing, the 
 
 9. Validate file content, not just MIME type
 The upload endpoint checks MIME type, but MIME types can be spoofed. Checking file magic bytes or using a library like file-type adds a real layer of safety.
-
-10. Enable removeConsole for production builds
-next.config.ts has removeConsole: false. The codebase has detailed console.log instrumentation throughout, which is great for debugging but should be stripped in production.
 
 11. Add client-side request timeouts
 There are no fetch timeouts on the client. If the TTS or image generation API hangs, the UI just spins indefinitely. Adding AbortController with a reasonable timeout (e.g. 30s) and showing a retry option would improve UX.

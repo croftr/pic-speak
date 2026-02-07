@@ -335,7 +335,7 @@ export async function batchAddCards(cards: Card[], preserveOrder: boolean = fals
                 templateValues.push(
                     card.id,
                     card.boardId,
-                    card.templateKey,
+                    card.templateKey || null,
                     order,
                     card.color || '#6366f1'
                 );
