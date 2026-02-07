@@ -21,8 +21,8 @@ This is a very large component with many state variables and responsibilities (d
 5. Remove any types
 There are several any types and a @ts-ignore in the codebase (e.g. batch card creation, board update parsing, generate-image/route.ts). Replacing these with proper types catches bugs at compile time.
 
-7. Improve public board queries
-getPublicBoardsWithInteractions() in storage.ts uses subqueries for counts. Switching to JOINs with GROUP BY would be more efficient, especially as the public boards gallery grows.
+~~7. Improve public board queries~~ DONE
+getPublicBoardsWithInteractions() refactored to use LEFT JOINs with GROUP BY instead of correlated subqueries. Starter board interaction queries consolidated from 3 separate queries into 1.
 
 Medium Priority
 8. Add environment variable validation at startup

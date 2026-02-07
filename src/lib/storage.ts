@@ -580,18 +580,32 @@ export async function getPublicBoards(): Promise<Board[]> {
 export async function getPublicBoardsWithInteractions(userId?: string): Promise<(Board & { likeCount: number, commentCount: number, isLikedByUser: boolean })[]> {
     const client = await getDbClient();
     try {
-        // Fetch DB boards with counts using subqueries
-        // Note: Using subqueries for counts to avoid GROUP BY complications with all columns
+        // Fetch DB boards with counts using LEFT JOINs + GROUP BY
+        const params: string[] = [];
+        let userLikeJoin = '';
+        let userLikeSelect = 'false as is_liked_by_user';
+
+        if (userId) {
+            params.push(userId);
+            userLikeJoin = `LEFT JOIN board_likes ul ON ul.board_id = b.id AND ul.user_id = $1`;
+            userLikeSelect = '(ul.id IS NOT NULL) as is_liked_by_user';
+        }
+
         const result = await client.query(
             `SELECT
-                b.*,
-                (SELECT COUNT(*) FROM board_likes WHERE board_id = b.id) as like_count,
-                (SELECT COUNT(*) FROM board_comments WHERE board_id = b.id) as comment_count,
-                ${userId ? `(EXISTS (SELECT 1 FROM board_likes WHERE board_id = b.id AND user_id = $1))` : 'false'} as is_liked_by_user
+                b.id, b.user_id, b.name, b.description, b.created_at, b.is_public,
+                b.creator_name, b.creator_image_url, b.owner_email, b.email_notifications_enabled,
+                COUNT(DISTINCT bl.id) as like_count,
+                COUNT(DISTINCT bc.id) as comment_count,
+                ${userLikeSelect}
             FROM boards b
+            LEFT JOIN board_likes bl ON bl.board_id = b.id
+            LEFT JOIN board_comments bc ON bc.board_id = b.id
+            ${userLikeJoin}
             WHERE b.is_public = true
+            GROUP BY b.id${userId ? ', ul.id' : ''}
             ORDER BY b.created_at DESC`,
-            userId ? [userId] : []
+            params
         );
 
         const dbBoards = result.rows.map(row => ({
@@ -610,40 +624,49 @@ export async function getPublicBoardsWithInteractions(userId?: string): Promise<
             isLikedByUser: row.is_liked_by_user
         }));
 
-        // Handle Starter Boards
+        // Enrich starter boards with interaction counts in a single query
         const starterIds = STARTER_BOARDS.map(b => b.id);
+        const starterParams: (string | string[])[] = [starterIds];
+        let starterUserLikeJoin = '';
+        let starterUserLikeSelect = 'false as is_liked_by_user';
 
-        // Fetch likes/comments for starter boards in bulk
-        const starterLikesRes = await client.query(
-            'SELECT board_id, COUNT(*) as count FROM board_likes WHERE board_id = ANY($1) GROUP BY board_id',
-            [starterIds]
-        );
-
-        const starterCommentsRes = await client.query(
-            'SELECT board_id, COUNT(*) as count FROM board_comments WHERE board_id = ANY($1) GROUP BY board_id',
-            [starterIds]
-        );
-
-        let starterLikedSet = new Set<string>();
         if (userId) {
-            const res = await client.query(
-                'SELECT board_id FROM board_likes WHERE board_id = ANY($1) AND user_id = $2',
-                [starterIds, userId]
-            );
-            res.rows.forEach(r => starterLikedSet.add(r.board_id));
+            starterParams.push(userId);
+            starterUserLikeJoin = `LEFT JOIN board_likes ul ON ul.board_id = bl.board_id AND ul.user_id = $2`;
+            starterUserLikeSelect = '(ul.id IS NOT NULL) as is_liked_by_user';
         }
 
-        const enrichedStarterBoards = STARTER_BOARDS.map(b => {
-            const likeCount = parseInt(starterLikesRes.rows.find(r => r.board_id === b.id)?.count || '0');
-            const commentCount = parseInt(starterCommentsRes.rows.find(r => r.board_id === b.id)?.count || '0');
-            const isLikedByUser = starterLikedSet.has(b.id);
-            return {
-                ...b,
-                likeCount,
-                commentCount,
-                isLikedByUser
-            };
+        const starterResult = await client.query(
+            `SELECT
+                bl.board_id,
+                COUNT(DISTINCT bl.id) as like_count,
+                COUNT(DISTINCT bc.id) as comment_count,
+                ${starterUserLikeSelect}
+            FROM (SELECT unnest($1::text[]) as board_id) ids
+            LEFT JOIN board_likes bl ON bl.board_id = ids.board_id
+            LEFT JOIN board_comments bc ON bc.board_id = ids.board_id
+            ${starterUserLikeJoin}
+            GROUP BY bl.board_id${userId ? ', ul.id' : ''}`,
+            starterParams
+        );
+
+        const starterInteractions = new Map<string, { likeCount: number, commentCount: number, isLikedByUser: boolean }>();
+        starterResult.rows.forEach(row => {
+            if (row.board_id) {
+                starterInteractions.set(row.board_id, {
+                    likeCount: parseInt(row.like_count),
+                    commentCount: parseInt(row.comment_count),
+                    isLikedByUser: row.is_liked_by_user
+                });
+            }
         });
+
+        const enrichedStarterBoards = STARTER_BOARDS.map(b => ({
+            ...b,
+            likeCount: starterInteractions.get(b.id)?.likeCount ?? 0,
+            commentCount: starterInteractions.get(b.id)?.commentCount ?? 0,
+            isLikedByUser: starterInteractions.get(b.id)?.isLikedByUser ?? false
+        }));
 
         return [...enrichedStarterBoards, ...dbBoards];
     } catch (error) {
