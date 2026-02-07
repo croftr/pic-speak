@@ -14,16 +14,12 @@ Fish (in the category animals)
 Happy (in the category feelings) 
 Sad (in the category feelings) 
 
-
 High Priority
 4. Refactor BoardClient.tsx
 This is a very large component with many state variables and responsibilities (drag-drop, card CRUD, audio playback, settings). Breaking it into smaller composable pieces (e.g. useBoardCards hook, CardGrid component, BoardToolbar) would improve maintainability.
 
 5. Remove any types
 There are several any types and a @ts-ignore in the codebase (e.g. batch card creation, board update parsing, generate-image/route.ts). Replacing these with proper types catches bugs at compile time.
-
-6. Add database migrations
-There's no schema versioning or migration tooling. If you need to alter a table, there's no safe, repeatable way to do it. A tool like Drizzle or Prisma (or even raw SQL migration files) would help.
 
 7. Improve public board queries
 getPublicBoardsWithInteractions() in storage.ts uses subqueries for counts. Switching to JOINs with GROUP BY would be more efficient, especially as the public boards gallery grows.
