@@ -36,10 +36,10 @@ function PublicBoardsContent() {
         <div className="max-w-7xl mx-auto px-6">
             <div className="mb-12">
                 <h1 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-4">
-                    {creatorFilter ? `Boards by ${displayedBoards[0]?.creatorName || 'Creator'}` : 'Explore Public Boards'}
+                    {creatorFilter ? `Boards by ${displayedBoards[0]?.creatorName || 'Creator'}` : 'Public Boards'}
                 </h1>
                 <p className="text-lg text-gray-500 max-w-2xl">
-                    {creatorFilter ? 'All public boards from this creator' : 'Check out these communication boards shared by our community'}
+                    {creatorFilter ? 'All public boards from this creator' : 'Communication boards shared by our community'}
                 </p>
             </div>
 
