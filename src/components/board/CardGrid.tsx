@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import PecsCard from '@/components/PecsCard';
 import { Card } from '@/types';
 import { useSwipeRef } from '@/hooks/useSwipe';
-import { Plus, Search } from 'lucide-react';
+import { Image, Plus, Search } from 'lucide-react';
 import {
     DndContext,
     closestCenter,
@@ -32,6 +32,7 @@ interface CardGridProps {
     onMoveCopy: (card: Card) => void;
     searchTerm: string;
     onAddCard: () => void;
+    onStartEditing?: () => void;
 }
 
 export default function CardGrid({
@@ -44,7 +45,8 @@ export default function CardGrid({
     onEdit,
     onMoveCopy,
     searchTerm,
-    onAddCard
+    onAddCard,
+    onStartEditing
 }: CardGridProps) {
     const [focusedCardIndex, setFocusedCardIndex] = useState<number>(-1);
     const gridRef = useRef<HTMLDivElement>(null);
@@ -175,13 +177,13 @@ export default function CardGrid({
             {totalCardsCount === 0 ? (
                 <div className="flex flex-col items-center justify-center p-8 sm:p-12 text-center rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-700 bg-white/50 dark:bg-slate-800/50">
                     <div className="p-4 sm:p-6 bg-gradient-to-br from-primary/10 to-accent/10 rounded-full mb-4 sm:mb-6">
-                        <Plus className="w-10 h-10 sm:w-12 sm:h-12 text-primary" />
+                        <Image className="w-10 h-10 sm:w-12 sm:h-12 text-primary" />
                     </div>
                     <h3 className="text-xl sm:text-2xl font-bold text-gray-700 dark:text-gray-200 mb-2">No Cards Yet</h3>
                     <p className="text-gray-500 text-sm sm:text-base max-w-sm mb-6">
                         Start building your communication board by adding picture cards
                     </p>
-                    {isEditing && (
+                    {isEditing ? (
                         <button
                             onClick={onAddCard}
                             className="flex items-center gap-2 px-5 py-3 bg-primary text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:bg-primary/90 transition-all touch-manipulation"
@@ -189,7 +191,15 @@ export default function CardGrid({
                             <Plus className="w-5 h-5" />
                             <span>Add Your First Card</span>
                         </button>
-                    )}
+                    ) : onStartEditing ? (
+                        <button
+                            onClick={onStartEditing}
+                            className="flex items-center gap-2 px-5 py-3 bg-primary text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:bg-primary/90 transition-all touch-manipulation"
+                        >
+                            <Plus className="w-5 h-5" />
+                            <span>Add Your First Card</span>
+                        </button>
+                    ) : null}
                 </div>
             ) : cards.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-12 text-center rounded-3xl border-2 border-dashed border-gray-300 dark:border-gray-700 bg-white/50 dark:bg-slate-800/50">
