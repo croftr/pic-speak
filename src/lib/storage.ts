@@ -113,6 +113,12 @@ const TEMPLATE_CARDS_REGISTRY: Record<string, Omit<Card, 'id' | 'boardId' | 'ord
     // Feelings
     'tpl-hungry': { label: 'Hungry', imageUrl: '/prebuilt/hungry.png', audioUrl: '/prebuilt/hungry.wav', category: 'Feelings', templateKey: 'tpl-hungry' },
     'tpl-tired': { label: 'Tired', imageUrl: '/prebuilt/tired.jpg', audioUrl: '/prebuilt/tired.wav', category: 'Feelings', templateKey: 'tpl-tired' },
+    'tpl-happy': { label: 'Happy', imageUrl: '/prebuilt/happy.png', audioUrl: '/prebuilt/happy.wav', category: 'Feelings', templateKey: 'tpl-happy' },
+    'tpl-sad': { label: 'Sad', imageUrl: '/prebuilt/sad.png', audioUrl: '/prebuilt/sad.wav', category: 'Feelings', templateKey: 'tpl-sad' },
+    // Animals
+    'tpl-dog': { label: 'Dog', imageUrl: '/prebuilt/dog.png', audioUrl: '/prebuilt/dog.wav', category: 'Animals', templateKey: 'tpl-dog' },
+    'tpl-cat': { label: 'Cat', imageUrl: '/prebuilt/cat.png', audioUrl: '/prebuilt/cat.wav', category: 'Animals', templateKey: 'tpl-cat' },
+    'tpl-fish': { label: 'Fish', imageUrl: '/prebuilt/fish.png', audioUrl: '/prebuilt/fish.wav', category: 'Animals', templateKey: 'tpl-fish' },
 };
 
 // Export for use in other modules
@@ -152,6 +158,12 @@ const STARTER_CARDS: Record<string, Card[]> = {
         // Feelings
         { id: 'sbp-23', boardId: 'starter-template', label: 'Hungry', imageUrl: '/prebuilt/hungry.png', audioUrl: '/prebuilt/hungry.wav', category: 'Feelings', order: 22, templateKey: 'tpl-hungry' },
         { id: 'sbp-24', boardId: 'starter-template', label: 'Tired', imageUrl: '/prebuilt/tired.jpg', audioUrl: '/prebuilt/tired.wav', category: 'Feelings', order: 23, templateKey: 'tpl-tired' },
+        { id: 'sbp-25', boardId: 'starter-template', label: 'Happy', imageUrl: '/prebuilt/happy.png', audioUrl: '/prebuilt/happy.wav', category: 'Feelings', order: 24, templateKey: 'tpl-happy' },
+        { id: 'sbp-26', boardId: 'starter-template', label: 'Sad', imageUrl: '/prebuilt/sad.png', audioUrl: '/prebuilt/sad.wav', category: 'Feelings', order: 25, templateKey: 'tpl-sad' },
+        // Animals
+        { id: 'sbp-27', boardId: 'starter-template', label: 'Dog', imageUrl: '/prebuilt/dog.png', audioUrl: '/prebuilt/dog.wav', category: 'Animals', order: 26, templateKey: 'tpl-dog' },
+        { id: 'sbp-28', boardId: 'starter-template', label: 'Cat', imageUrl: '/prebuilt/cat.png', audioUrl: '/prebuilt/cat.wav', category: 'Animals', order: 27, templateKey: 'tpl-cat' },
+        { id: 'sbp-29', boardId: 'starter-template', label: 'Fish', imageUrl: '/prebuilt/fish.png', audioUrl: '/prebuilt/fish.wav', category: 'Animals', order: 28, templateKey: 'tpl-fish' },
     ]
 };
 

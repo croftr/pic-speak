@@ -258,6 +258,10 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
                 onMoveCopy={handleMoveCopyCard}
                 searchTerm={searchTerm}
                 onAddCard={() => setIsModalOpen(true)}
+                onStartEditing={!isEditing && (isOwner || isAdmin) && !isStarterBoard && cards.length === 0
+                    ? () => router.push(`/board/${boardId}?edit=true`)
+                    : undefined
+                }
             />
 
             {/* Like and Comments Section - Show for public boards */}
