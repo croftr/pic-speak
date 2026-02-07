@@ -35,7 +35,7 @@ export async function POST(request: Request) {
             imageUrl: cardData.imageUrl,
             audioUrl: cardData.audioUrl || '',
             color: cardData.color || '#6366f1',
-            category: cardData.category || undefined, // Optional free-text category
+            category: cardData.category ? cardData.category.trim().toLowerCase().replace(/^\w/, (c: string) => c.toUpperCase()) : undefined,
             order: cardData.order ?? index
         }));
 

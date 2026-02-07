@@ -21,6 +21,7 @@ const ConfirmDialog = dynamic(() => import('@/components/ConfirmDialog'), {
     loading: () => null
 });
 import { Card, Board } from '@/types';
+import { getCategoryEmoji } from '@/lib/categories';
 import { Plus, Upload, ArrowLeft, Loader2, Search, X, Trash2, Share2, Check, MoreHorizontal, ChevronDown, ChevronUp, Grid3X3, Grid2X2, LayoutGrid } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -295,13 +296,14 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
     // Use optimisticCards for instant UI updates
     const displayCards = optimisticCards;
 
-    // Get unique categories from cards (excluding empty/undefined)
-    const existingCategories = [...new Set(displayCards.map(c => c.category).filter((c): c is string => !!c))];
+    // Get unique categories from cards (excluding empty/undefined), normalized for case/whitespace
+    const normalizeCategory = (cat: string) => cat.trim().toLowerCase().replace(/^\w/, c => c.toUpperCase());
+    const existingCategories = [...new Set(displayCards.map(c => c.category).filter((c): c is string => !!c).map(normalizeCategory))];
     const showCategoryFilter = existingCategories.length > 0;
 
     const filteredCards = displayCards.filter(card => {
         const matchesSearch = card.label.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesCategory = categoryFilter === 'All' || card.category === categoryFilter;
+        const matchesCategory = categoryFilter === 'All' || (card.category ? normalizeCategory(card.category) === categoryFilter : false);
         return matchesSearch && matchesCategory;
     });
 
@@ -732,7 +734,7 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
                                         : "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700"
                                 )}
                             >
-                                {cat} ({displayCards.filter(c => c.category === cat).length})
+                                {getCategoryEmoji(cat) && <span>{getCategoryEmoji(cat)}</span>} {cat} ({displayCards.filter(c => c.category ? normalizeCategory(c.category) === cat : false).length})
                             </button>
                         ))}
                     </div>

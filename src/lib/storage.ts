@@ -75,24 +75,28 @@ const STARTER_BOARDS: Board[] = [
 
 // Template card definitions - these are referenced by templateKey and never stored in DB
 const TEMPLATE_CARDS_REGISTRY: Record<string, Omit<Card, 'id' | 'boardId' | 'order'>> = {
-    'tpl-yes': { label: 'Yes', imageUrl: '/prebuilt/yes.png', audioUrl: '/prebuilt/yes.mp3', category: 'Word', templateKey: 'tpl-yes' },
-    'tpl-no': { label: 'No', imageUrl: '/prebuilt/no.png', audioUrl: '/prebuilt/no.mp3', category: 'Word', templateKey: 'tpl-no' },
-    'tpl-hello': { label: 'Hello', imageUrl: '/prebuilt/hello.png', audioUrl: '/prebuilt/hello.mp3', category: 'Word', templateKey: 'tpl-hello' },
-    'tpl-bye': { label: 'Bye', imageUrl: '/prebuilt/bye.png', audioUrl: '/prebuilt/bye.mp3', category: 'Word', templateKey: 'tpl-bye' },
-    'tpl-thank-you': { label: 'Thank You', imageUrl: '/prebuilt/thank_you.png', audioUrl: '/prebuilt/thank_you.mp3', category: 'Word', templateKey: 'tpl-thank-you' },
-    'tpl-please': { label: 'Please', imageUrl: '/prebuilt/please.png', audioUrl: '/prebuilt/please.mp3', category: 'Word', templateKey: 'tpl-please' },
-    'tpl-computer': { label: 'Computer', imageUrl: '/prebuilt/computer.png', audioUrl: '/prebuilt/computer.mp3', category: 'Thing', templateKey: 'tpl-computer' },
-    'tpl-tablet': { label: 'Tablet', imageUrl: '/prebuilt/tablet.png', audioUrl: '/prebuilt/tablet.mp3', category: 'Thing', templateKey: 'tpl-tablet' },
-    'tpl-mobile-phone': { label: 'Mobile Phone', imageUrl: '/prebuilt/mobile_phone.png', audioUrl: '/prebuilt/mobile_phone.mp3', category: 'Thing', templateKey: 'tpl-mobile-phone' },
-    'tpl-bed': { label: 'Bed', imageUrl: '/prebuilt/bed.png', audioUrl: '/prebuilt/bed.mp3', category: 'Thing', templateKey: 'tpl-bed' },
-    'tpl-toilet': { label: 'Toilet', imageUrl: '/prebuilt/toilet.png', audioUrl: '/prebuilt/toilet.mp3', category: 'Thing', templateKey: 'tpl-toilet' },
-    'tpl-brush-teeth': { label: 'Brush Teeth', imageUrl: '/prebuilt/brush_teeth.png', audioUrl: '/prebuilt/brush_teeth.mp3', category: 'Thing', templateKey: 'tpl-brush-teeth' },
-    'tpl-school': { label: 'School', imageUrl: '/prebuilt/school.png', audioUrl: '/prebuilt/school.wav', category: 'Thing', templateKey: 'tpl-school' },
-    'tpl-juice': { label: 'Juice', imageUrl: '/prebuilt/juice.png', audioUrl: '/prebuilt/juice.wav', category: 'Thing', templateKey: 'tpl-juice' },
-    'tpl-chocolate': { label: 'Chocolate', imageUrl: '/prebuilt/chocolate.png', audioUrl: '/prebuilt/chocolate.wav', category: 'Thing', templateKey: 'tpl-chocolate' },
-    'tpl-sweets': { label: 'Sweets', imageUrl: '/prebuilt/sweets.png', audioUrl: '/prebuilt/sweets.wav', category: 'Thing', templateKey: 'tpl-sweets' },
-    'tpl-cake': { label: 'Cake', imageUrl: '/prebuilt/cake.png', audioUrl: '/prebuilt/cake.wav', category: 'Thing', templateKey: 'tpl-cake' },
-    'tpl-apple': { label: 'Apple', imageUrl: '/prebuilt/apple.png', audioUrl: '/prebuilt/apple.wav', category: 'Thing', templateKey: 'tpl-apple' },
+    // Core
+    'tpl-yes': { label: 'Yes', imageUrl: '/prebuilt/yes.png', audioUrl: '/prebuilt/yes.mp3', category: 'Core', templateKey: 'tpl-yes' },
+    'tpl-no': { label: 'No', imageUrl: '/prebuilt/no.png', audioUrl: '/prebuilt/no.mp3', category: 'Core', templateKey: 'tpl-no' },
+    'tpl-hello': { label: 'Hello', imageUrl: '/prebuilt/hello.png', audioUrl: '/prebuilt/hello.mp3', category: 'Core', templateKey: 'tpl-hello' },
+    'tpl-bye': { label: 'Goodbye', imageUrl: '/prebuilt/bye.png', audioUrl: '/prebuilt/bye.mp3', category: 'Core', templateKey: 'tpl-bye' },
+    'tpl-thank-you': { label: 'Thank You', imageUrl: '/prebuilt/thank_you.png', audioUrl: '/prebuilt/thank_you.mp3', category: 'Core', templateKey: 'tpl-thank-you' },
+    'tpl-please': { label: 'Please', imageUrl: '/prebuilt/please.png', audioUrl: '/prebuilt/please.mp3', category: 'Core', templateKey: 'tpl-please' },
+    // Activities
+    'tpl-computer': { label: 'Computer', imageUrl: '/prebuilt/computer.png', audioUrl: '/prebuilt/computer.mp3', category: 'Activities', templateKey: 'tpl-computer' },
+    'tpl-tablet': { label: 'Tablet', imageUrl: '/prebuilt/tablet.png', audioUrl: '/prebuilt/tablet.mp3', category: 'Activities', templateKey: 'tpl-tablet' },
+    'tpl-mobile-phone': { label: 'Mobile Phone', imageUrl: '/prebuilt/mobile_phone.png', audioUrl: '/prebuilt/mobile_phone.mp3', category: 'Activities', templateKey: 'tpl-mobile-phone' },
+    'tpl-toilet': { label: 'Toilet', imageUrl: '/prebuilt/toilet.png', audioUrl: '/prebuilt/toilet.mp3', category: 'Activities', templateKey: 'tpl-toilet' },
+    'tpl-brush-teeth': { label: 'Brush Teeth', imageUrl: '/prebuilt/brush_teeth.png', audioUrl: '/prebuilt/brush_teeth.mp3', category: 'Activities', templateKey: 'tpl-brush-teeth' },
+    // Places
+    'tpl-bed': { label: 'Bed', imageUrl: '/prebuilt/bed.png', audioUrl: '/prebuilt/bed.mp3', category: 'Places', templateKey: 'tpl-bed' },
+    'tpl-school': { label: 'School', imageUrl: '/prebuilt/school.png', audioUrl: '/prebuilt/school.wav', category: 'Places', templateKey: 'tpl-school' },
+    // Food
+    'tpl-juice': { label: 'Juice', imageUrl: '/prebuilt/juice.png', audioUrl: '/prebuilt/juice.wav', category: 'Food', templateKey: 'tpl-juice' },
+    'tpl-chocolate': { label: 'Chocolate', imageUrl: '/prebuilt/chocolate.png', audioUrl: '/prebuilt/chocolate.wav', category: 'Food', templateKey: 'tpl-chocolate' },
+    'tpl-sweets': { label: 'Sweets', imageUrl: '/prebuilt/sweets.png', audioUrl: '/prebuilt/sweets.wav', category: 'Food', templateKey: 'tpl-sweets' },
+    'tpl-cake': { label: 'Cake', imageUrl: '/prebuilt/cake.png', audioUrl: '/prebuilt/cake.wav', category: 'Food', templateKey: 'tpl-cake' },
+    'tpl-apple': { label: 'Apple', imageUrl: '/prebuilt/apple.png', audioUrl: '/prebuilt/apple.wav', category: 'Food', templateKey: 'tpl-apple' },
 };
 
 // Export for use in other modules
@@ -102,24 +106,28 @@ export function getTemplateCard(templateKey: string): Omit<Card, 'id' | 'boardId
 
 const STARTER_CARDS: Record<string, Card[]> = {
     'starter-template': [
-        { id: 'sbp-1', boardId: 'starter-template', label: 'Yes', imageUrl: '/prebuilt/yes.png', audioUrl: '/prebuilt/yes.mp3', category: 'Word', order: 0, templateKey: 'tpl-yes' },
-        { id: 'sbp-2', boardId: 'starter-template', label: 'No', imageUrl: '/prebuilt/no.png', audioUrl: '/prebuilt/no.mp3', category: 'Word', order: 1, templateKey: 'tpl-no' },
-        { id: 'sbp-3', boardId: 'starter-template', label: 'Hello', imageUrl: '/prebuilt/hello.png', audioUrl: '/prebuilt/hello.mp3', category: 'Word', order: 2, templateKey: 'tpl-hello' },
-        { id: 'sbp-4', boardId: 'starter-template', label: 'Bye', imageUrl: '/prebuilt/bye.png', audioUrl: '/prebuilt/bye.mp3', category: 'Word', order: 3, templateKey: 'tpl-bye' },
-        { id: 'sbp-5', boardId: 'starter-template', label: 'Thank You', imageUrl: '/prebuilt/thank_you.png', audioUrl: '/prebuilt/thank_you.mp3', category: 'Word', order: 4, templateKey: 'tpl-thank-you' },
-        { id: 'sbp-6', boardId: 'starter-template', label: 'Please', imageUrl: '/prebuilt/please.png', audioUrl: '/prebuilt/please.mp3', category: 'Word', order: 5, templateKey: 'tpl-please' },
-        { id: 'sbp-7', boardId: 'starter-template', label: 'Computer', imageUrl: '/prebuilt/computer.png', audioUrl: '/prebuilt/computer.mp3', category: 'Thing', order: 6, templateKey: 'tpl-computer' },
-        { id: 'sbp-8', boardId: 'starter-template', label: 'Tablet', imageUrl: '/prebuilt/tablet.png', audioUrl: '/prebuilt/tablet.mp3', category: 'Thing', order: 7, templateKey: 'tpl-tablet' },
-        { id: 'sbp-9', boardId: 'starter-template', label: 'Mobile Phone', imageUrl: '/prebuilt/mobile_phone.png', audioUrl: '/prebuilt/mobile_phone.mp3', category: 'Thing', order: 8, templateKey: 'tpl-mobile-phone' },
-        { id: 'sbp-10', boardId: 'starter-template', label: 'Bed', imageUrl: '/prebuilt/bed.png', audioUrl: '/prebuilt/bed.mp3', category: 'Thing', order: 9, templateKey: 'tpl-bed' },
-        { id: 'sbp-11', boardId: 'starter-template', label: 'Toilet', imageUrl: '/prebuilt/toilet.png', audioUrl: '/prebuilt/toilet.mp3', category: 'Thing', order: 10, templateKey: 'tpl-toilet' },
-        { id: 'sbp-12', boardId: 'starter-template', label: 'Brush Teeth', imageUrl: '/prebuilt/brush_teeth.png', audioUrl: '/prebuilt/brush_teeth.mp3', category: 'Thing', order: 11, templateKey: 'tpl-brush-teeth' },
-        { id: 'sbp-13', boardId: 'starter-template', label: 'School', imageUrl: '/prebuilt/school.png', audioUrl: '/prebuilt/school.wav', category: 'Thing', order: 12, templateKey: 'tpl-school' },
-        { id: 'sbp-14', boardId: 'starter-template', label: 'Juice', imageUrl: '/prebuilt/juice.png', audioUrl: '/prebuilt/juice.wav', category: 'Thing', order: 13, templateKey: 'tpl-juice' },
-        { id: 'sbp-15', boardId: 'starter-template', label: 'Chocolate', imageUrl: '/prebuilt/chocolate.png', audioUrl: '/prebuilt/chocolate.wav', category: 'Thing', order: 14, templateKey: 'tpl-chocolate' },
-        { id: 'sbp-16', boardId: 'starter-template', label: 'Sweets', imageUrl: '/prebuilt/sweets.png', audioUrl: '/prebuilt/sweets.wav', category: 'Thing', order: 15, templateKey: 'tpl-sweets' },
-        { id: 'sbp-17', boardId: 'starter-template', label: 'Cake', imageUrl: '/prebuilt/cake.png', audioUrl: '/prebuilt/cake.wav', category: 'Thing', order: 16, templateKey: 'tpl-cake' },
-        { id: 'sbp-18', boardId: 'starter-template', label: 'Apple', imageUrl: '/prebuilt/apple.png', audioUrl: '/prebuilt/apple.wav', category: 'Thing', order: 17, templateKey: 'tpl-apple' },
+        // Core
+        { id: 'sbp-1', boardId: 'starter-template', label: 'Yes', imageUrl: '/prebuilt/yes.png', audioUrl: '/prebuilt/yes.mp3', category: 'Core', order: 0, templateKey: 'tpl-yes' },
+        { id: 'sbp-2', boardId: 'starter-template', label: 'No', imageUrl: '/prebuilt/no.png', audioUrl: '/prebuilt/no.mp3', category: 'Core', order: 1, templateKey: 'tpl-no' },
+        { id: 'sbp-3', boardId: 'starter-template', label: 'Hello', imageUrl: '/prebuilt/hello.png', audioUrl: '/prebuilt/hello.mp3', category: 'Core', order: 2, templateKey: 'tpl-hello' },
+        { id: 'sbp-4', boardId: 'starter-template', label: 'Goodbye', imageUrl: '/prebuilt/bye.png', audioUrl: '/prebuilt/bye.mp3', category: 'Core', order: 3, templateKey: 'tpl-bye' },
+        { id: 'sbp-5', boardId: 'starter-template', label: 'Thank You', imageUrl: '/prebuilt/thank_you.png', audioUrl: '/prebuilt/thank_you.mp3', category: 'Core', order: 4, templateKey: 'tpl-thank-you' },
+        { id: 'sbp-6', boardId: 'starter-template', label: 'Please', imageUrl: '/prebuilt/please.png', audioUrl: '/prebuilt/please.mp3', category: 'Core', order: 5, templateKey: 'tpl-please' },
+        // Activities
+        { id: 'sbp-7', boardId: 'starter-template', label: 'Computer', imageUrl: '/prebuilt/computer.png', audioUrl: '/prebuilt/computer.mp3', category: 'Activities', order: 6, templateKey: 'tpl-computer' },
+        { id: 'sbp-8', boardId: 'starter-template', label: 'Tablet', imageUrl: '/prebuilt/tablet.png', audioUrl: '/prebuilt/tablet.mp3', category: 'Activities', order: 7, templateKey: 'tpl-tablet' },
+        { id: 'sbp-9', boardId: 'starter-template', label: 'Mobile Phone', imageUrl: '/prebuilt/mobile_phone.png', audioUrl: '/prebuilt/mobile_phone.mp3', category: 'Activities', order: 8, templateKey: 'tpl-mobile-phone' },
+        { id: 'sbp-10', boardId: 'starter-template', label: 'Toilet', imageUrl: '/prebuilt/toilet.png', audioUrl: '/prebuilt/toilet.mp3', category: 'Activities', order: 9, templateKey: 'tpl-toilet' },
+        { id: 'sbp-11', boardId: 'starter-template', label: 'Brush Teeth', imageUrl: '/prebuilt/brush_teeth.png', audioUrl: '/prebuilt/brush_teeth.mp3', category: 'Activities', order: 10, templateKey: 'tpl-brush-teeth' },
+        // Places
+        { id: 'sbp-12', boardId: 'starter-template', label: 'Bed', imageUrl: '/prebuilt/bed.png', audioUrl: '/prebuilt/bed.mp3', category: 'Places', order: 11, templateKey: 'tpl-bed' },
+        { id: 'sbp-13', boardId: 'starter-template', label: 'School', imageUrl: '/prebuilt/school.png', audioUrl: '/prebuilt/school.wav', category: 'Places', order: 12, templateKey: 'tpl-school' },
+        // Food
+        { id: 'sbp-14', boardId: 'starter-template', label: 'Juice', imageUrl: '/prebuilt/juice.png', audioUrl: '/prebuilt/juice.wav', category: 'Food', order: 13, templateKey: 'tpl-juice' },
+        { id: 'sbp-15', boardId: 'starter-template', label: 'Chocolate', imageUrl: '/prebuilt/chocolate.png', audioUrl: '/prebuilt/chocolate.wav', category: 'Food', order: 14, templateKey: 'tpl-chocolate' },
+        { id: 'sbp-16', boardId: 'starter-template', label: 'Sweets', imageUrl: '/prebuilt/sweets.png', audioUrl: '/prebuilt/sweets.wav', category: 'Food', order: 15, templateKey: 'tpl-sweets' },
+        { id: 'sbp-17', boardId: 'starter-template', label: 'Cake', imageUrl: '/prebuilt/cake.png', audioUrl: '/prebuilt/cake.wav', category: 'Food', order: 16, templateKey: 'tpl-cake' },
+        { id: 'sbp-18', boardId: 'starter-template', label: 'Apple', imageUrl: '/prebuilt/apple.png', audioUrl: '/prebuilt/apple.wav', category: 'Food', order: 17, templateKey: 'tpl-apple' },
     ]
 };
 

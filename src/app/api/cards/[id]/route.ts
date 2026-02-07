@@ -38,7 +38,8 @@ export async function PUT(
         }
 
         const body = await request.json();
-        const { label, imageUrl, audioUrl, color, category, boardId } = body;
+        const { label, imageUrl, audioUrl, color, category: rawCategory, boardId } = body;
+        const category = rawCategory ? rawCategory.trim().toLowerCase().replace(/^\w/, (c: string) => c.toUpperCase()) : rawCategory;
 
         // If moving to a different board, verify user owns the destination board
         if (boardId && boardId !== existingCard.boardId) {

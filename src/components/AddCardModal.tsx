@@ -13,6 +13,7 @@ const PublicCardPickerModal = dynamic(() => import('./PublicCardPickerModal'), {
 import { clsx } from 'clsx';
 import { Card } from '@/types';
 import { toast } from 'sonner';
+import { PREDEFINED_CATEGORIES, getCategoryEmoji } from '@/lib/categories';
 
 interface AddCardModalProps {
     isOpen: boolean;
@@ -965,19 +966,56 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                                         Category (Optional)
                                                     </label>
+
+                                                    {/* Predefined category chips */}
+                                                    <div className="flex flex-wrap gap-2 mb-2">
+                                                        {PREDEFINED_CATEGORIES.map((cat) => (
+                                                            <button
+                                                                key={cat.name}
+                                                                type="button"
+                                                                onClick={() => setCategory(category === cat.name ? '' : cat.name)}
+                                                                className={clsx(
+                                                                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all active:scale-95",
+                                                                    category === cat.name
+                                                                        ? "bg-primary text-white shadow-md ring-2 ring-primary/30"
+                                                                        : "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700"
+                                                                )}
+                                                            >
+                                                                <span>{cat.emoji}</span>
+                                                                <span>{cat.name}</span>
+                                                            </button>
+                                                        ))}
+
+                                                        {/* Show chips for user-created categories that aren't predefined */}
+                                                        {existingCategories
+                                                            .filter(cat => !PREDEFINED_CATEGORIES.some(p => p.name === cat))
+                                                            .map((cat) => (
+                                                                <button
+                                                                    key={cat}
+                                                                    type="button"
+                                                                    onClick={() => setCategory(category === cat ? '' : cat)}
+                                                                    className={clsx(
+                                                                        "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all active:scale-95",
+                                                                        category === cat
+                                                                            ? "bg-primary text-white shadow-md ring-2 ring-primary/30"
+                                                                            : "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700"
+                                                                    )}
+                                                                >
+                                                                    <span>🏷️</span>
+                                                                    <span>{cat}</span>
+                                                                </button>
+                                                            ))
+                                                        }
+                                                    </div>
+
+                                                    {/* Custom category input */}
                                                     <input
                                                         type="text"
-                                                        list="category-suggestions"
                                                         value={category}
                                                         onChange={(e) => setCategory(e.target.value)}
-                                                        placeholder="Select or type..."
-                                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                                                        placeholder="Or type a custom category..."
+                                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-sm"
                                                     />
-                                                    <datalist id="category-suggestions">
-                                                        {existingCategories.map((cat) => (
-                                                            <option key={cat} value={cat} />
-                                                        ))}
-                                                    </datalist>
                                                 </div>
                                             </div>
 

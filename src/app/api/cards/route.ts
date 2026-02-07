@@ -76,7 +76,8 @@ export async function POST(request: Request) {
         const body = await request.json();
         console.log(`[CreateCard-${requestId}] Request body parsed in ${Date.now() - parseStart}ms`);
 
-        const { label, imageUrl, audioUrl, color, boardId, category, sourceBoardId } = body;
+        const { label, imageUrl, audioUrl, color, boardId, category: rawCategory, sourceBoardId } = body;
+        const category = rawCategory ? rawCategory.trim().toLowerCase().replace(/^\w/, (c: string) => c.toUpperCase()) : rawCategory;
 
         console.log(`[CreateCard-${requestId}] Card details:`, {
             label: label || 'Untitled',
