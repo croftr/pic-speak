@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { put } from '@vercel/blob';
 import { TextToSpeechClient } from '@google-cloud/text-to-speech';
 import { rateLimit } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 // 10 TTS generations per minute per user
 const MAX_REQUESTS = 10;
@@ -48,23 +49,31 @@ function getTTSClient(): TextToSpeechClient {
 }
 
 export async function POST(request: Request) {
+    const startTime = Date.now();
     const requestId = crypto.randomUUID().slice(0, 8);
-    console.log(`[TTS-${requestId}] Started at ${new Date().toISOString()}`);
+    const log = logger.withContext({ requestId, operation: 'generate_audio' });
+
+    log.info('TTS request started');
 
     const { userId } = await auth();
     if (!userId) {
+        log.warn('Unauthorized TTS attempt');
         return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const limited = rateLimit(userId, 'generate-audio', MAX_REQUESTS, WINDOW_MS);
-    if (limited) return limited;
+    const userLog = log.withContext({ userId });
 
-    console.log(`[TTS-${requestId}] User authenticated: ${userId}`);
+    const limited = rateLimit(userId, 'generate-audio', MAX_REQUESTS, WINDOW_MS);
+    if (limited) {
+        userLog.warn('Rate limit exceeded');
+        return limited;
+    }
 
     try {
         const { text, languageCode = 'en-US', voiceName } = await request.json();
 
         if (!text || typeof text !== 'string') {
+            userLog.warn('Invalid text input');
             return NextResponse.json(
                 { success: false, error: 'Text is required' },
                 { status: 400 }
@@ -73,6 +82,7 @@ export async function POST(request: Request) {
 
         const trimmedText = text.trim();
         if (trimmedText.length === 0) {
+            userLog.warn('Empty text input');
             return NextResponse.json(
                 { success: false, error: 'Text cannot be empty' },
                 { status: 400 }
@@ -80,22 +90,26 @@ export async function POST(request: Request) {
         }
 
         if (trimmedText.length > MAX_TEXT_LENGTH) {
+            userLog.warn('Text too long', { length: trimmedText.length, max: MAX_TEXT_LENGTH });
             return NextResponse.json(
                 { success: false, error: `Text too long. Maximum ${MAX_TEXT_LENGTH} characters allowed.` },
                 { status: 400 }
             );
         }
 
-        console.log(`[TTS-${requestId}] Generating audio for: "${trimmedText}" (${trimmedText.length} chars)`);
-
-        // Get TTS client
-        const client = getTTSClient();
-
         // Select voice - use Neural2 for high quality
         // Default to a pleasant female voice suitable for children
         const selectedVoice = voiceName || 'en-US-Neural2-C';
 
-        console.log(`[TTS-${requestId}] Using voice: ${selectedVoice}, language: ${languageCode}`);
+        userLog.info('Generating audio', {
+            textLength: trimmedText.length,
+            textSnippet: trimmedText.slice(0, 20),
+            voice: selectedVoice,
+            language: languageCode
+        });
+
+        // Get TTS client
+        const client = getTTSClient();
 
         // Generate speech
         const ttsStart = Date.now();
@@ -113,7 +127,6 @@ export async function POST(request: Request) {
         });
 
         const ttsTime = Date.now() - ttsStart;
-        console.log(`[TTS-${requestId}] TTS generated in ${ttsTime}ms`);
 
         if (!response.audioContent) {
             throw new Error('No audio content received from TTS');
@@ -121,12 +134,17 @@ export async function POST(request: Request) {
 
         // Convert to Buffer
         const audioBuffer = Buffer.from(response.audioContent as Uint8Array);
-        console.log(`[TTS-${requestId}] Audio size: ${(audioBuffer.length / 1024).toFixed(2)}KB`);
+
+        userLog.info('TTS generated successfully', {
+            duration_ms: ttsTime,
+            sizeBytes: audioBuffer.length,
+            sizeKB: (audioBuffer.length / 1024).toFixed(2)
+        });
 
         // Upload to Vercel Blob
         const fileName = `tts-${Date.now()}.mp3`;
         const blobUploadStart = Date.now();
-        console.log(`[TTS-${requestId}] Uploading to Vercel Blob...`);
+        userLog.info('Uploading audio to Blob', { fileName });
 
         const blob = await Promise.race([
             put(fileName, audioBuffer, {
@@ -140,10 +158,13 @@ export async function POST(request: Request) {
         ]);
 
         const blobUploadTime = Date.now() - blobUploadStart;
-        const totalTime = Date.now() - ttsStart;
+        const totalTime = Date.now() - startTime;
 
-        console.log(`[TTS-${requestId}] SUCCESS! Blob uploaded in ${blobUploadTime}ms (total: ${totalTime}ms)`);
-        console.log(`[TTS-${requestId}] URL: ${blob.url}`);
+        userLog.info('Audio generation complete', {
+            url: blob.url,
+            upload_duration_ms: blobUploadTime,
+            total_duration_ms: totalTime
+        });
 
         return NextResponse.json({
             success: true,
@@ -153,11 +174,8 @@ export async function POST(request: Request) {
         });
 
     } catch (error) {
-        console.error(`[TTS-${requestId}] FAILED:`, error);
-        console.error(`[TTS-${requestId}] Error details:`, {
-            name: error instanceof Error ? error.name : 'Unknown',
-            message: error instanceof Error ? error.message : String(error),
-        });
+        const totalTime = Date.now() - startTime;
+        userLog.error('TTS generation failed', error, { duration_ms: totalTime });
 
         // Check for specific error types
         if (error instanceof Error) {

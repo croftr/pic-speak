@@ -48,6 +48,6 @@ export interface BoardComment {
 
 export interface ApiResponse {
   message: string;
-  data?: any;
+  data?: unknown;
   error?: string;
 }

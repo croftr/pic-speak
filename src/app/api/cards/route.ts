@@ -3,18 +3,20 @@ import { getCards, addCard, getBoard, getCardLabels } from '@/lib/storage';
 import { Card } from '@/types';
 import { auth } from '@clerk/nextjs/server';
 import { checkIsAdmin } from '@/lib/admin';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: Request) {
     const startTime = Date.now();
     const requestId = crypto.randomUUID().slice(0, 8);
+    const log = logger.withContext({ requestId, operation: 'get_cards' });
 
     const { searchParams } = new URL(request.url);
     const boardId = searchParams.get('boardId');
 
-    console.log(`[GetCards-${requestId}] Started for board: ${boardId}`);
+    log.debug('Request started', { boardId });
 
     if (!boardId) {
-        console.log(`[GetCards-${requestId}] No boardId provided`);
+        log.warn('No boardId provided');
         return NextResponse.json([]);
     }
 
@@ -25,14 +27,19 @@ export async function GET(request: Request) {
     ]);
 
     if (!board) {
-        console.log(`[GetCards-${requestId}] Board not found`);
+        log.warn('Board not found', { boardId });
         return new NextResponse("Board not found", { status: 404 });
     }
 
     // Allow access if board is public or user is the owner
     const { userId } = authResult;
+    const userLog = log.withContext({ userId });
+
     if (!board.isPublic && board.userId !== userId) {
-        console.log(`[GetCards-${requestId}] Unauthorized access attempt`);
+        userLog.warn('Unauthorized access attempt', {
+            boardId,
+            boardOwner: board.userId
+        });
         return new NextResponse("Unauthorized Board Access", { status: 403 });
     }
 
@@ -40,7 +47,11 @@ export async function GET(request: Request) {
     const cards = await getCards(boardId);
     const totalTime = Date.now() - startTime;
 
-    console.log(`[GetCards-${requestId}] SUCCESS! Retrieved ${cards.length} cards in ${totalTime}ms (query: ${Date.now() - cardsStart}ms)`);
+    userLog.info('Cards retrieved', {
+        count: cards.length,
+        query_duration_ms: Date.now() - cardsStart,
+        total_duration_ms: totalTime
+    });
 
     // Cache cards with stale-while-revalidate for better performance
     const cacheControl = board.isPublic
@@ -57,29 +68,31 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     const startTime = Date.now();
     const requestId = crypto.randomUUID().slice(0, 8);
+    const log = logger.withContext({ requestId, operation: 'create_card' });
 
-    console.log(`[CreateCard-${requestId}] Started at ${new Date().toISOString()}`);
+    log.info('Create card request started');
 
     const authStart = Date.now();
     const { userId } = await auth();
-    console.log(`[CreateCard-${requestId}] Auth check completed in ${Date.now() - authStart}ms`);
+    log.debug('Auth check completed', { duration_ms: Date.now() - authStart });
 
     if (!userId) {
-        console.log(`[CreateCard-${requestId}] FAILED: Unauthorized user`);
+        log.warn('Unauthorized user');
         return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    console.log(`[CreateCard-${requestId}] User: ${userId}`);
+    // Add userId to logger context
+    const userLog = log.withContext({ userId });
 
     try {
         const parseStart = Date.now();
         const body = await request.json();
-        console.log(`[CreateCard-${requestId}] Request body parsed in ${Date.now() - parseStart}ms`);
+        userLog.debug('Request body parsed', { duration_ms: Date.now() - parseStart });
 
         const { label, imageUrl, audioUrl, color, boardId, category: rawCategory, sourceBoardId } = body;
         const category = rawCategory ? rawCategory.trim().toLowerCase().replace(/^\w/, (c: string) => c.toUpperCase()) : rawCategory;
 
-        console.log(`[CreateCard-${requestId}] Card details:`, {
+        userLog.info('Card details received', {
             label: label || 'Untitled',
             boardId,
             hasImage: !!imageUrl,
@@ -89,7 +102,10 @@ export async function POST(request: Request) {
 
         // BoardID and imageUrl are mandatory, audioUrl is optional for batch uploads
         if (!imageUrl || !boardId) {
-            console.log(`[CreateCard-${requestId}] FAILED: Missing required fields (imageUrl: ${!!imageUrl}, boardId: ${!!boardId})`);
+            userLog.warn('Missing required fields', {
+                hasImage: !!imageUrl,
+                hasBoardId: !!boardId
+            });
             return NextResponse.json(
                 { error: 'Image and Board ID are required' },
                 { status: 400 }
@@ -99,7 +115,7 @@ export async function POST(request: Request) {
         // Verify board ownership or admin status
         // Use retryOnNotFound=true to handle Postgres read replica lag on Vercel
         const boardCheckStart = Date.now();
-        console.log(`[CreateCard-${requestId}] Checking board ownership for board: ${boardId}`);
+        userLog.debug('Checking board ownership', { boardId });
 
         // Optimization: Check ownership first to avoid expensive admin check (external API call)
         const board = await getBoard(boardId, true);
@@ -107,19 +123,24 @@ export async function POST(request: Request) {
 
         let isAdmin = false;
         if (board && !isOwner) {
-            console.log(`[CreateCard-${requestId}] User is not owner, checking admin status...`);
+            userLog.debug('User is not owner, checking admin status');
             isAdmin = await checkIsAdmin();
         }
 
-        console.log(`[CreateCard-${requestId}] Board check completed in ${Date.now() - boardCheckStart}ms (found: ${!!board}, isOwner: ${isOwner}, isAdmin: ${isAdmin})`);
+        userLog.debug('Board check completed', {
+            duration_ms: Date.now() - boardCheckStart,
+            found: !!board,
+            isOwner,
+            isAdmin
+        });
 
         if (!board || (!isOwner && !isAdmin)) {
-            console.log(`[CreateCard-${requestId}] FAILED: Unauthorized board access`);
+            userLog.warn('Unauthorized board access', { boardId });
             return new NextResponse("Unauthorized Board Access", { status: 403 });
         }
 
         if (boardId.startsWith('starter-')) {
-            console.log(`[CreateCard-${requestId}] FAILED: Attempted to add card to template board`);
+            userLog.warn('Attempted to add card to template board', { boardId });
             return new NextResponse("Cards cannot be added to template boards", { status: 403 });
         }
 
@@ -128,7 +149,7 @@ export async function POST(request: Request) {
         if (cardLabel) {
             const existingLabels = await getCardLabels(boardId);
             if (existingLabels.has(cardLabel)) {
-                console.log(`[CreateCard-${requestId}] FAILED: Duplicate label "${label}" on board ${boardId}`);
+                userLog.warn('Duplicate label', { label: cardLabel, boardId });
                 return NextResponse.json(
                     { error: `A card named "${label}" already exists on this board` },
                     { status: 409 }
@@ -148,24 +169,22 @@ export async function POST(request: Request) {
             sourceBoardId: sourceBoardId || undefined, // Track if card was copied from a public board
         };
 
-        console.log(`[CreateCard-${requestId}] Creating card with ID: ${cardId}`);
+        userLog.info('Creating card', { cardId });
+
         const dbInsertStart = Date.now();
         await addCard(newCard);
-        const dbInsertTime = Date.now() - dbInsertStart;
-        console.log(`[CreateCard-${requestId}] Card inserted into database in ${dbInsertTime}ms`);
 
-        const totalTime = Date.now() - startTime;
-        console.log(`[CreateCard-${requestId}] SUCCESS! Card created in ${totalTime}ms`);
+        userLog.info('Card created successfully', {
+            cardId,
+            db_duration_ms: Date.now() - dbInsertStart,
+            total_duration_ms: Date.now() - startTime
+        });
 
         return NextResponse.json(newCard, { status: 201 });
     } catch (error) {
         const totalTime = Date.now() - startTime;
-        console.error(`[CreateCard-${requestId}] FAILED after ${totalTime}ms:`, error);
-        console.error(`[CreateCard-${requestId}] Error details:`, {
-            name: error instanceof Error ? error.name : 'Unknown',
-            message: error instanceof Error ? error.message : String(error),
-            stack: error instanceof Error ? error.stack : undefined
-        });
+        userLog.error('Failed to add card', error, { duration_ms: totalTime });
+
         return NextResponse.json(
             { error: 'Failed to add card' },
             { status: 500 }

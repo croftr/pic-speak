@@ -1,5 +1,6 @@
 import { Pool, PoolClient } from 'pg';
 import { Card, Board, BoardComment } from '@/types';
+import { logger } from './logger';
 
 // Database row types (snake_case from DB)
 type CardRow = {
@@ -49,11 +50,18 @@ async function getDbClient(): Promise<PoolClient> {
     try {
         const client = await pool.connect();
         const connectionTime = Date.now() - startTime;
-        console.log(`[DB-Pool] Client acquired in ${connectionTime}ms (pool: ${pool.totalCount} total, ${pool.idleCount} idle, ${pool.waitingCount} waiting)`);
+        logger.debug('DB Client acquired', {
+            duration_ms: connectionTime,
+            pool: {
+                total: pool.totalCount,
+                idle: pool.idleCount,
+                waiting: pool.waitingCount
+            }
+        });
         return client;
     } catch (error) {
         const connectionTime = Date.now() - startTime;
-        console.error(`[DB-Pool] Failed to acquire client after ${connectionTime}ms:`, error);
+        logger.error('Failed to acquire DB client', error, { duration_ms: connectionTime });
         throw error;
     }
 }
@@ -199,7 +207,7 @@ export async function getCards(boardId?: string): Promise<Card[]> {
             };
         });
     } catch (error) {
-        console.error('Error getting cards:', error);
+        logger.error('Error getting cards', error, { boardId });
         return [];
     } finally {
         client.release();
@@ -231,7 +239,7 @@ export async function getCardLabels(boardId: string): Promise<Set<string>> {
 
 export async function addCard(card: Card): Promise<void> {
     const startTime = Date.now();
-    console.log(`[DB-AddCard] Starting for card ${card.id} on board ${card.boardId}`);
+    logger.info('Adding card', { cardId: card.id, boardId: card.boardId });
 
     const client = await getDbClient();
     try {
@@ -247,7 +255,7 @@ export async function addCard(card: Card): Promise<void> {
 
         // If this is a template card, only store the template key and minimal data
         if (card.templateKey) {
-            console.log(`[DB-AddCard] Inserting template card with key: ${card.templateKey}`);
+            logger.debug('Inserting template card', { templateKey: card.templateKey, cardId: card.id });
             await client.query(
                 'INSERT INTO cards (id, board_id, template_key, "order", color) VALUES ($1, $2, $3, $4, $5)',
                 [card.id, card.boardId, card.templateKey, newOrder, card.color || '#6366f1']
@@ -255,7 +263,12 @@ export async function addCard(card: Card): Promise<void> {
         } else {
             // Regular user card - insert at lowest order (top of board)
             // Note: 'category' maps to 'type' column in database (NOT NULL with default 'Thing')
-            console.log(`[DB-AddCard] Inserting user card: ${card.label}`);
+            logger.debug('Inserting user card', {
+                label: card.label,
+                imageUrl: card.imageUrl,
+                audioUrl: card.audioUrl,
+                cardId: card.id
+            });
             await client.query(
                 'INSERT INTO cards (id, board_id, label, image_url, audio_url, color, "order", type, source_board_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
                 [card.id, card.boardId, card.label, card.imageUrl, card.audioUrl, card.color || '#6366f1', newOrder, card.category || 'Thing', card.sourceBoardId || null]
@@ -264,22 +277,25 @@ export async function addCard(card: Card): Promise<void> {
 
         const queryTime = Date.now() - queryStart;
         const totalTime = Date.now() - startTime;
-        console.log(`[DB-AddCard] SUCCESS! Query: ${queryTime}ms, Total: ${totalTime}ms`);
+        logger.info('Card added successfully', {
+            cardId: card.id,
+            query_duration_ms: queryTime,
+            total_duration_ms: totalTime
+        });
     } catch (error) {
         const totalTime = Date.now() - startTime;
-        console.error(`[DB-AddCard] FAILED after ${totalTime}ms for card ${card.id}:`, error);
-        console.error(`[DB-AddCard] Error details:`, {
-            name: error instanceof Error ? error.name : 'Unknown',
-            message: error instanceof Error ? error.message : String(error),
-            code: (error as any)?.code,
-            detail: (error as any)?.detail,
-            constraint: (error as any)?.constraint
+        logger.error('Failed to add card', error, {
+            cardId: card.id,
+            boardId: card.boardId,
+            duration_ms: totalTime,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            db_error_code: (error as any)?.code,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            db_error_detail: (error as any)?.detail
         });
         throw error;
     } finally {
-        const releaseStart = Date.now();
         client.release();
-        console.log(`[DB-AddCard] Client released in ${Date.now() - releaseStart}ms`);
     }
 }
 
@@ -310,7 +326,7 @@ export async function batchAddCards(cards: Card[], preserveOrder: boolean = fals
 
         // Batch insert template cards if any
         if (templateCards.length > 0) {
-            const templateValues: any[] = [];
+            const templateValues: (string | number | null)[] = [];
             const templatePlaceholders: string[] = [];
             let paramIndex = 1;
 
@@ -337,7 +353,7 @@ export async function batchAddCards(cards: Card[], preserveOrder: boolean = fals
 
         // Batch insert regular cards if any
         if (regularCards.length > 0) {
-            const regularValues: any[] = [];
+            const regularValues: (string | number | null)[] = [];
             const regularPlaceholders: string[] = [];
             let paramIndex = 1;
 
@@ -372,7 +388,7 @@ export async function batchAddCards(cards: Card[], preserveOrder: boolean = fals
         await client.query('COMMIT');
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Error batch adding cards:', error);
+        logger.error('Error batch adding cards', error, { cardCount: cards.length });
         throw error;
     } finally {
         client.release();
@@ -382,13 +398,20 @@ export async function batchAddCards(cards: Card[], preserveOrder: boolean = fals
 export async function updateCard(updatedCard: Card): Promise<void> {
     const client = await getDbClient();
     try {
+        logger.debug('Updating card', {
+            cardId: updatedCard.id,
+            label: updatedCard.label,
+            imageUrl: updatedCard.imageUrl,
+            audioUrl: updatedCard.audioUrl
+        });
+
         // Note: 'category' maps to 'type' column in database (NOT NULL with default 'Thing')
         await client.query(
             'UPDATE cards SET label = $1, image_url = $2, audio_url = $3, color = $4, type = $5, board_id = $6, updated_at = CURRENT_TIMESTAMP WHERE id = $7',
             [updatedCard.label, updatedCard.imageUrl, updatedCard.audioUrl, updatedCard.color || '#6366f1', updatedCard.category || 'Thing', updatedCard.boardId, updatedCard.id]
         );
     } catch (error) {
-        console.error('Error updating card:', error);
+        logger.error('Error updating card', error, { cardId: updatedCard.id });
         throw error;
     } finally {
         client.release();
@@ -399,8 +422,9 @@ export async function deleteCard(id: string): Promise<void> {
     const client = await getDbClient();
     try {
         await client.query('DELETE FROM cards WHERE id = $1', [id]);
+        logger.debug('Card deleted', { cardId: id });
     } catch (error) {
-        console.error('Error deleting card:', error);
+        logger.error('Error deleting card', error, { cardId: id });
         throw error;
     } finally {
         client.release();
@@ -426,8 +450,10 @@ export async function updateCardOrders(boardId: string, cardOrders: { id: string
              WHERE cards.id = v.card_id AND cards.board_id = $3`,
             [ids, orders, boardId]
         );
+
+        logger.debug('Card orders updated', { boardId, count: cardOrders.length });
     } catch (error) {
-        console.error('Error updating card orders:', error);
+        logger.error('Error updating card orders', error, { boardId });
         throw error;
     } finally {
         client.release();
@@ -457,7 +483,7 @@ export async function getBoards(userId: string): Promise<Board[]> {
             emailNotificationsEnabled: row.email_notifications_enabled ?? true
         }));
     } catch (error) {
-        console.error('Error getting boards:', error);
+        logger.error('Error getting boards', error, { userId });
         return [];
     } finally {
         client.release();
@@ -467,12 +493,13 @@ export async function getBoards(userId: string): Promise<Board[]> {
 export async function addBoard(board: Board): Promise<void> {
     const client = await getDbClient();
     try {
+        logger.info('Adding board', { boardId: board.id, userId: board.userId });
         await client.query(
             'INSERT INTO boards (id, user_id, name, description, created_at, is_public, creator_name, creator_image_url, owner_email, email_notifications_enabled) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
             [board.id, board.userId, board.name, board.description || '', board.createdAt, board.isPublic || false, board.creatorName, board.creatorImageUrl, board.ownerEmail || null, board.emailNotificationsEnabled ?? true]
         );
     } catch (error) {
-        console.error('Error adding board:', error);
+        logger.error('Error adding board', error, { boardId: board.id });
         throw error;
     } finally {
         client.release();
@@ -481,11 +508,9 @@ export async function addBoard(board: Board): Promise<void> {
 
 export async function getBoard(id: string, retryOnNotFound: boolean = false): Promise<Board | undefined> {
     const startTime = Date.now();
-    console.log(`[DB-GetBoard] Looking up board: ${id}${retryOnNotFound ? ' (with retry)' : ''}`);
 
     const starterBoard = STARTER_BOARDS.find(b => b.id === id);
     if (starterBoard) {
-        console.log(`[DB-GetBoard] Found starter board in ${Date.now() - startTime}ms`);
         return starterBoard;
     }
 
@@ -501,7 +526,7 @@ export async function getBoard(id: string, retryOnNotFound: boolean = false): Pr
         // If not found and retry is enabled, wait briefly and try again
         // This handles Postgres read replica lag on Vercel
         if (result.rows.length === 0 && retryOnNotFound) {
-            console.log(`[DB-GetBoard] Board not found on first attempt, retrying after 500ms (replica lag workaround)...`);
+            logger.warn('Board not found on first attempt, retrying...', { boardId: id });
             await new Promise(resolve => setTimeout(resolve, 500));
 
             const retryStart = Date.now();
@@ -510,17 +535,23 @@ export async function getBoard(id: string, retryOnNotFound: boolean = false): Pr
                 [id]
             );
             queryTime += Date.now() - retryStart;
-            console.log(`[DB-GetBoard] Retry completed (found: ${result.rows.length > 0})`);
+            logger.info('Retry completed', { boardId: id, found: result.rows.length > 0 });
         }
 
         if (result.rows.length === 0) {
-            console.log(`[DB-GetBoard] Board not found (query: ${queryTime}ms)`);
+            logger.info('Board not found', { boardId: id, query_duration_ms: queryTime });
             return undefined;
         }
 
         const row = result.rows[0];
         const totalTime = Date.now() - startTime;
-        console.log(`[DB-GetBoard] Found board "${row.name}" in ${totalTime}ms (query: ${queryTime}ms)`);
+
+        logger.debug('Board retrieved', {
+            boardId: id,
+            name: row.name,
+            query_duration_ms: queryTime,
+            total_duration_ms: totalTime
+        });
 
         return {
             id: row.id,
@@ -536,7 +567,7 @@ export async function getBoard(id: string, retryOnNotFound: boolean = false): Pr
         };
     } catch (error) {
         const totalTime = Date.now() - startTime;
-        console.error(`[DB-GetBoard] FAILED after ${totalTime}ms:`, error);
+        logger.error('Failed to get board', error, { boardId: id, duration_ms: totalTime });
         return undefined;
     } finally {
         client.release();
@@ -546,12 +577,13 @@ export async function getBoard(id: string, retryOnNotFound: boolean = false): Pr
 export async function updateBoard(updatedBoard: Board): Promise<void> {
     const client = await getDbClient();
     try {
+        logger.debug('Updating board', { boardId: updatedBoard.id });
         await client.query(
             'UPDATE boards SET name = $1, description = $2, is_public = $3, creator_name = $4, creator_image_url = $5, owner_email = $6, email_notifications_enabled = $7, updated_at = CURRENT_TIMESTAMP WHERE id = $8',
             [updatedBoard.name, updatedBoard.description || '', updatedBoard.isPublic || false, updatedBoard.creatorName, updatedBoard.creatorImageUrl, updatedBoard.ownerEmail || null, updatedBoard.emailNotificationsEnabled ?? true, updatedBoard.id]
         );
     } catch (error) {
-        console.error('Error updating board:', error);
+        logger.error('Error updating board', error, { boardId: updatedBoard.id });
         throw error;
     } finally {
         client.release();
@@ -563,8 +595,9 @@ export async function deleteBoard(id: string): Promise<void> {
     try {
         // Cards will be automatically deleted due to CASCADE
         await client.query('DELETE FROM boards WHERE id = $1', [id]);
+        logger.info('Board deleted', { boardId: id });
     } catch (error) {
-        console.error('Error deleting board:', error);
+        logger.error('Error deleting board', error, { boardId: id });
         throw error;
     } finally {
         client.release();
@@ -593,7 +626,7 @@ export async function getPublicBoards(): Promise<Board[]> {
 
         return [...STARTER_BOARDS, ...dbBoards];
     } catch (error) {
-        console.error('Error getting public boards:', error);
+        logger.error('Error getting public boards', error);
         return [];
     } finally {
         client.release();
@@ -693,7 +726,7 @@ export async function getPublicBoardsWithInteractions(userId?: string): Promise<
 
         return [...enrichedStarterBoards, ...dbBoards];
     } catch (error) {
-        console.error('Error getting public boards with interactions:', error);
+        logger.error('Error getting public boards with interactions', error, { userId });
         throw error;
     } finally {
         client.release();
@@ -702,6 +735,7 @@ export async function getPublicBoardsWithInteractions(userId?: string): Promise<
 
 // ============= LIKES =============
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function likeBoardByUser(boardId: string, userId: string, userName: string): Promise<void> {
     const client = await getDbClient();
     try {

@@ -3,6 +3,7 @@ import { put } from '@vercel/blob';
 import sharp from 'sharp';
 import { auth } from '@clerk/nextjs/server';
 import { rateLimit } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 // 20 uploads per minute per user
 const MAX_REQUESTS = 20;
@@ -23,29 +24,44 @@ export async function POST(request: Request) {
     const startTime = Date.now();
     const requestId = crypto.randomUUID().slice(0, 8);
 
-    console.log(`[Upload-${requestId}] Started at ${new Date().toISOString()}`);
+    // Create a child logger with request context
+    const log = logger.withContext({ requestId, operation: 'upload' });
+
+    log.info('Upload request started');
 
     const { userId } = await auth();
     if (!userId) {
+        log.warn('Unauthorized upload attempt');
         return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    // Add userId to logger context
+    const userLog = log.withContext({ userId });
+
     const limited = rateLimit(userId, 'upload', MAX_REQUESTS, WINDOW_MS);
-    if (limited) return limited;
+    if (limited) {
+        userLog.warn('Rate limit exceeded');
+        return limited;
+    }
 
     try {
         const formDataStart = Date.now();
         const data = await request.formData();
-        console.log(`[Upload-${requestId}] FormData parsed in ${Date.now() - formDataStart}ms`);
+        userLog.debug('FormData parsed', { duration_ms: Date.now() - formDataStart });
 
         const file: File | null = data.get('file') as unknown as File;
 
         if (!file) {
-            console.log(`[Upload-${requestId}] FAILED: No file provided`);
+            userLog.warn('No file provided');
             return NextResponse.json({ success: false, error: 'No file uploaded' }, { status: 400 });
         }
 
-        console.log(`[Upload-${requestId}] File received: ${file.name}, type: ${file.type}, size: ${(file.size / 1024).toFixed(2)}KB`);
+        userLog.info('File received', {
+            fileName: file.name,
+            fileType: file.type,
+            fileSize: file.size,
+            fileSizeKB: (file.size / 1024).toFixed(2)
+        });
 
         let fileToUpload: File | Buffer = file;
         let contentType = file.type;
@@ -54,7 +70,7 @@ export async function POST(request: Request) {
         // Compress images before uploading
         if (file.type.startsWith('image/')) {
             const compressionStart = Date.now();
-            console.log(`[Upload-${requestId}] Starting image compression...`);
+            userLog.debug('Starting image compression');
 
             try {
                 const arrayBuffer = await file.arrayBuffer();
@@ -80,9 +96,16 @@ export async function POST(request: Request) {
                 const savings = ((originalSize - compressedSize) / originalSize * 100).toFixed(1);
                 const compressionTime = Date.now() - compressionStart;
 
-                console.log(`[Upload-${requestId}] Image compressed in ${compressionTime}ms: ${(originalSize / 1024).toFixed(1)}KB -> ${(compressedSize / 1024).toFixed(1)}KB (${savings}% reduction)`);
+                userLog.info('Image compressed', {
+                    duration_ms: compressionTime,
+                    originalSizeKB: (originalSize / 1024).toFixed(1),
+                    compressedSizeKB: (compressedSize / 1024).toFixed(1),
+                    savingsPercent: savings
+                });
             } catch (compressionError) {
-                console.error(`[Upload-${requestId}] Image compression FAILED after ${Date.now() - compressionStart}ms:`, compressionError);
+                userLog.error('Image compression failed, using original', compressionError, {
+                    duration_ms: Date.now() - compressionStart
+                });
                 // If compression fails, upload the original
                 fileToUpload = file;
             }
@@ -90,9 +113,11 @@ export async function POST(request: Request) {
 
         // Check audio file size
         if (file.type.startsWith('audio/')) {
-            console.log(`[Upload-${requestId}] Audio file detected: ${(file.size / 1024).toFixed(2)}KB`);
             if (file.size > MAX_AUDIO_SIZE) {
-                console.log(`[Upload-${requestId}] FAILED: Audio file too large (${(file.size / 1024 / 1024).toFixed(2)}MB > ${MAX_AUDIO_SIZE / 1024 / 1024}MB)`);
+                userLog.warn('Audio file too large', {
+                    sizeBytes: file.size,
+                    maxBytes: MAX_AUDIO_SIZE
+                });
                 return NextResponse.json({
                     success: false,
                     error: `Audio file too large. Maximum size is ${MAX_AUDIO_SIZE / 1024 / 1024}MB`
@@ -102,7 +127,7 @@ export async function POST(request: Request) {
 
         // Upload to Vercel Blob with timeout
         const blobUploadStart = Date.now();
-        console.log(`[Upload-${requestId}] Starting Vercel Blob upload for ${fileName}...`);
+        userLog.info('Starting Vercel Blob upload', { fileName });
 
         const blob = await Promise.race([
             put(fileName, fileToUpload, {
@@ -118,8 +143,11 @@ export async function POST(request: Request) {
         const blobUploadTime = Date.now() - blobUploadStart;
         const totalTime = Date.now() - startTime;
 
-        console.log(`[Upload-${requestId}] SUCCESS! Blob uploaded in ${blobUploadTime}ms (total: ${totalTime}ms)`);
-        console.log(`[Upload-${requestId}] Blob URL: ${blob.url}`);
+        userLog.info('Blob upload successful', {
+            url: blob.url,
+            upload_duration_ms: blobUploadTime,
+            total_duration_ms: totalTime
+        });
 
         // Return the public URL
         return NextResponse.json({
@@ -130,12 +158,8 @@ export async function POST(request: Request) {
         });
     } catch (error) {
         const totalTime = Date.now() - startTime;
-        console.error(`[Upload-${requestId}] FAILED after ${totalTime}ms:`, error);
-        console.error(`[Upload-${requestId}] Error details:`, {
-            name: error instanceof Error ? error.name : 'Unknown',
-            message: error instanceof Error ? error.message : String(error),
-            stack: error instanceof Error ? error.stack : undefined
-        });
+        userLog.error('Upload failed', error, { duration_ms: totalTime });
+
         return NextResponse.json({
             success: false,
             error: 'Upload failed'
