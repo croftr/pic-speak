@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCards, addCard, getBoard } from '@/lib/storage';
+import { getCards, addCard, getBoard, getCardLabels } from '@/lib/storage';
 import { Card } from '@/types';
 import { auth } from '@clerk/nextjs/server';
 import { checkIsAdmin } from '@/lib/admin';
@@ -121,6 +121,19 @@ export async function POST(request: Request) {
         if (boardId.startsWith('starter-')) {
             console.log(`[CreateCard-${requestId}] FAILED: Attempted to add card to template board`);
             return new NextResponse("Cards cannot be added to template boards", { status: 403 });
+        }
+
+        // Check label uniqueness within the board
+        const cardLabel = (label || 'Untitled').trim().toLowerCase();
+        if (cardLabel) {
+            const existingLabels = await getCardLabels(boardId);
+            if (existingLabels.has(cardLabel)) {
+                console.log(`[CreateCard-${requestId}] FAILED: Duplicate label "${label}" on board ${boardId}`);
+                return NextResponse.json(
+                    { error: `A card named "${label}" already exists on this board` },
+                    { status: 409 }
+                );
+            }
         }
 
         const cardId = crypto.randomUUID();

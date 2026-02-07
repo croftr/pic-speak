@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { X, Image as ImageIcon, Check, Loader2, Mic, Upload, Music, Sparkles, Play, Pause, Volume2, Crop, Camera, ChevronRight, ChevronLeft, ArrowRight, ArrowLeft, Globe } from 'lucide-react';
 import AudioRecorder from './AudioRecorder';
@@ -25,9 +25,19 @@ interface AddCardModalProps {
     batchMode?: boolean;
 }
 
-export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdated, boardId, editCard, batchMode = false, existingCategories = [] }: AddCardModalProps & { existingCategories?: string[] }) {
+export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdated, boardId, editCard, batchMode = false, existingCategories = [], existingCardLabels = [] }: AddCardModalProps & { existingCategories?: string[]; existingCardLabels?: string[] }) {
     const [label, setLabel] = useState('');
     const [category, setCategory] = useState('');
+
+    // Duplicate label detection
+    const existingLabelsSet = useMemo(
+        () => new Set(existingCardLabels.map(l => l.trim().toLowerCase())),
+        [existingCardLabels]
+    );
+    const isLabelDuplicate = label.trim().toLowerCase() !== '' &&
+        existingLabelsSet.has(label.trim().toLowerCase()) &&
+        // Allow if editing and label hasn't changed
+        !(editCard && editCard.label.trim().toLowerCase() === label.trim().toLowerCase());
 
     // Image State
     const [imageType, setImageType] = useState<'upload' | 'camera' | 'generate'>('upload');
@@ -711,6 +721,10 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
 
                 if (!res.ok) {
                     console.error(`[Frontend-CardOp-${operationId}] Update failed: HTTP ${res.status}`);
+                    if (res.status === 409) {
+                        toast.error(`A card named "${label}" already exists on this board`);
+                        return;
+                    }
                     throw new Error('Failed to update card');
                 }
 
@@ -737,6 +751,10 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
 
                 if (!res.ok) {
                     console.error(`[Frontend-CardOp-${operationId}] Create failed: HTTP ${res.status}`);
+                    if (res.status === 409) {
+                        toast.error(`A card named "${label}" already exists on this board`);
+                        return;
+                    }
                     const errorText = await res.text();
                     console.error(`[Frontend-CardOp-${operationId}] Error response:`, errorText);
                     throw new Error('Failed to create card');
@@ -782,7 +800,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     const canProceed = () => {
         if (batchMode) return batchImages.length > 0;
 
-        if (step === 1) return !!label;
+        if (step === 1) return !!label && !isLabelDuplicate;
         if (step === 2) return !!imageFile || (editCard && !!imagePreview);
         // For step 3, we allow saving if we have audio OR if we are editing and have existing audio (and not replacing it)
         // Check local state first, then editCard fallback
@@ -817,6 +835,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                         onClose();
                     }}
                     boardId={boardId}
+                    existingCardLabels={existingCardLabels}
                 />
             ) : (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -956,10 +975,19 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                                         value={label}
                                                         onChange={(e) => setLabel(e.target.value)}
                                                         placeholder="e.g., Apple, Hungry, Yes"
-                                                        className="w-full px-5 py-4 rounded-2xl border-2 border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-slate-800 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-bold text-xl text-center"
+                                                        className={`w-full px-5 py-4 rounded-2xl border-2 bg-gray-50 dark:bg-slate-800 focus:outline-none focus:ring-4 transition-all font-bold text-xl text-center ${
+                                                            isLabelDuplicate
+                                                                ? 'border-red-300 dark:border-red-700 focus:border-red-500 focus:ring-red-500/10'
+                                                                : 'border-gray-100 dark:border-gray-700 focus:border-primary focus:ring-primary/10'
+                                                        }`}
                                                         required
                                                         autoFocus
                                                     />
+                                                    {isLabelDuplicate && (
+                                                        <p className="text-sm text-red-500 mt-2 text-center">
+                                                            A card named &ldquo;{label}&rdquo; already exists on this board
+                                                        </p>
+                                                    )}
                                                 </div>
 
                                                 <div>

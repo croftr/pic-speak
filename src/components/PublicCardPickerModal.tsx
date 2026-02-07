@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { X, Loader2, Search, ChevronLeft, Check, Globe, Volume2 } from 'lucide-react';
 import { Card, Board } from '@/types';
 import { toast } from 'sonner';
@@ -13,9 +13,10 @@ interface PublicCardPickerModalProps {
     onBack?: () => void; // Go back to New Card modal
     onCardSelected: (card: Card) => void;
     boardId: string; // The board we're adding to
+    existingCardLabels?: string[]; // Labels already on the target board
 }
 
-export default function PublicCardPickerModal({ isOpen, onClose, onBack, onCardSelected, boardId }: PublicCardPickerModalProps) {
+export default function PublicCardPickerModal({ isOpen, onClose, onBack, onCardSelected, boardId, existingCardLabels = [] }: PublicCardPickerModalProps) {
     const [publicBoards, setPublicBoards] = useState<Board[]>([]);
     const [selectedBoard, setSelectedBoard] = useState<Board | null>(null);
     const [boardCards, setBoardCards] = useState<Card[]>([]);
@@ -24,6 +25,11 @@ export default function PublicCardPickerModal({ isOpen, onClose, onBack, onCardS
     const [isAddingCard, setIsAddingCard] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
+
+    const existingLabelsSet = useMemo(
+        () => new Set(existingCardLabels.map(l => l.trim().toLowerCase())),
+        [existingCardLabels]
+    );
 
     useEffect(() => {
         if (isOpen) {
@@ -87,7 +93,13 @@ export default function PublicCardPickerModal({ isOpen, onClose, onBack, onCardS
                 })
             });
 
-            if (!res.ok) throw new Error('Failed to add card');
+            if (!res.ok) {
+                if (res.status === 409) {
+                    toast.error(`A card named "${card.label}" already exists on your board`);
+                    return;
+                }
+                throw new Error('Failed to add card');
+            }
 
             const newCard = await res.json();
             toast.success(`"${card.label}" added to your board!`);
@@ -315,20 +327,26 @@ export default function PublicCardPickerModal({ isOpen, onClose, onBack, onCardS
                                                     {card.category}
                                                 </p>
                                             )}
-                                            <button
-                                                onClick={() => handleAddCard(card)}
-                                                disabled={isAddingCard}
-                                                className="w-full mt-1 py-2 px-3 bg-green-500 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-1.5 active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
-                                            >
-                                                {isAddingCard ? (
-                                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                                ) : (
-                                                    <>
-                                                        <Check className="w-4 h-4" />
-                                                        Select
-                                                    </>
-                                                )}
-                                            </button>
+                                            {existingLabelsSet.has(card.label.trim().toLowerCase()) ? (
+                                                <div className="w-full mt-1 py-2 px-3 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-sm text-center">
+                                                    Already Added
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleAddCard(card)}
+                                                    disabled={isAddingCard}
+                                                    className="w-full mt-1 py-2 px-3 bg-green-500 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-1.5 active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    {isAddingCard ? (
+                                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                                    ) : (
+                                                        <>
+                                                            <Check className="w-4 h-4" />
+                                                            Select
+                                                        </>
+                                                    )}
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 ))}

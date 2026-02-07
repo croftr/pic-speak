@@ -20,9 +20,12 @@ const CommentsSection = dynamic(() => import('@/components/CommentsSection'), {
 const ConfirmDialog = dynamic(() => import('@/components/ConfirmDialog'), {
     loading: () => null
 });
+const MergeBoardModal = dynamic(() => import('@/components/MergeBoardModal'), {
+    loading: () => null
+});
 import { Card, Board } from '@/types';
 import { getCategoryEmoji } from '@/lib/categories';
-import { Plus, Upload, ArrowLeft, Loader2, Search, X, Trash2, Share2, Check, MoreHorizontal, ChevronDown, ChevronUp, Grid3X3, Grid2X2, LayoutGrid } from 'lucide-react';
+import { Plus, Upload, ArrowLeft, Loader2, Search, X, Trash2, Share2, Check, MoreHorizontal, ChevronDown, ChevronUp, Grid3X3, Grid2X2, LayoutGrid, Layers } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -80,6 +83,7 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
     const [moveCopyCard, setMoveCopyCard] = useState<Card | null>(null);
     const [editingCard, setEditingCard] = useState<Card | null>(null);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [isMergeBoardModalOpen, setIsMergeBoardModalOpen] = useState(false);
 
     // Edit states
     const [editName, setEditName] = useState(initialBoard.name);
@@ -201,6 +205,11 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
         }
         setIsMoveCopyModalOpen(false);
         setMoveCopyCard(null);
+    };
+
+    const handleMergeComplete = (addedCards: Card[]) => {
+        setCards(prev => [...addedCards, ...prev]);
+        setIsMergeBoardModalOpen(false);
     };
 
     const handleSaveBoard = async () => {
@@ -548,6 +557,16 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
                                             </button>
                                             <button
                                                 onClick={() => {
+                                                    setIsMergeBoardModalOpen(true);
+                                                    setIsMoreMenuOpen(false);
+                                                }}
+                                                className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors text-left"
+                                            >
+                                                <Layers className="w-4 h-4" />
+                                                Merge Board
+                                            </button>
+                                            <button
+                                                onClick={() => {
                                                     setIsDeleteDialogOpen(true);
                                                     setIsMoreMenuOpen(false);
                                                 }}
@@ -845,6 +864,7 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
                 editCard={editingCard}
                 batchMode={isBatchMode}
                 existingCategories={existingCategories}
+                existingCardLabels={cards.map(c => c.label)}
             />
 
             {/* Move/Copy Modal */}
@@ -860,6 +880,15 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
                     currentBoardId={boardId}
                 />
             )}
+
+            {/* Merge Board Modal */}
+            <MergeBoardModal
+                isOpen={isMergeBoardModalOpen}
+                onClose={() => setIsMergeBoardModalOpen(false)}
+                onMergeComplete={handleMergeComplete}
+                boardId={boardId}
+                existingCards={cards}
+            />
 
             {/* Delete Confirmation Dialog */}
             <ConfirmDialog

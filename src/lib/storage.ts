@@ -206,6 +206,29 @@ export async function getCards(boardId?: string): Promise<Card[]> {
     }
 }
 
+export async function getCardLabels(boardId: string): Promise<Set<string>> {
+    const client = await getDbClient();
+    try {
+        const result = await client.query<{ label: string }>(
+            'SELECT LOWER(TRIM(label)) as label FROM cards WHERE board_id = $1 AND label != \'\'',
+            [boardId]
+        );
+        const labels = new Set(result.rows.map(row => row.label));
+
+        // Also include labels from starter cards if applicable
+        if (STARTER_CARDS[boardId]) {
+            for (const card of STARTER_CARDS[boardId]) {
+                const normalized = card.label.trim().toLowerCase();
+                if (normalized) labels.add(normalized);
+            }
+        }
+
+        return labels;
+    } finally {
+        client.release();
+    }
+}
+
 export async function addCard(card: Card): Promise<void> {
     const startTime = Date.now();
     console.log(`[DB-AddCard] Starting for card ${card.id} on board ${card.boardId}`);

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { batchAddCards, getBoard } from '@/lib/storage';
+import { batchAddCards, getBoard, getCardLabels } from '@/lib/storage';
 import { Card } from '@/types';
 
 export async function POST(request: Request) {
@@ -27,8 +27,30 @@ export async function POST(request: Request) {
             return new NextResponse("Unauthorized", { status: 403 });
         }
 
+        // Filter out cards with duplicate labels (skip empty labels)
+        const existingLabels = await getCardLabels(boardId);
+        const duplicateLabels: string[] = [];
+        const seenInBatch = new Set<string>();
+        const filteredCards = cards.filter((cardData: any) => {
+            const normalized = (cardData.label || '').trim().toLowerCase();
+            if (!normalized) return true; // Allow empty labels through
+            if (existingLabels.has(normalized) || seenInBatch.has(normalized)) {
+                duplicateLabels.push(cardData.label);
+                return false;
+            }
+            seenInBatch.add(normalized);
+            return true;
+        });
+
+        if (filteredCards.length === 0) {
+            return NextResponse.json(
+                { error: 'All cards have duplicate labels', duplicateLabels },
+                { status: 409 }
+            );
+        }
+
         // Create full card objects with IDs
-        const cardsToInsert: Card[] = cards.map((cardData: any, index: number) => ({
+        const cardsToInsert: Card[] = filteredCards.map((cardData: any, index: number) => ({
             id: crypto.randomUUID(),
             boardId,
             label: cardData.label || '',
@@ -36,7 +58,9 @@ export async function POST(request: Request) {
             audioUrl: cardData.audioUrl || '',
             color: cardData.color || '#6366f1',
             category: cardData.category ? cardData.category.trim().toLowerCase().replace(/^\w/, (c: string) => c.toUpperCase()) : undefined,
-            order: cardData.order ?? index
+            order: cardData.order ?? index,
+            sourceBoardId: cardData.sourceBoardId || undefined,
+            templateKey: cardData.templateKey || undefined,
         }));
 
         // Batch insert all cards in a single transaction

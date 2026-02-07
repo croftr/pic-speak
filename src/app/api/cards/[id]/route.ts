@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCards, deleteCard, updateCard, getBoard } from '@/lib/storage';
+import { getCards, deleteCard, updateCard, getBoard, getCardLabels } from '@/lib/storage';
 import { auth } from '@clerk/nextjs/server';
 import { checkIsAdmin } from '@/lib/admin';
 
@@ -41,6 +41,21 @@ export async function PUT(
         const { label, imageUrl, audioUrl, color, category: rawCategory, boardId } = body;
         const category = rawCategory ? rawCategory.trim().toLowerCase().replace(/^\w/, (c: string) => c.toUpperCase()) : rawCategory;
 
+        // Check label uniqueness if label is changing
+        const targetBoardId = boardId || existingCard.boardId;
+        if (label !== undefined && label.trim().toLowerCase() !== existingCard.label.trim().toLowerCase()) {
+            const normalizedLabel = label.trim().toLowerCase();
+            if (normalizedLabel) {
+                const existingLabels = await getCardLabels(targetBoardId);
+                if (existingLabels.has(normalizedLabel)) {
+                    return NextResponse.json(
+                        { error: `A card named "${label}" already exists on this board` },
+                        { status: 409 }
+                    );
+                }
+            }
+        }
+
         // If moving to a different board, verify user owns the destination board
         if (boardId && boardId !== existingCard.boardId) {
             const [destinationBoard, isAdmin] = await Promise.all([
@@ -50,6 +65,18 @@ export async function PUT(
             const isDestinationOwner = destinationBoard && destinationBoard.userId === userId;
             if (!destinationBoard || (!isDestinationOwner && !isAdmin)) {
                 return new NextResponse("Unauthorized Access to Destination Board", { status: 403 });
+            }
+
+            // Check label uniqueness on the destination board
+            const moveLabel = (label !== undefined ? label : existingCard.label).trim().toLowerCase();
+            if (moveLabel) {
+                const destLabels = await getCardLabels(boardId);
+                if (destLabels.has(moveLabel)) {
+                    return NextResponse.json(
+                        { error: `A card named "${label !== undefined ? label : existingCard.label}" already exists on the destination board` },
+                        { status: 409 }
+                    );
+                }
             }
         }
 
