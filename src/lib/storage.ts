@@ -97,6 +97,14 @@ const TEMPLATE_CARDS_REGISTRY: Record<string, Omit<Card, 'id' | 'boardId' | 'ord
     'tpl-sweets': { label: 'Sweets', imageUrl: '/prebuilt/sweets.png', audioUrl: '/prebuilt/sweets.wav', category: 'Food', templateKey: 'tpl-sweets' },
     'tpl-cake': { label: 'Cake', imageUrl: '/prebuilt/cake.png', audioUrl: '/prebuilt/cake.wav', category: 'Food', templateKey: 'tpl-cake' },
     'tpl-apple': { label: 'Apple', imageUrl: '/prebuilt/apple.png', audioUrl: '/prebuilt/apple.wav', category: 'Food', templateKey: 'tpl-apple' },
+    // Core - New
+    'tpl-help': { label: 'Help', imageUrl: '/prebuilt/help.png', audioUrl: '/prebuilt/help.wav', category: 'Core', templateKey: 'tpl-help' },
+    'tpl-start': { label: 'Start', imageUrl: '/prebuilt/start.png', audioUrl: '/prebuilt/start.wav', category: 'Core', templateKey: 'tpl-start' },
+    'tpl-stop': { label: 'Stop', imageUrl: '/prebuilt/stop.png', audioUrl: '/prebuilt/stop.wav', category: 'Core', templateKey: 'tpl-stop' },
+    'tpl-more': { label: 'More', imageUrl: '/prebuilt/more.png', audioUrl: '/prebuilt/more.wav', category: 'Core', templateKey: 'tpl-more' },
+    // Feelings
+    'tpl-hungry': { label: 'Hungry', imageUrl: '/prebuilt/hungry.png', audioUrl: '/prebuilt/hungry.wav', category: 'Feelings', templateKey: 'tpl-hungry' },
+    'tpl-tired': { label: 'Tired', imageUrl: '/prebuilt/tired.jpg', audioUrl: '/prebuilt/tired.wav', category: 'Feelings', templateKey: 'tpl-tired' },
 };
 
 // Export for use in other modules
@@ -128,6 +136,14 @@ const STARTER_CARDS: Record<string, Card[]> = {
         { id: 'sbp-16', boardId: 'starter-template', label: 'Sweets', imageUrl: '/prebuilt/sweets.png', audioUrl: '/prebuilt/sweets.wav', category: 'Food', order: 15, templateKey: 'tpl-sweets' },
         { id: 'sbp-17', boardId: 'starter-template', label: 'Cake', imageUrl: '/prebuilt/cake.png', audioUrl: '/prebuilt/cake.wav', category: 'Food', order: 16, templateKey: 'tpl-cake' },
         { id: 'sbp-18', boardId: 'starter-template', label: 'Apple', imageUrl: '/prebuilt/apple.png', audioUrl: '/prebuilt/apple.wav', category: 'Food', order: 17, templateKey: 'tpl-apple' },
+        // Core - New
+        { id: 'sbp-19', boardId: 'starter-template', label: 'Help', imageUrl: '/prebuilt/help.png', audioUrl: '/prebuilt/help.wav', category: 'Core', order: 18, templateKey: 'tpl-help' },
+        { id: 'sbp-20', boardId: 'starter-template', label: 'Start', imageUrl: '/prebuilt/start.png', audioUrl: '/prebuilt/start.wav', category: 'Core', order: 19, templateKey: 'tpl-start' },
+        { id: 'sbp-21', boardId: 'starter-template', label: 'Stop', imageUrl: '/prebuilt/stop.png', audioUrl: '/prebuilt/stop.wav', category: 'Core', order: 20, templateKey: 'tpl-stop' },
+        { id: 'sbp-22', boardId: 'starter-template', label: 'More', imageUrl: '/prebuilt/more.png', audioUrl: '/prebuilt/more.wav', category: 'Core', order: 21, templateKey: 'tpl-more' },
+        // Feelings
+        { id: 'sbp-23', boardId: 'starter-template', label: 'Hungry', imageUrl: '/prebuilt/hungry.png', audioUrl: '/prebuilt/hungry.wav', category: 'Feelings', order: 22, templateKey: 'tpl-hungry' },
+        { id: 'sbp-24', boardId: 'starter-template', label: 'Tired', imageUrl: '/prebuilt/tired.jpg', audioUrl: '/prebuilt/tired.wav', category: 'Feelings', order: 23, templateKey: 'tpl-tired' },
     ]
 };
 
@@ -610,11 +626,11 @@ export async function getPublicBoardsWithInteractions(userId?: string): Promise<
 
         let starterLikedSet = new Set<string>();
         if (userId) {
-             const res = await client.query(
+            const res = await client.query(
                 'SELECT board_id FROM board_likes WHERE board_id = ANY($1) AND user_id = $2',
                 [starterIds, userId]
-             );
-             res.rows.forEach(r => starterLikedSet.add(r.board_id));
+            );
+            res.rows.forEach(r => starterLikedSet.add(r.board_id));
         }
 
         const enrichedStarterBoards = STARTER_BOARDS.map(b => {

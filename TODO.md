@@ -6,6 +6,15 @@ Jest + React Testing Library for unit/component tests
 Playwright for E2E tests (especially the card creation and audio playback flows)
 Start with the API routes in src/app/api/ — they're the most critical paths
 
+2. Add new template pecs cards for 
+Dog (in the category animals) 
+Cat (in the category animals) 
+Fish (in the category animals) 
+
+Happy (in the category feelings) 
+Sad (in the category feelings) 
+
+
 High Priority
 4. Refactor BoardClient.tsx
 This is a very large component with many state variables and responsibilities (drag-drop, card CRUD, audio playback, settings). Breaking it into smaller composable pieces (e.g. useBoardCards hook, CardGrid component, BoardToolbar) would improve maintainability.
