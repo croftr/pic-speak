@@ -18,6 +18,10 @@ Pic Speak is a PECS (Picture Exchange Communication System) board builder design
 ## Project Structure
 
 ```
+migrations/                  # Versioned SQL migration files (NNN_name.sql)
+scripts/
+└── run-migrations.ts        # Migration runner (npm run db:migrate)
+schema.sql                   # Full schema reference (not used by runner)
 src/
 ├── app/
 │   ├── api/
@@ -71,28 +75,7 @@ src/
 
 ## Key Data Models
 
-### Board
-```typescript
-interface Board {
-  id: string;
-  userId: string;
-  name: string;
-  description?: string;
-  createdAt: string;
-}
-```
-
-### Card
-```typescript
-interface Card {
-  id: string;
-  boardId: string;
-  label: string;
-  imageUrl: string;
-  audioUrl: string;
-  color?: string;
-}
-```
+See `src/types/index.ts` for all type definitions. Key models: `Board`, `Card`, `BoardLike`, `BoardComment`.
 
 ## Authentication
 
@@ -109,6 +92,37 @@ npm run build    # Build for production
 npm run start    # Start production server
 npm run lint     # Run ESLint
 ```
+
+## Database & Migrations
+
+The project uses Vercel Postgres with a versioned SQL migration system. Migration files live in `migrations/` as numbered SQL files (e.g. `001_initial_schema.sql`). Applied versions are tracked in a `schema_migrations` table so each migration runs exactly once.
+
+### Commands
+
+```bash
+npm run db:migrate           # Apply all pending migrations
+npm run db:migrate:status    # Show which migrations are applied vs pending
+npm run db:migrate:baseline  # Mark all as applied without running SQL (for existing DBs)
+```
+
+### Adding a new migration
+
+1. Create `migrations/NNN_description.sql` with the next number
+2. Write idempotent SQL (use `IF NOT EXISTS`, `IF EXISTS` where possible)
+3. Run `npm run db:migrate`
+4. Update `schema.sql` to reflect the new full schema state (reference file only)
+
+### Current tables
+
+- `schema_migrations` - tracks applied migration versions
+- `boards` - user communication boards
+- `cards` - PECS cards within boards (FK to boards with CASCADE delete)
+- `board_likes` - likes on public boards (unique per user+board)
+- `board_comments` - comments on public boards
+
+### Key column mapping
+
+DB uses `snake_case`, app uses `camelCase`. Notable: DB column `type` maps to app field `category`. Mapping lives in `src/lib/storage.ts`.
 
 ## File Storage
 
@@ -133,9 +147,11 @@ Based on git history:
 ## Environment Variables Needed
 
 When setting up this project, you'll likely need:
-- Clerk authentication keys (NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY)
-- Google AI API key (for image generation)
-- Any file storage configuration
+- `POSTGRES_URL` - Vercel Postgres connection string (required for DB and migrations)
+- `BLOB_READ_WRITE_TOKEN` - Vercel Blob storage token
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` - Clerk auth
+- `GOOGLE_AI_API_KEY` - Google AI (for image generation)
+- `RESEND_API_KEY`, `RESEND_FROM_EMAIL` - Email notifications (optional)
 
 ## Notes for Development
 
