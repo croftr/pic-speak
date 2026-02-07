@@ -1,0 +1,23 @@
+
+> pic-speak@0.1.0 dev
+> next dev
+
+▲ Next.js 16.1.1 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+
+✓ Starting...
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+✓ Ready in 1738ms
+○ Compiling /board/[id] ...
+[DB-GetBoard] Looking up board: starter-template
+[DB-GetBoard] Found starter board in 2ms
+
+[35m
+[Clerk]:[0m You are running in keyless mode.
+You can [35mclaim your keys[0m by visiting https://dashboard.clerk.com/apps/claim?token=x9cfo3i03dvo88xexi4xn6u4rpa8m6io3nqd6qg8&return_url=http%3A%2F%2Flocalhost%3A3000%2F
+
+ GET /board/starter-template 200 in 13.5s (compile: 6.8s, proxy.ts: 150ms, render: 6.5s)
+ POST /board/starter-template 200 in 95ms (compile: 57ms, proxy.ts: 17ms, render: 20ms)
+ POST /board/starter-template 303 in 443ms (compile: 10ms, proxy.ts: 10ms, render: 423ms)
+ GET /board/starter-template 404 in 1408ms (compile: 1317ms, proxy.ts: 25ms, render: 67ms)
