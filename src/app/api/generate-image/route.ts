@@ -78,8 +78,8 @@ export async function POST(request: Request) {
 
         const client = new GoogleGenAI({ apiKey });
 
-        // Wrap user prompt with PECS-appropriate instructions
-        const pecsPrompt = `Create a simple, clear cartoon-style illustration suitable for a PECS (Picture Exchange Communication System) card for children. The image should be:
+        // Wrap user prompt with communication board-appropriate instructions
+        const imagePrompt = `Create a simple, clear cartoon-style illustration suitable for a communication board card for children. The image should be:
 - Simple and easy to understand at a glance
 - Cartoon or clipart style (not realistic or photographic)
 - Bold, clear outlines
@@ -89,13 +89,13 @@ export async function POST(request: Request) {
 
 Subject to illustrate: ${prompt}`;
 
-        userLog.debug('Enhanced prompt created', { pecsPrompt });
+        userLog.debug('Enhanced prompt created', { imagePrompt });
 
         const genStart = Date.now();
 
         const response = await client.models.generateImages({
             model: 'models/imagen-4.0-generate-001',
-            prompt: pecsPrompt,
+            prompt: imagePrompt,
             config: {
                 numberOfImages: 1,
                 aspectRatio: "1:1"

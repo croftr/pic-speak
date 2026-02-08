@@ -10,7 +10,7 @@ import { CSS } from '@dnd-kit/utilities';
 import ConfirmDialog from './ConfirmDialog';
 import Image from 'next/image';
 
-interface PecsCardProps {
+interface CommunicationCardProps {
     card: Card;
     onClick?: () => void;
     isEditing?: boolean;
@@ -21,9 +21,9 @@ interface PecsCardProps {
     onFocus?: () => void;
 }
 
-export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy, isFocused = false, onFocus }: PecsCardProps) {
+export default function CommunicationCard({ card, isEditing, onDelete, onEdit, onMoveCopy, isFocused = false, onFocus }: CommunicationCardProps) {
     const [isPlaying, setIsPlaying] = useState(false);
-    const [volume, setVolume] = useState(1.0); // 0.0 to 1.0
+    const [volume] = useState(1.0); // 0.0 to 1.0
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -57,7 +57,7 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
         opacity: isDragging ? 0.5 : 1,
     };
 
-    const handlePlay = (e: React.MouseEvent) => {
+    const handlePlay = () => {
         if (!card.audioUrl) return;
 
         if (audioRef.current) {
@@ -70,8 +70,8 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
         }
 
         setIsPlaying(true);
-        audioRef.current.play().catch(e => {
-            console.error("Audio playback failed", e);
+        audioRef.current.play().catch(err => {
+            console.error("Audio playback failed", err);
             setIsPlaying(false);
         });
     };

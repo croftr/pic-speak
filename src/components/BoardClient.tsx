@@ -193,7 +193,7 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
             try {
                 await navigator.share({
                     title: board.name,
-                    text: board.description || `Check out this PECS board: ${board.name}`,
+                    text: board.description || `Check out this communication board: ${board.name}`,
                     url: shareUrl,
                 });
                 return;

@@ -2,7 +2,7 @@
 
 ## What This Project Is
 
-Pic Speak is a PECS (Picture Exchange Communication System) board builder designed to help non-verbal children communicate using customizable picture cards with audio support. The application allows parents and caregivers to create personalized communication boards using real photos and familiar voices.
+Pic Speak is a communication board builder designed to help non-verbal children communicate using customizable picture cards with audio support. The application allows parents and caregivers to create personalized communication boards using real photos and familiar voices.
 
 ## Tech Stack
 
@@ -40,7 +40,7 @@ src/
 ├── components/
 │   ├── AddCardModal.tsx     # Modal for creating cards
 │   ├── AudioRecorder.tsx    # Audio recording component
-│   └── PecsCard.tsx         # Individual PECS card display
+│   └── CommunicationCard.tsx         # Individual communication card display
 ├── lib/
 │   └── storage.ts           # Data storage utilities
 ├── types/
@@ -52,7 +52,7 @@ src/
 ## Core Features
 
 ### 1. Board Management
-- Create multiple PECS boards
+- Create multiple communication boards
 - Each board has a name and optional description
 - User-specific boards tied to Clerk authentication
 - View all boards at `/my-boards`
@@ -116,7 +116,7 @@ npm run db:migrate:baseline  # Mark all as applied without running SQL (for exis
 
 - `schema_migrations` - tracks applied migration versions
 - `boards` - user communication boards
-- `cards` - PECS cards within boards (FK to boards with CASCADE delete)
+- `cards` - Communication cards within boards (FK to boards with CASCADE delete)
 - `board_likes` - likes on public boards (unique per user+board)
 - `board_comments` - comments on public boards
 

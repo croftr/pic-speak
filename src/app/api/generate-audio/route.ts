@@ -14,7 +14,7 @@ const WINDOW_MS = 60_000;
 const MAX_PER_USER_PER_DAY = 50;
 const MAX_GLOBAL_PER_DAY = 2000;
 
-// Maximum text length for TTS (PECS labels should be short)
+// Maximum text length for TTS (Communication board labels should be short)
 const MAX_TEXT_LENGTH = 200;
 
 // Upload timeout (25 seconds - less than Vercel's 30s function timeout)
