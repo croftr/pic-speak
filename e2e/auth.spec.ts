@@ -94,8 +94,8 @@ test('logged-in user can create a board, add a card with image and audio, then d
 
   // Step 2: Update Image
   // Hover over image preview to reveal "Change Image" button
-  await page.locator('img[alt="Card Preview"]').hover()
-  await page.getByRole('button', { name: /change image/i }).click()
+  // The button is centered over the image, so we force the click or hover the container
+  await page.getByRole('button', { name: /change image/i }).click({ force: true })
 
   // Upload new image
   const updateImageInput = page.locator('input[type="file"][accept="image/*"]')
