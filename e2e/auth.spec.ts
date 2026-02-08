@@ -74,11 +74,67 @@ test('logged-in user can create a board, add a card with image and audio, then d
   // Verify the card now appears on the board
   await expect(page.getByText(cardLabel)).toBeVisible({ timeout: 15000 })
 
-  // ── Delete the card via the UI ──────────────────────────────────────
-  // Open the card's options menu (⋮ button) — find it near the card
+  // ── Edit the card ───────────────────────────────────────────────────
+  const updatedCardLabel = `Updated Card Label ${Date.now()}`
+
+  // Open the card's options menu
   const cardElement = page.locator(`[data-card-id]`).filter({ hasText: cardLabel })
+
+  // Capture initial image src for verification
+  const initialImageSrc = await cardElement.locator('img').getAttribute('src')
+
   const cardContainer = cardElement.locator('..')
   await cardContainer.getByRole('button', { name: /card options/i }).click()
+
+  // Click "Edit Card"
+  await page.getByRole('button', { name: /edit card/i }).click()
+
+  // Verify modal is open
+  await expect(page.getByRole('heading', { name: /edit card/i })).toBeVisible()
+
+  // Step 1: Update Label
+  await page.getByPlaceholder('e.g., Apple, Hungry, Yes').fill(updatedCardLabel)
+  await page.getByRole('button', { name: /next step/i }).click()
+
+  // Step 2: Update Image
+  // Hover over image preview to reveal "Change Image" button
+  // The button is centered over the image, so we force the click
+  await page.getByRole('button', { name: /change image/i }).click({ force: true })
+
+  // Upload new image - scope to the visible file input to avoid ambiguity
+  const updateImageInput = page.locator('input[type="file"][accept="image/*"]').last()
+  await updateImageInput.setInputFiles(path.resolve(__dirname, 'fixtures/test-image-2.png'))
+
+  // Handle Crop Modal
+  await expect(page.getByText('Crop & Resize Image')).toBeVisible()
+  await page.getByRole('button', { name: /apply/i }).click()
+
+  // Go to next step
+  await page.getByRole('button', { name: /next step/i }).click()
+
+  // Step 3: Update Audio
+  await page.getByText('Remove & Record New').click()
+  // Scope audio input similarly
+  const updateAudioInput = page.locator('input[type="file"][accept="audio/*"]').last()
+  await updateAudioInput.setInputFiles(path.resolve(__dirname, 'fixtures/test-audio-2.wav'))
+
+  // Submit update
+  await page.getByRole('button', { name: /update card/i }).click()
+
+  // Verify update
+  await expect(page.getByRole('heading', { name: /edit card/i })).not.toBeVisible()
+  await expect(page.getByText(updatedCardLabel)).toBeVisible({ timeout: 10000 })
+  await expect(page.getByText(cardLabel)).not.toBeVisible()
+
+  // Verify image has changed
+  const updatedCardElement = page.locator(`[data-card-id]`).filter({ hasText: updatedCardLabel })
+  const updatedImageSrc = await updatedCardElement.locator('img').getAttribute('src')
+  expect(updatedImageSrc).not.toBe(initialImageSrc)
+
+  // ── Delete the card via the UI ──────────────────────────────────────
+  // Use the updated label to find the card
+  const updatedCardContainer = updatedCardElement.locator('..')
+  await updatedCardContainer.getByRole('button', { name: /card options/i }).click()
 
   // Click "Delete" in the dropdown menu
   await page.getByRole('button', { name: /delete card/i }).click()
@@ -87,7 +143,7 @@ test('logged-in user can create a board, add a card with image and audio, then d
   await page.getByRole('button', { name: 'Delete', exact: true }).click()
 
   // Verify the card is gone
-  await expect(page.getByText(cardLabel)).not.toBeVisible({ timeout: 5000 })
+  await expect(page.getByText(updatedCardLabel)).not.toBeVisible({ timeout: 5000 })
 
   // ── Delete the board via the API ────────────────────────────────────
   const boardId = page.url().match(/\/board\/([^?]+)/)?.[1]
