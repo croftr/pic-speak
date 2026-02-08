@@ -110,7 +110,7 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
                                             <Copy className="w-4 h-4" />
                                             Copy / Move
                                         </button>
-                                        {canEdit && (
+                                        {canEdit ? (
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -119,11 +119,26 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
                                                     setIsMenuOpen(false);
                                                 }}
                                                 className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors text-left"
-                                            aria-label="Edit Card"
+                                                aria-label="Edit Card"
                                             >
                                                 <Pencil className="w-4 h-4" />
                                                 Edit Card
                                             </button>
+                                        ) : (
+                                            <>
+                                                {isTemplateCard && (
+                                                    <div className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/10 rounded-lg cursor-default select-none">
+                                                        <Sparkles className="w-4 h-4" />
+                                                        Template Card
+                                                    </div>
+                                                )}
+                                                {isInheritedCard && !isTemplateCard && (
+                                                    <div className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/10 rounded-lg cursor-default select-none">
+                                                        <Link className="w-4 h-4" />
+                                                        Inherited Card
+                                                    </div>
+                                                )}
+                                            </>
                                         )}
                                         <button
                                             onClick={(e) => {
@@ -178,20 +193,6 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
                 }}
             >
                 <div className="relative flex-1 w-full overflow-hidden rounded-xl sm:rounded-2xl bg-gray-100 dark:bg-gray-700 pointer-events-none">
-                    {/* Template badge */}
-                    {isTemplateCard && (
-                        <div className="absolute top-1 right-1 z-10 px-1.5 py-0.5 bg-gradient-to-r from-amber-400 to-orange-500 rounded-md flex items-center gap-0.5">
-                            <Sparkles className="w-2.5 h-2.5 text-white" />
-                            <span className="text-[9px] font-bold text-white uppercase tracking-wide">Template</span>
-                        </div>
-                    )}
-                    {/* Inherited card badge (from public board template) */}
-                    {isInheritedCard && !isTemplateCard && (
-                        <div className="absolute top-1 right-1 z-10 px-1.5 py-0.5 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-md flex items-center gap-0.5">
-                            <Link className="w-2.5 h-2.5 text-white" />
-                            <span className="text-[9px] font-bold text-white uppercase tracking-wide">Inherited</span>
-                        </div>
-                    )}
                     {/* Helper layout for centering image */}
                     <div className="absolute inset-0 flex items-center justify-center">
                         {/* Use Next.js Image for uploaded images (http/https), fallback to img for blob URLs */}
