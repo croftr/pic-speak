@@ -13,7 +13,9 @@
     "test:db": "tsx scripts/test-postgres.ts",
     "test:blob": "tsx scripts/test-blob.ts",
     "test:api": "tsx scripts/test-api-e2e.ts",
-    "test:compression": "tsx scripts/test-compression.ts"
+    "test:compression": "tsx scripts/test-compression.ts",
+    "test:e2e": "npx playwright test",
+    "test:e2e:ui": "npx playwright test --ui"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.36.7",
@@ -40,6 +42,8 @@
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
+    "@clerk/testing": "^1.13.35",
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.16.0",

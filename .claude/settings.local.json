@@ -18,7 +18,11 @@
       "Bash(npx dotenv:*)",
       "Bash(npx tsc:*)",
       "Bash(xargs ls:*)",
-      "Bash(npx next build:*)"
+      "Bash(npx next build:*)",
+      "mcp__Context7__resolve-library-id",
+      "mcp__Context7__get-library-docs",
+      "Bash(npm i:*)",
+      "Bash(npx playwright install:*)"
     ]
   }
 }

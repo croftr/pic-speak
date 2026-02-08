@@ -1,10 +1,7 @@
 Critical
-1. Add automated tests
-There are zero unit, integration, or E2E tests. This is the single biggest risk. I'd recommend:
+1. Add automated  with play
+but keep the tests very light weight.  Start with the API routes in src/app/api/ — they're the most critical paths and then add test for the following flow
 
-Jest + React Testing Library for unit/component tests
-Playwright for E2E tests (especially the card creation and audio playback flows)
-Start with the API routes in src/app/api/ — they're the most critical paths
 
 2. Add new template pecs cards for 
 Dog (in the category animals) 
