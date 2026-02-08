@@ -62,6 +62,7 @@ export async function POST(
         if (board && board.ownerEmail && board.emailNotificationsEnabled && board.userId !== userId) {
             // Don't notify if user comments on their own board
             const commentCount = await getBoardCommentCount(boardId);
+            console.log('[Comment] Attempting to send email notification for board:', board.name);
             sendCommentNotification(
                 board.ownerEmail,
                 board.name,
@@ -69,7 +70,23 @@ export async function POST(
                 commenterName,
                 content.trim(),
                 commentCount
-            ).catch(err => console.error('[Comment] Failed to send notification:', err));
+            )
+                .then(success => {
+                    if (success) {
+                        console.log('[Comment] Email sent successfully');
+                    } else {
+                        console.log('[Comment] Email send returned false - check Resend configuration');
+                    }
+                })
+                .catch(err => console.error('[Comment] Failed to send notification:', err));
+        } else {
+            // Log why notification was skipped
+            console.log('[Comment] Email notification skipped:', {
+                hasBoard: !!board,
+                hasOwnerEmail: !!board?.ownerEmail,
+                emailNotificationsEnabled: board?.emailNotificationsEnabled,
+                isSameUser: board?.userId === userId
+            });
         }
 
         return NextResponse.json(comment, { status: 201 });
