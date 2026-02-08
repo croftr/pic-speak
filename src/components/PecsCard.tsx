@@ -1,7 +1,7 @@
 'use client';
 
 import { Card } from '@/types';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Volume2 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Trash2, Pencil, GripVertical, Copy, Sparkles, MoreVertical, Link } from 'lucide-react';
@@ -27,6 +27,15 @@ export default function PecsCard({ card, isEditing, onDelete, onEdit, onMoveCopy
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+
+    // Reset audio ref when audioUrl changes (e.g. after editing card)
+    useEffect(() => {
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current = null;
+            setIsPlaying(false);
+        }
+    }, [card.audioUrl]);
 
     // Template cards and cards inherited from public boards cannot be edited
     const isTemplateCard = !!card.templateKey;
