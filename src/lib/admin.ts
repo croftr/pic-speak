@@ -1,18 +1,26 @@
 import { currentUser } from '@clerk/nextjs/server';
 
-export async function checkIsAdmin() {
+const HARDCODED_ADMIN_EMAILS = [
+    'angelajanecroft@gmail.com',
+];
+
+function getAdminEmails(): string[] {
+    const envAdmins = process.env.ADMIN_EMAILS;
+    const envList = envAdmins
+        ? envAdmins.split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
+        : [];
+    return [...HARDCODED_ADMIN_EMAILS, ...envList];
+}
+
+export async function isAdmin(): Promise<boolean> {
     const user = await currentUser();
     if (!user) return false;
 
-    const adminId = process.env.ADMIN_USERNAME;
-    if (!adminId) return false;
+    const adminEmails = getAdminEmails();
+    const userEmails = user.emailAddresses.map(e => e.emailAddress.toLowerCase());
 
-    // Check username
-    if (user.username === adminId) return true;
-
-    // Check primary email or all emails
-    const emails = user.emailAddresses.map(e => e.emailAddress);
-    if (emails.includes(adminId)) return true;
-
-    return false;
+    return userEmails.some(email => adminEmails.includes(email));
 }
+
+/** @deprecated Use isAdmin() instead */
+export const checkIsAdmin = isAdmin;

@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowRight, Eye, User, Heart, MessageCircle, Layers } from 'lucide-react';
+import { ArrowRight, Eye, User, Heart, MessageCircle, Layers, Trash2 } from 'lucide-react';
 import { Board } from '@/types';
 import Image from 'next/image';
 
@@ -13,6 +13,8 @@ function PublicBoardsContent() {
 
     const [publicBoards, setPublicBoards] = useState<Board[]>([]);
     const [isLoadingBoards, setIsLoadingBoards] = useState(true);
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [deletingBoardId, setDeletingBoardId] = useState<string | null>(null);
 
     useEffect(() => {
         fetch('/api/boards/public')
@@ -25,7 +27,29 @@ function PublicBoardsContent() {
                 console.error('Error loading public boards:', err);
                 setIsLoadingBoards(false);
             });
+        fetch('/api/user')
+            .then(res => res.json())
+            .then(data => setIsAdmin(data.isAdmin))
+            .catch(() => {});
     }, []);
+
+    const handleDeleteBoard = async (boardId: string) => {
+        if (!confirm('Are you sure you want to delete this board? This cannot be undone.')) return;
+        setDeletingBoardId(boardId);
+        try {
+            const res = await fetch(`/api/boards/${boardId}`, { method: 'DELETE' });
+            if (res.ok) {
+                setPublicBoards(boards => boards.filter(b => b.id !== boardId));
+            } else {
+                const text = await res.text();
+                alert(`Failed to delete board: ${text}`);
+            }
+        } catch {
+            alert('Failed to delete board. Please try again.');
+        } finally {
+            setDeletingBoardId(null);
+        }
+    };
 
     // Filter boards by creator if specified
     const displayedBoards = creatorFilter
@@ -58,9 +82,26 @@ function PublicBoardsContent() {
                             href={`/board/${board.id}`}
                             className="group relative block p-6 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800 rounded-2xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl hover:scale-105 transition-all duration-300"
                         >
-                            <div className="absolute top-3 right-3 px-2 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold flex items-center gap-1">
-                                <Eye className="w-3 h-3" />
-                                Public
+                            <div className="absolute top-3 right-3 flex items-center gap-2">
+                                {isAdmin && !board.id.startsWith('starter-') && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            handleDeleteBoard(board.id);
+                                        }}
+                                        disabled={deletingBoardId === board.id}
+                                        className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full text-xs font-bold flex items-center gap-1 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors cursor-pointer"
+                                        title="Admin: Delete board"
+                                    >
+                                        <Trash2 className="w-3 h-3" />
+                                        {deletingBoardId === board.id ? 'Deleting...' : 'Delete'}
+                                    </button>
+                                )}
+                                <div className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold flex items-center gap-1">
+                                    <Eye className="w-3 h-3" />
+                                    Public
+                                </div>
                             </div>
                             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 pr-16 group-hover:text-primary transition-colors">
                                 {board.name}
