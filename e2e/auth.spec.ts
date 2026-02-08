@@ -79,6 +79,10 @@ test('logged-in user can create a board, add a card with image and audio, then d
 
   // Open the card's options menu
   const cardElement = page.locator(`[data-card-id]`).filter({ hasText: cardLabel })
+
+  // Capture initial image src for verification
+  const initialImageSrc = await cardElement.locator('img').getAttribute('src')
+
   const cardContainer = cardElement.locator('..')
   await cardContainer.getByRole('button', { name: /card options/i }).click()
 
@@ -94,11 +98,11 @@ test('logged-in user can create a board, add a card with image and audio, then d
 
   // Step 2: Update Image
   // Hover over image preview to reveal "Change Image" button
-  // The button is centered over the image, so we force the click or hover the container
+  // The button is centered over the image, so we force the click
   await page.getByRole('button', { name: /change image/i }).click({ force: true })
 
-  // Upload new image
-  const updateImageInput = page.locator('input[type="file"][accept="image/*"]')
+  // Upload new image - scope to the visible file input to avoid ambiguity
+  const updateImageInput = page.locator('input[type="file"][accept="image/*"]').last()
   await updateImageInput.setInputFiles(path.resolve(__dirname, 'fixtures/test-image-2.png'))
 
   // Handle Crop Modal
@@ -110,7 +114,8 @@ test('logged-in user can create a board, add a card with image and audio, then d
 
   // Step 3: Update Audio
   await page.getByText('Remove & Record New').click()
-  const updateAudioInput = page.locator('input[type="file"][accept="audio/*"]')
+  // Scope audio input similarly
+  const updateAudioInput = page.locator('input[type="file"][accept="audio/*"]').last()
   await updateAudioInput.setInputFiles(path.resolve(__dirname, 'fixtures/test-audio-2.wav'))
 
   // Submit update
@@ -121,9 +126,13 @@ test('logged-in user can create a board, add a card with image and audio, then d
   await expect(page.getByText(updatedCardLabel)).toBeVisible({ timeout: 10000 })
   await expect(page.getByText(cardLabel)).not.toBeVisible()
 
+  // Verify image has changed
+  const updatedCardElement = page.locator(`[data-card-id]`).filter({ hasText: updatedCardLabel })
+  const updatedImageSrc = await updatedCardElement.locator('img').getAttribute('src')
+  expect(updatedImageSrc).not.toBe(initialImageSrc)
+
   // ── Delete the card via the UI ──────────────────────────────────────
   // Use the updated label to find the card
-  const updatedCardElement = page.locator(`[data-card-id]`).filter({ hasText: updatedCardLabel })
   const updatedCardContainer = updatedCardElement.locator('..')
   await updatedCardContainer.getByRole('button', { name: /card options/i }).click()
 
