@@ -24,6 +24,7 @@ export interface Board {
   emailNotificationsEnabled?: boolean;
   likeCount?: number;
   commentCount?: number;
+  cardCount?: number;
   isLikedByUser?: boolean;
 }
 

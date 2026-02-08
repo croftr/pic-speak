@@ -77,7 +77,8 @@ const STARTER_BOARDS: Board[] = [
         createdAt: '2024-01-01T00:00:00.000Z',
         isPublic: true,
         creatorName: 'Pic Speak',
-        creatorImageUrl: '/logo.png'
+        creatorImageUrl: '/logo.png',
+        cardCount: 29
     }
 ];
 
@@ -477,8 +478,13 @@ export async function updateCardOrders(boardId: string, cardOrders: { id: string
 export async function getBoards(userId: string): Promise<Board[]> {
     const client = await getDbClient();
     try {
-        const result = await client.query<BoardRow>(
-            'SELECT * FROM boards WHERE user_id = $1 ORDER BY created_at DESC',
+        const result = await client.query<BoardRow & { card_count: string }>(
+            `SELECT b.*, COUNT(c.id) as card_count
+             FROM boards b
+             LEFT JOIN cards c ON c.board_id = b.id
+             WHERE b.user_id = $1
+             GROUP BY b.id
+             ORDER BY b.created_at DESC`,
             [userId]
         );
 
@@ -492,7 +498,8 @@ export async function getBoards(userId: string): Promise<Board[]> {
             creatorName: row.creator_name,
             creatorImageUrl: row.creator_image_url,
             ownerEmail: row.owner_email,
-            emailNotificationsEnabled: row.email_notifications_enabled ?? true
+            emailNotificationsEnabled: row.email_notifications_enabled ?? true,
+            cardCount: parseInt(row.card_count || '0')
         }));
     } catch (error) {
         logger.error('Error getting boards', error, { userId });
@@ -619,8 +626,13 @@ export async function deleteBoard(id: string): Promise<void> {
 export async function getPublicBoards(): Promise<Board[]> {
     const client = await getDbClient();
     try {
-        const result = await client.query<BoardRow>(
-            'SELECT * FROM boards WHERE is_public = true ORDER BY created_at DESC'
+        const result = await client.query<BoardRow & { card_count: string }>(
+            `SELECT b.*, COUNT(c.id) as card_count
+             FROM boards b
+             LEFT JOIN cards c ON c.board_id = b.id
+             WHERE b.is_public = true
+             GROUP BY b.id
+             ORDER BY b.created_at DESC`
         );
 
         const dbBoards = result.rows.map(row => ({
@@ -633,7 +645,8 @@ export async function getPublicBoards(): Promise<Board[]> {
             creatorName: row.creator_name,
             creatorImageUrl: row.creator_image_url,
             ownerEmail: row.owner_email,
-            emailNotificationsEnabled: row.email_notifications_enabled ?? true
+            emailNotificationsEnabled: row.email_notifications_enabled ?? true,
+            cardCount: parseInt(row.card_count || '0')
         }));
 
         return [...STARTER_BOARDS, ...dbBoards];
@@ -663,15 +676,13 @@ export async function getPublicBoardsWithInteractions(userId?: string): Promise<
             `SELECT
                 b.id, b.user_id, b.name, b.description, b.created_at, b.is_public,
                 b.creator_name, b.creator_image_url, b.owner_email, b.email_notifications_enabled,
-                COUNT(DISTINCT bl.id) as like_count,
-                COUNT(DISTINCT bc.id) as comment_count,
+                (SELECT COUNT(*) FROM board_likes bl WHERE bl.board_id = b.id) as like_count,
+                (SELECT COUNT(*) FROM board_comments bc WHERE bc.board_id = b.id) as comment_count,
+                (SELECT COUNT(*) FROM cards c WHERE c.board_id = b.id) as card_count,
                 ${userLikeSelect}
             FROM boards b
-            LEFT JOIN board_likes bl ON bl.board_id = b.id
-            LEFT JOIN board_comments bc ON bc.board_id = b.id
             ${userLikeJoin}
             WHERE b.is_public = true
-            GROUP BY b.id${userId ? ', ul.id' : ''}
             ORDER BY b.created_at DESC`,
             params
         );
@@ -689,6 +700,7 @@ export async function getPublicBoardsWithInteractions(userId?: string): Promise<
             emailNotificationsEnabled: row.email_notifications_enabled ?? true,
             likeCount: parseInt(row.like_count),
             commentCount: parseInt(row.comment_count),
+            cardCount: parseInt(row.card_count || '0'),
             isLikedByUser: row.is_liked_by_user
         }));
 
