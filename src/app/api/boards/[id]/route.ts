@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getBoard, updateBoard, deleteBoard } from '@/lib/storage';
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { checkIsAdmin } from '@/lib/admin';
+import { validateStringLength } from '@/lib/validation';
 
 export async function GET(
     request: Request,
@@ -59,6 +60,20 @@ export async function PUT(
     try {
         const body = await request.json();
         const { name, description, isPublic, emailNotificationsEnabled } = body;
+
+        if (name) {
+            const nameError = validateStringLength(name, 100, 'Board name');
+            if (nameError) {
+                return NextResponse.json({ error: nameError }, { status: 400 });
+            }
+        }
+
+        if (description !== undefined && description) {
+            const descError = validateStringLength(description, 500, 'Description');
+            if (descError) {
+                return NextResponse.json({ error: descError }, { status: 400 });
+            }
+        }
 
         // Determine if we need to fetch user email (when making board public for the first time)
         let ownerEmail = existingBoard.ownerEmail;

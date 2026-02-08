@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getCards, deleteCard, updateCard, getBoard, getCardLabels } from '@/lib/storage';
 import { auth } from '@clerk/nextjs/server';
 import { checkIsAdmin } from '@/lib/admin';
+import { validateStringLength, validateColor } from '@/lib/validation';
 
 export async function PUT(
     request: Request,
@@ -40,6 +41,20 @@ export async function PUT(
         const body = await request.json();
         const { label, imageUrl, audioUrl, color, category: rawCategory, boardId } = body;
         const category = rawCategory ? rawCategory.trim().toLowerCase().replace(/^\w/, (c: string) => c.toUpperCase()) : rawCategory;
+
+        if (label !== undefined) {
+            const labelError = validateStringLength(label, 100, 'Card label');
+            if (labelError) {
+                return NextResponse.json({ error: labelError }, { status: 400 });
+            }
+        }
+
+        if (color !== undefined) {
+            const colorError = validateColor(color);
+            if (colorError) {
+                return NextResponse.json({ error: colorError }, { status: 400 });
+            }
+        }
 
         // Check label uniqueness if label is changing
         const targetBoardId = boardId || existingCard.boardId;

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { batchAddCards, getBoard, getCardLabels } from '@/lib/storage';
 import { Card } from '@/types';
+import { validateColor } from '@/lib/validation';
 
 export async function POST(request: Request) {
     const { userId } = await auth();
@@ -54,6 +55,16 @@ export async function POST(request: Request) {
                 { error: 'All cards have duplicate labels', duplicateLabels },
                 { status: 409 }
             );
+        }
+
+        // Validate colors in the batch
+        for (const cardData of filteredCards) {
+            if (cardData.color) {
+                const colorError = validateColor(cardData.color);
+                if (colorError) {
+                    return NextResponse.json({ error: `Invalid color "${cardData.color}": ${colorError}` }, { status: 400 });
+                }
+            }
         }
 
         // Create full card objects with IDs

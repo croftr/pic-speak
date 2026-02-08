@@ -4,7 +4,7 @@ import { Card } from '@/types';
 import { auth } from '@clerk/nextjs/server';
 import { checkIsAdmin } from '@/lib/admin';
 import { logger } from '@/lib/logger';
-import { validateStringLength } from '@/lib/validation';
+import { validateStringLength, validateColor } from '@/lib/validation';
 
 export async function GET(request: Request) {
     const startTime = Date.now();
@@ -106,6 +106,14 @@ export async function POST(request: Request) {
             if (labelError) {
                 userLog.warn('Label too long', { length: label.length });
                 return NextResponse.json({ error: labelError }, { status: 400 });
+            }
+        }
+
+        if (color) {
+            const colorError = validateColor(color);
+            if (colorError) {
+                userLog.warn('Invalid color', { color });
+                return NextResponse.json({ error: colorError }, { status: 400 });
             }
         }
 
