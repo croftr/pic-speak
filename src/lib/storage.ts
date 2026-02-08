@@ -76,8 +76,8 @@ const STARTER_BOARDS: Board[] = [
         description: 'Essential everyday phrases and objects.',
         createdAt: '2024-01-01T00:00:00.000Z',
         isPublic: true,
-        creatorName: 'Pic Speak',
-        creatorImageUrl: '/logo.png',
+        creatorName: 'My Voice Board',
+        creatorImageUrl: '/logo.svg',
         cardCount: 29
     }
 ];

@@ -71,20 +71,20 @@ export default function Home() {
   if (!mounted) return null;
 
   return (
-    <main className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-sky-100 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-950 dark:to-slate-950 flex flex-col items-center justify-center p-4">
+    <main className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-violet-100 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-950 dark:to-slate-950 flex flex-col items-center justify-center p-4">
 
       <div className="w-full max-w-4xl mx-auto flex flex-col items-center gap-8 sm:gap-12">
 
         {/* Logo / Header Area */}
         <div className="text-center space-y-4 animate-in slide-in-from-top-10 duration-700">
           <div className="w-24 h-24 sm:w-32 sm:h-32 mx-auto bg-white dark:bg-slate-800 rounded-3xl shadow-lg flex items-center justify-center p-4 transform -rotate-3 hover:rotate-0 transition-transform duration-500">
-            <Image src="/logo.svg" alt="Pic Speak Logo" width={100} height={100} className="w-full h-full" priority />
+            <Image src="/logo.svg" alt="My Voice Board Logo" width={100} height={100} className="w-full h-full" priority />
           </div>
           <h1 className="text-4xl sm:text-5xl font-black text-slate-800 dark:text-white tracking-tight">
-            Pic Speak
+            My Voice Board
           </h1>
           <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 font-medium max-w-md mx-auto">
-            Communication made easy
+            Giving a voice to every child
           </p>
         </div>
 

@@ -47,14 +47,14 @@ export default function GlobalHeader() {
                         <div className="relative w-8 h-8 sm:w-10 sm:h-10">
                             <Image
                                 src="/logo.svg"
-                                alt="Pic Speak Logo"
+                                alt="My Voice Board Logo"
                                 width={100}
                                 height={100}
                                 className="object-contain"
                             />
                         </div>
                         <span className="text-lg sm:text-xl font-black tracking-tighter text-gray-900 dark:text-white">
-                            Pic Speak
+                            My Voice Board
                         </span>
                     </Link>
 

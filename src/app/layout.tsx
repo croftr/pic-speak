@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://pic-speak.vercel.app'),
-  title: "Pic Speak - PECS Communication Board Builder",
-  description: "Create personalized PECS boards with custom photos and audio. Help non-verbal children communicate with confidence using familiar pictures and voices.",
+  metadataBase: new URL('https://myvoiceboard.com'),
+  title: "My Voice Board - Custom Autism Communication Boards",
+  description: "Create personalized communication boards for non-verbal children. My Voice Board helps parents and teachers build custom PECS-style boards with familiar photos and voices.",
   icons: {
     icon: [
       { url: '/logo.svg', sizes: 'any' },
@@ -24,15 +24,15 @@ export const metadata: Metadata = {
     apple: '/logo.svg',
   },
   openGraph: {
-    title: "Pic Speak - PECS Communication Board Builder",
-    description: "Create personalized PECS boards with custom photos and audio. Help non-verbal children communicate with confidence.",
+    title: "My Voice Board - Custom Autism Communication Boards",
+    description: "Empower non-verbal children with My Voice Board. The easy way for parents and teachers to create personalized communication boards.",
     images: ['/logo.svg'],
     type: 'website',
   },
   twitter: {
     card: 'summary',
-    title: "Pic Speak - PECS Communication Board Builder",
-    description: "Create personalized PECS boards with custom photos and audio.",
+    title: "My Voice Board - Custom Autism Communication Boards",
+    description: "Create personalized communication boards with custom photos and audio for non-verbal children.",
     images: ['/logo.svg'],
   },
 };
