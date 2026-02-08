@@ -132,7 +132,9 @@ export default function Home() {
 
         {/* Footer/Info */}
         <div className="mt-8 text-center text-slate-400 text-sm animate-in fade-in duration-1000 delay-500">
-          <p>Simple tools for powerful voices</p>
+          <Link href="/about" className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors underline underline-offset-4 decoration-slate-300 dark:decoration-slate-700">
+            About My Voice Board & Privacy
+          </Link>
         </div>
 
       </div>

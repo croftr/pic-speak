@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserButton, SignedIn, SignedOut, SignInButton } from '@clerk/nextjs';
-import { Grid, Globe } from 'lucide-react';
+import { Grid, Globe, Info } from 'lucide-react';
 import Image from 'next/image';
 
 export default function GlobalHeader() {
@@ -38,8 +38,8 @@ export default function GlobalHeader() {
                 }`}
         >
             <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 shadow-sm">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-                    {/* Logo */}
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 relative flex items-center justify-between">
+                    {/* Logo - left */}
                     <Link
                         href="/"
                         className="flex items-center gap-2 hover:opacity-80 transition-opacity"
@@ -58,8 +58,8 @@ export default function GlobalHeader() {
                         </span>
                     </Link>
 
-                    {/* Desktop Nav Links - hidden on mobile, shown on sm+ */}
-                    <nav className="hidden sm:flex items-center gap-1">
+                    {/* Desktop Nav Links - absolutely centered */}
+                    <nav className="hidden sm:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
                         <SignedIn>
                             <Link
                                 href="/my-boards"
@@ -82,9 +82,19 @@ export default function GlobalHeader() {
                             <Globe className="w-4 h-4" />
                             Explore
                         </Link>
+                        <Link
+                            href="/about"
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${isActive('/about')
+                                ? 'bg-primary/10 text-primary'
+                                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800'
+                                }`}
+                        >
+                            <Info className="w-4 h-4" />
+                            About
+                        </Link>
                     </nav>
 
-                    {/* User Menu */}
+                    {/* User Menu - right */}
                     <div className="flex items-center gap-3">
                         <SignedIn>
                             <UserButton

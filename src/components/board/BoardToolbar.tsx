@@ -6,8 +6,8 @@ import { Board } from '@/types';
 import { useSettings } from '@/contexts/SettingsContext';
 import {
     Upload, ArrowLeft, Loader2, Trash2,
-    Share2, Check, MoreHorizontal, ChevronDown, ChevronUp,
-    Grid3X3, Grid2X2, LayoutGrid, Layers
+    Share2, Check,
+    Grid3X3, Grid2X2, LayoutGrid, Layers, ChevronDown, ChevronUp, Settings
 } from 'lucide-react';
 
 interface BoardToolbarProps {
@@ -47,7 +47,6 @@ export default function BoardToolbar({
 }: BoardToolbarProps) {
     const { cardSize: userCardSize, setCardSize } = useSettings();
     const [isSettingsExpanded, setIsSettingsExpanded] = useState(false);
-    const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
     const [isHeaderVisible, setIsHeaderVisible] = useState(true);
     const [lastScrollY, setLastScrollY] = useState(0);
 
@@ -75,93 +74,81 @@ export default function BoardToolbar({
             <header className={`max-w-7xl mx-auto mb-4 md:mb-6 sticky top-16 sm:top-[4.5rem] z-40 transition-transform duration-300 ${isHeaderVisible ? 'translate-y-0' : '-translate-y-[150%]'
                 }`}>
                 {isEditing ? (
-                    // EDIT MODE - Clean, minimal header
-                    <div className="flex items-center justify-between gap-2 p-2 sm:p-3 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-md border border-gray-100 dark:border-gray-800">
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                            <Link
-                                href={`/board/${board?.id}`}
-                                className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors flex items-center justify-center text-gray-600 dark:text-gray-300 flex-shrink-0 touch-manipulation"
-                                title="Done Editing"
-                            >
-                                <ArrowLeft className="w-5 h-5" />
-                            </Link>
-                            <button
-                                onClick={() => setIsSettingsExpanded(!isSettingsExpanded)}
-                                className="flex items-center gap-2 min-w-0 flex-1 p-1.5 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-lg transition-colors touch-manipulation"
-                            >
+                    // EDIT MODE
+                    <div className="rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-md border border-gray-100 dark:border-gray-800">
+                        {/* Top bar: back, name, save */}
+                        <div className="flex items-center justify-between gap-2 p-2 sm:p-3">
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                                <Link
+                                    href={`/board/${board?.id}`}
+                                    className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors flex items-center justify-center text-gray-600 dark:text-gray-300 flex-shrink-0 touch-manipulation"
+                                    title="Done Editing"
+                                >
+                                    <ArrowLeft className="w-5 h-5" />
+                                </Link>
                                 <span className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white truncate">
                                     {editName || 'Untitled Board'}
                                 </span>
-                                {isSettingsExpanded ? (
-                                    <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                                ) : (
-                                    <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                                )}
-                            </button>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                                <button
+                                    onClick={onSave}
+                                    disabled={isSaving}
+                                    className="bg-primary text-white px-3 py-2 rounded-lg font-semibold shadow-md hover:shadow-lg hover:bg-primary/90 transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed text-sm touch-manipulation"
+                                >
+                                    {isSaving ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <Check className="w-4 h-4" />
+                                    )}
+                                    <span className="hidden sm:inline">Save</span>
+                                </button>
+                            </div>
                         </div>
 
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                            {/* More options menu for secondary actions */}
-                            <div className="relative">
-                                <button
-                                    onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
-                                    className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-gray-500 dark:text-gray-400 touch-manipulation"
-                                    title="More options"
-                                >
-                                    <MoreHorizontal className="w-5 h-5" />
-                                </button>
-                                {isMoreMenuOpen && (
-                                    <>
-                                        <div
-                                            className="fixed inset-0 z-[60]"
-                                            onClick={() => setIsMoreMenuOpen(false)}
-                                        />
-                                        <div className="absolute right-0 top-full mt-1 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-1.5 min-w-[180px] z-[61] animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-                                            <button
-                                                onClick={() => {
-                                                    onBatchUpload();
-                                                    setIsMoreMenuOpen(false);
-                                                }}
-                                                className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg transition-colors text-left"
-                                            >
-                                                <Upload className="w-4 h-4" />
-                                                Batch Upload
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    onMergeBoard();
-                                                    setIsMoreMenuOpen(false);
-                                                }}
-                                                className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors text-left"
-                                            >
-                                                <Layers className="w-4 h-4" />
-                                                Merge Board
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    onDelete();
-                                                    setIsMoreMenuOpen(false);
-                                                }}
-                                                className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors text-left"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                                Delete Board
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
+                        {/* Action buttons row - always visible */}
+                        <div className="flex items-center gap-1.5 px-2 sm:px-3 pb-2 sm:pb-3 flex-wrap">
                             <button
-                                onClick={onSave}
-                                disabled={isSaving}
-                                className="bg-primary text-white px-3 py-2 rounded-lg font-semibold shadow-md hover:shadow-lg hover:bg-primary/90 transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed text-sm touch-manipulation"
+                                onClick={() => setIsSettingsExpanded(!isSettingsExpanded)}
+                                className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors touch-manipulation ${
+                                    isSettingsExpanded
+                                        ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary'
+                                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800'
+                                }`}
                             >
-                                {isSaving ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                <Settings className="w-4 h-4" />
+                                <span className="hidden xs:inline">Board Settings</span>
+                                <span className="xs:hidden">Settings</span>
+                                {isSettingsExpanded ? (
+                                    <ChevronUp className="w-3.5 h-3.5" />
                                 ) : (
-                                    <Check className="w-4 h-4" />
+                                    <ChevronDown className="w-3.5 h-3.5" />
                                 )}
-                                <span className="hidden sm:inline">Save</span>
+                            </button>
+                            <button
+                                onClick={onBatchUpload}
+                                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg transition-colors touch-manipulation"
+                            >
+                                <Upload className="w-4 h-4" />
+                                <span className="hidden sm:inline">Batch Upload</span>
+                                <span className="sm:hidden">Batch</span>
+                            </button>
+                            <button
+                                onClick={onMergeBoard}
+                                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors touch-manipulation"
+                            >
+                                <Layers className="w-4 h-4" />
+                                <span className="hidden sm:inline">Merge Board</span>
+                                <span className="sm:hidden">Merge</span>
+                            </button>
+                            <button
+                                onClick={onDelete}
+                                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors touch-manipulation ml-auto"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                                <span className="hidden sm:inline">Delete Board</span>
+                                <span className="sm:hidden">Delete</span>
                             </button>
                         </div>
                     </div>
