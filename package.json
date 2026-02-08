@@ -15,6 +15,7 @@
     "test:api": "tsx scripts/test-api-e2e.ts",
     "test:compression": "tsx scripts/test-compression.ts",
     "test:e2e": "npx playwright test",
+    "test:e2e:headed": "npx playwright test --headed",
     "test:e2e:ui": "npx playwright test --ui"
   },
   "dependencies": {
