@@ -9,7 +9,7 @@ import { logger } from '@/lib/logger';
 const MAX_REQUESTS = 20;
 const WINDOW_MS = 60_000;
 
-// Maximum dimensions for PECS images (they don't need to be huge)
+// Maximum dimensions for communication board images (they don't need to be huge)
 const MAX_IMAGE_WIDTH = 800;
 const MAX_IMAGE_HEIGHT = 800;
 const IMAGE_QUALITY = 85; // Good quality with smaller file size

@@ -3,7 +3,7 @@ Critical
 but keep the tests very light weight.  Start with the API routes in src/app/api/ — they're the most critical paths and then add test for the following flow
 
 
-2. Add new template pecs cards for 
+2. Add new template communication cards for
 Dog (in the category animals) 
 Cat (in the category animals) 
 Fish (in the category animals) 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import PecsCard from '@/components/PecsCard';
+import CommunicationCard from '@/components/CommunicationCard';
 import { Card } from '@/types';
 import { useSwipeRef } from '@/hooks/useSwipe';
 import { Image, Plus, Search } from 'lucide-react';
@@ -228,7 +228,7 @@ export default function CardGrid({
                                 : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
                             }`}>
                             {cards.map((card, index) => (
-                                <PecsCard
+                                <CommunicationCard
                                     key={card.id}
                                     card={card}
                                     isEditing={isEditing}

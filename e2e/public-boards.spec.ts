@@ -29,7 +29,7 @@ test('can browse public boards and open the Starter Template', async ({ page }) 
   // Verify the board name is displayed
   await expect(page.getByText('Starter Template')).toBeVisible()
 
-  // Verify some of the known PECS cards are rendered (use button role since
+  // Verify some of the known communication cards are rendered (use button role since
   // cards are interactive buttons on the board)
   await expect(page.getByRole('button', { name: /^Yes/ })).toBeVisible()
   await expect(page.getByRole('button', { name: /^No / })).toBeVisible()
