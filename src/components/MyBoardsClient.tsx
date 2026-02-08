@@ -59,13 +59,9 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
 
                 if (res.ok) {
                     const { board, cardCount } = await res.json();
-                    setBoards([...boards, board]);
-                    setNewBoardName('');
-                    setNewBoardDesc('');
-                    setSelectedTemplateBoardId('');
-                    setShowCreateForm(false);
                     toast.success(`Board created with ${cardCount} cards from template!`);
                     router.push(`/board/${board.id}?edit=true`);
+                    return;
                 } else {
                     toast.error('Failed to create board from template');
                 }
@@ -82,13 +78,9 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
 
                 if (res.ok) {
                     const newBoard = await res.json();
-                    setBoards([...boards, newBoard]);
-                    setNewBoardName('');
-                    setNewBoardDesc('');
-                    setSelectedTemplateBoardId('');
-                    setShowCreateForm(false);
                     toast.success('Board created successfully!');
                     router.push(`/board/${newBoard.id}?edit=true`);
+                    return;
                 } else {
                     toast.error('Failed to create board');
                 }
