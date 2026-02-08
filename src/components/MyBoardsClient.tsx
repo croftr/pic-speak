@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Pencil, X, Plus, Sparkles, Play } from 'lucide-react';
+import { Pencil, X, Plus, Sparkles, Play, Layers } from 'lucide-react';
 import { Board } from '@/types';
 import { toast } from 'sonner';
 
@@ -309,6 +309,12 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
                                     <p className="text-gray-600 dark:text-gray-300 line-clamp-2 sm:line-clamp-3 text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6 min-h-[3em] sm:min-h-[4.5em]">
                                         {template.description || 'No description provided.'}
                                     </p>
+
+                                    <div className="flex items-center gap-1.5 mb-4 text-xs font-medium text-amber-700 dark:text-amber-400 opacity-80">
+                                        <Layers className="w-3.5 h-3.5" />
+                                        <span>{template.cardCount || 0} cards</span>
+                                    </div>
+
                                     <button
                                         onClick={() => {
                                             setSelectedTemplateId(template.id);
@@ -359,12 +365,18 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
                                 <p className="text-gray-500 line-clamp-2 sm:line-clamp-3 text-xs sm:text-sm leading-relaxed mb-3 sm:mb-4 min-h-[3em] sm:min-h-[4.5em]">
                                     {board.description || 'No description provided.'}
                                 </p>
-                                <div className="flex items-center text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 sm:mb-5">
-                                    {new Date(board.createdAt).toLocaleDateString(undefined, {
-                                        month: 'short',
-                                        day: 'numeric',
-                                        year: 'numeric'
-                                    })}
+                                <div className="flex items-center justify-between text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 sm:mb-5">
+                                    <span>
+                                        {new Date(board.createdAt).toLocaleDateString(undefined, {
+                                            month: 'short',
+                                            day: 'numeric',
+                                            year: 'numeric'
+                                        })}
+                                    </span>
+                                    <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-slate-800 px-2 py-1 rounded-md border border-gray-100 dark:border-gray-700">
+                                        <Layers className="w-3 h-3" />
+                                        <span>{board.cardCount || 0} cards</span>
+                                    </div>
                                 </div>
                                 <div className="flex gap-3 mt-auto">
                                     <Link

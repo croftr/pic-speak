@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowRight, Eye, User, Heart, MessageCircle } from 'lucide-react';
+import { ArrowRight, Eye, User, Heart, MessageCircle, Layers } from 'lucide-react';
 import { Board } from '@/types';
 import Image from 'next/image';
 
@@ -113,6 +113,10 @@ function PublicBoardsContent() {
                                 <div className="flex items-center gap-1">
                                     <MessageCircle className="w-4 h-4" />
                                     <span>{board.commentCount || 0}</span>
+                                </div>
+                                <div className="flex items-center gap-1" title={`${board.cardCount || 0} cards`}>
+                                    <Layers className="w-4 h-4" />
+                                    <span>{board.cardCount || 0}</span>
                                 </div>
                             </div>
 
