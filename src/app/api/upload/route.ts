@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     // Add userId to logger context
     const userLog = log.withContext({ userId });
 
-    const limited = rateLimit(userId, 'upload', MAX_REQUESTS, WINDOW_MS);
+    const limited = await rateLimit(userId, 'upload', MAX_REQUESTS, WINDOW_MS);
     if (limited) {
         userLog.warn('Rate limit exceeded');
         return limited;

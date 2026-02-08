@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { likeBoardByUser, unlikeBoardByUser, isUserLikedBoard, getBoardLikeCount, getBoard } from '@/lib/storage';
 import { sendLikeNotification } from '@/lib/email';
+import { rateLimit } from '@/lib/rate-limit';
 
 // Toggle like (POST = like, DELETE = unlike)
 export async function POST(
@@ -12,6 +13,10 @@ export async function POST(
     if (!userId) {
         return new NextResponse("Unauthorized", { status: 401 });
     }
+
+    // Rate limit: 10 likes per minute per user
+    const limited = await rateLimit(userId, 'like', 10, 60_000);
+    if (limited) return limited;
 
     try {
         const { id: boardId } = await context.params;

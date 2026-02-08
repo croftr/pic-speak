@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getBoards, addBoard } from '@/lib/storage';
 import { Board } from '@/types';
 import { auth, clerkClient } from '@clerk/nextjs/server';
+import { validateStringLength } from '@/lib/validation';
 
 export async function GET() {
     const { userId } = await auth();
@@ -34,6 +35,18 @@ export async function POST(request: Request) {
                 { error: 'Name is required' },
                 { status: 400 }
             );
+        }
+
+        const nameError = validateStringLength(name, 100, 'Board name');
+        if (nameError) {
+            return NextResponse.json({ error: nameError }, { status: 400 });
+        }
+
+        if (description) {
+            const descError = validateStringLength(description, 500, 'Description');
+            if (descError) {
+                return NextResponse.json({ error: descError }, { status: 400 });
+            }
         }
 
         // Fetch user info from Clerk

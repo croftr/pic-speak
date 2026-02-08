@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { auth } from '@clerk/nextjs/server';
-import { rateLimit } from '@/lib/rate-limit';
+import { rateLimit, checkDailyLimit, checkGlobalDailyLimit } from '@/lib/rate-limit';
+import { validateStringLength } from '@/lib/validation';
 import { logger } from '@/lib/logger';
 
 // 5 image generations per minute per user
 const MAX_REQUESTS = 5;
 const WINDOW_MS = 60_000;
+
+// Daily caps
+const MAX_PER_USER_PER_DAY = 20;
+const MAX_GLOBAL_PER_DAY = 500;
+const MAX_PROMPT_LENGTH = 500;
 
 export async function POST(request: Request) {
     const startTime = Date.now();
@@ -23,10 +29,22 @@ export async function POST(request: Request) {
 
     const userLog = log.withContext({ userId });
 
-    const limited = rateLimit(userId, 'generate-image', MAX_REQUESTS, WINDOW_MS);
+    const limited = await rateLimit(userId, 'generate-image', MAX_REQUESTS, WINDOW_MS);
     if (limited) {
         userLog.warn('Rate limit exceeded');
         return limited;
+    }
+
+    // Check daily per-user and global caps
+    const dailyLimited = await checkDailyLimit(userId, 'generate-image', MAX_PER_USER_PER_DAY);
+    if (dailyLimited) {
+        userLog.warn('Daily user limit exceeded');
+        return dailyLimited;
+    }
+    const globalLimited = await checkGlobalDailyLimit('generate-image', MAX_GLOBAL_PER_DAY);
+    if (globalLimited) {
+        userLog.warn('Global daily limit exceeded');
+        return globalLimited;
     }
 
     try {
@@ -38,6 +56,12 @@ export async function POST(request: Request) {
                 { error: 'Prompt is required' },
                 { status: 400 }
             );
+        }
+
+        const promptError = validateStringLength(prompt, MAX_PROMPT_LENGTH, 'Prompt');
+        if (promptError) {
+            userLog.warn('Prompt too long', { length: prompt.length });
+            return NextResponse.json({ error: promptError }, { status: 400 });
         }
 
         userLog.info('Generating image', { prompt });

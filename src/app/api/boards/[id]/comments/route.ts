@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { addComment, getCommentsByBoard, getBoard, getBoardCommentCount } from '@/lib/storage';
 import { sendCommentNotification } from '@/lib/email';
+import { rateLimit } from '@/lib/rate-limit';
+import { validateStringLength } from '@/lib/validation';
 
 // Get all comments for a board
 export async function GET(
@@ -32,6 +34,10 @@ export async function POST(
         return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    // Rate limit: 5 comments per minute per user
+    const limited = await rateLimit(userId, 'comment', 5, 60_000);
+    if (limited) return limited;
+
     try {
         const { id: boardId } = await context.params;
         const body = await request.json();
@@ -42,6 +48,20 @@ export async function POST(
                 { error: 'Comment content is required' },
                 { status: 400 }
             );
+        }
+
+        const contentError = validateStringLength(content.trim(), 1000, 'Comment');
+        if (contentError) {
+            return NextResponse.json({ error: contentError }, { status: 400 });
+        }
+
+        // Verify board exists and is accessible (public or owned by user)
+        const board = await getBoard(boardId);
+        if (!board) {
+            return NextResponse.json({ error: 'Board not found' }, { status: 404 });
+        }
+        if (!board.isPublic && board.userId !== userId) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
 
         // Get user details from Clerk
@@ -58,8 +78,7 @@ export async function POST(
         );
 
         // Send email notification to board owner (async, don't await)
-        const board = await getBoard(boardId);
-        if (board && board.ownerEmail && board.emailNotificationsEnabled && board.userId !== userId) {
+        if (board.ownerEmail && board.emailNotificationsEnabled && board.userId !== userId) {
             // Don't notify if user comments on their own board
             const commentCount = await getBoardCommentCount(boardId);
             console.log('[Comment] Attempting to send email notification for board:', board.name);

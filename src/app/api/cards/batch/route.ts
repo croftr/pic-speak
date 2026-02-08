@@ -21,6 +21,13 @@ export async function POST(request: Request) {
             );
         }
 
+        if (cards.length > 50) {
+            return NextResponse.json(
+                { error: 'Maximum 50 cards per batch' },
+                { status: 400 }
+            );
+        }
+
         // Verify user owns the board (retry on not found to handle replica lag)
         const board = await getBoard(boardId, true);
         if (!board || board.userId !== userId) {

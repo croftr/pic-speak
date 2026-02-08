@@ -2,12 +2,17 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { put } from '@vercel/blob';
 import { TextToSpeechClient } from '@google-cloud/text-to-speech';
-import { rateLimit } from '@/lib/rate-limit';
+import { rateLimit, checkDailyLimit, checkGlobalDailyLimit } from '@/lib/rate-limit';
+import { ALLOWED_TTS_VOICES } from '@/lib/validation';
 import { logger } from '@/lib/logger';
 
 // 10 TTS generations per minute per user
 const MAX_REQUESTS = 10;
 const WINDOW_MS = 60_000;
+
+// Daily caps
+const MAX_PER_USER_PER_DAY = 50;
+const MAX_GLOBAL_PER_DAY = 2000;
 
 // Maximum text length for TTS (PECS labels should be short)
 const MAX_TEXT_LENGTH = 200;
@@ -63,10 +68,22 @@ export async function POST(request: Request) {
 
     const userLog = log.withContext({ userId });
 
-    const limited = rateLimit(userId, 'generate-audio', MAX_REQUESTS, WINDOW_MS);
+    const limited = await rateLimit(userId, 'generate-audio', MAX_REQUESTS, WINDOW_MS);
     if (limited) {
         userLog.warn('Rate limit exceeded');
         return limited;
+    }
+
+    // Check daily per-user and global caps
+    const dailyLimited = await checkDailyLimit(userId, 'generate-audio', MAX_PER_USER_PER_DAY);
+    if (dailyLimited) {
+        userLog.warn('Daily user limit exceeded');
+        return dailyLimited;
+    }
+    const globalLimited = await checkGlobalDailyLimit('generate-audio', MAX_GLOBAL_PER_DAY);
+    if (globalLimited) {
+        userLog.warn('Global daily limit exceeded');
+        return globalLimited;
     }
 
     try {
@@ -100,6 +117,14 @@ export async function POST(request: Request) {
         // Select voice - use Neural2 for high quality
         // Default to a pleasant female voice suitable for children
         const selectedVoice = voiceName || 'en-US-Neural2-C';
+
+        if (voiceName && !ALLOWED_TTS_VOICES.includes(voiceName)) {
+            userLog.warn('Invalid voice requested', { voiceName });
+            return NextResponse.json(
+                { success: false, error: `Invalid voice. Allowed voices: ${ALLOWED_TTS_VOICES.join(', ')}` },
+                { status: 400 }
+            );
+        }
 
         userLog.info('Generating audio', {
             textLength: trimmedText.length,

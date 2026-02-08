@@ -4,6 +4,7 @@ import { Card } from '@/types';
 import { auth } from '@clerk/nextjs/server';
 import { checkIsAdmin } from '@/lib/admin';
 import { logger } from '@/lib/logger';
+import { validateStringLength } from '@/lib/validation';
 
 export async function GET(request: Request) {
     const startTime = Date.now();
@@ -99,6 +100,14 @@ export async function POST(request: Request) {
             hasAudio: !!audioUrl,
             category: category || '(none)'
         });
+
+        if (label) {
+            const labelError = validateStringLength(label, 100, 'Card label');
+            if (labelError) {
+                userLog.warn('Label too long', { length: label.length });
+                return NextResponse.json({ error: labelError }, { status: 400 });
+            }
+        }
 
         // BoardID and imageUrl are mandatory, audioUrl is optional for batch uploads
         if (!imageUrl || !boardId) {
