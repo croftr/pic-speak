@@ -14,8 +14,9 @@ const MAX_IMAGE_WIDTH = 800;
 const MAX_IMAGE_HEIGHT = 800;
 const IMAGE_QUALITY = 85; // Good quality with smaller file size
 
-// Maximum audio file size (5MB)
-const MAX_AUDIO_SIZE = 5 * 1024 * 1024;
+// Maximum file sizes (10MB)
+const MAX_AUDIO_SIZE = 10 * 1024 * 1024;
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 
 // Upload timeout (25 seconds - less than Vercel's 30s function timeout)
 const UPLOAD_TIMEOUT_MS = 25000;
@@ -67,8 +68,19 @@ export async function POST(request: Request) {
         let contentType = file.type;
         let fileName = file.name;
 
-        // Compress images before uploading
+        // Check image file size
         if (file.type.startsWith('image/')) {
+            if (file.size > MAX_IMAGE_SIZE) {
+                userLog.warn('Image file too large', {
+                    sizeBytes: file.size,
+                    maxBytes: MAX_IMAGE_SIZE
+                });
+                return NextResponse.json({
+                    success: false,
+                    error: `Image file too large. Maximum size is ${MAX_IMAGE_SIZE / 1024 / 1024}MB`
+                }, { status: 400 });
+            }
+
             const compressionStart = Date.now();
             userLog.debug('Starting image compression');
 

@@ -15,6 +15,9 @@ import { Card } from '@/types';
 import { toast } from 'sonner';
 import { PREDEFINED_CATEGORIES, getCategoryEmoji } from '@/lib/categories';
 
+const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
+
 interface AddCardModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -253,13 +256,36 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
         if (batchMode) {
             // Batch upload mode - handle multiple files
             const files = Array.from(e.target.files || []);
-            if (files.length > 0) {
-                setBatchImages(files);
+
+            // Filter out large files
+            const validFiles: File[] = [];
+            let skippedCount = 0;
+
+            files.forEach(file => {
+                if (file.size > MAX_FILE_SIZE) {
+                    skippedCount++;
+                } else {
+                    validFiles.push(file);
+                }
+            });
+
+            if (skippedCount > 0) {
+                toast.warning(`Skipped ${skippedCount} file(s) larger than ${MAX_FILE_SIZE_MB}MB`);
+            }
+
+            if (validFiles.length > 0) {
+                setBatchImages(validFiles);
             }
         } else {
             // Single upload mode
             const file = e.target.files?.[0];
             if (file) {
+                if (file.size > MAX_FILE_SIZE) {
+                    toast.error(`Image must be smaller than ${MAX_FILE_SIZE_MB}MB`);
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                    return;
+                }
+
                 const url = URL.createObjectURL(file);
                 setImageToCrop(url);
                 setShowCropModal(true);
@@ -288,6 +314,11 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     const handleAudioFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            if (file.size > MAX_FILE_SIZE) {
+                toast.error(`Audio file must be smaller than ${MAX_FILE_SIZE_MB}MB`);
+                if (audioInputRef.current) audioInputRef.current.value = '';
+                return;
+            }
             setAudioFile(file);
             // Stop any playing preview
             stopAudioPreview();
