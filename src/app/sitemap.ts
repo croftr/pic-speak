@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { getPublicBoards } from '@/lib/storage';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const baseUrl = 'https://myvoiceboard.com';
+    const baseUrl = 'https://www.myvoiceboard.com';
 
     // Static pages
     const staticPages: MetadataRoute.Sitemap = [

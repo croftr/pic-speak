@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
             allow: '/',
             disallow: ['/api/', '/my-boards'],
         },
-        sitemap: 'https://myvoiceboard.com/sitemap.xml',
+        sitemap: 'https://www.myvoiceboard.com/sitemap.xml',
     };
 }
