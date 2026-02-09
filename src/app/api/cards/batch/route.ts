@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { batchAddCards, getBoard, getCardLabels } from '@/lib/storage';
+import { batchAddCards, getBoard, getCardLabels, getCardCount } from '@/lib/storage';
 import { Card } from '@/types';
 import { validateColor } from '@/lib/validation';
+import { MAX_CARDS_PER_BOARD } from '@/lib/limits';
 
 export async function POST(request: Request) {
     const { userId } = await auth();
@@ -54,6 +55,15 @@ export async function POST(request: Request) {
             return NextResponse.json(
                 { error: 'All cards have duplicate labels', duplicateLabels },
                 { status: 409 }
+            );
+        }
+
+        // Check card limit
+        const currentCardCount = await getCardCount(boardId);
+        if (currentCardCount + filteredCards.length > MAX_CARDS_PER_BOARD) {
+            return NextResponse.json(
+                { error: `Adding these cards would exceed the maximum limit of ${MAX_CARDS_PER_BOARD} cards per board` },
+                { status: 403 }
             );
         }
 

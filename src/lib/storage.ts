@@ -170,6 +170,27 @@ const STARTER_CARDS: Record<string, Card[]> = {
 
 // --- Cards ---
 
+export async function getCardCount(boardId: string): Promise<number> {
+    // Check starter boards first
+    if (STARTER_CARDS[boardId]) {
+        return STARTER_CARDS[boardId].length;
+    }
+
+    const client = await getDbClient();
+    try {
+        const result = await client.query(
+            'SELECT COUNT(*) FROM cards WHERE board_id = $1',
+            [boardId]
+        );
+        return parseInt(result.rows[0].count);
+    } catch (error) {
+        logger.error('Error counting cards', error, { boardId });
+        return 0;
+    } finally {
+        client.release();
+    }
+}
+
 export async function getCards(boardId?: string): Promise<Card[]> {
     if (boardId && STARTER_CARDS[boardId]) {
         return STARTER_CARDS[boardId];
@@ -474,6 +495,22 @@ export async function updateCardOrders(boardId: string, cardOrders: { id: string
 }
 
 // --- Boards ---
+
+export async function getBoardCount(userId: string): Promise<number> {
+    const client = await getDbClient();
+    try {
+        const result = await client.query(
+            'SELECT COUNT(*) FROM boards WHERE user_id = $1',
+            [userId]
+        );
+        return parseInt(result.rows[0].count);
+    } catch (error) {
+        logger.error('Error counting boards', error, { userId });
+        return 0;
+    } finally {
+        client.release();
+    }
+}
 
 export async function getBoards(userId: string): Promise<Board[]> {
     const client = await getDbClient();
