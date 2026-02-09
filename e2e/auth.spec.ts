@@ -175,6 +175,7 @@ test('logged-in user can create a board, add a card with image and audio, then d
   await expect(page.getByText(updatedCardLabel)).not.toBeVisible({ timeout: 5000 })
 
   // ── Delete the board via the API ────────────────────────────────────
+  // Explicitly delete the board as part of the test verification
   const boardId = page.url().match(/\/board\/([^?]+)/)?.[1]
   if (boardId) {
     const response = await page.request.delete(`/api/boards/${boardId}`)
