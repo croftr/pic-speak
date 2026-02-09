@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { addBoard, getCards, batchAddCards, getBoard, getBoardCount } from '@/lib/storage';
 import { Board, Card } from '@/types';
-import { MAX_BOARDS_PER_USER, MAX_CARDS_PER_BOARD } from '@/lib/limits';
+import { getMaxBoardsPerUser, getMaxCardsPerBoard } from '@/lib/limits';
 
 export async function POST(request: Request) {
     const { userId } = await auth();
@@ -23,10 +23,11 @@ export async function POST(request: Request) {
         }
 
         // Check board limit
+        const maxBoards = await getMaxBoardsPerUser();
         const boardCount = await getBoardCount(userId);
-        if (boardCount >= MAX_BOARDS_PER_USER) {
+        if (boardCount >= maxBoards) {
             return NextResponse.json(
-                { error: `Maximum number of boards (${MAX_BOARDS_PER_USER}) reached` },
+                { error: `Maximum number of boards (${maxBoards}) reached` },
                 { status: 403 }
             );
         }
@@ -41,10 +42,11 @@ export async function POST(request: Request) {
         }
 
         // Get all cards from template and check limit
+        const maxCards = await getMaxCardsPerBoard();
         const templateCards = await getCards(templateBoardId);
-        if (templateCards.length > MAX_CARDS_PER_BOARD) {
+        if (templateCards.length > maxCards) {
             return NextResponse.json(
-                { error: `Template has too many cards (${templateCards.length}). Max allowed is ${MAX_CARDS_PER_BOARD}.` },
+                { error: `Template has too many cards (${templateCards.length}). Max allowed is ${maxCards}.` },
                 { status: 403 }
             );
         }

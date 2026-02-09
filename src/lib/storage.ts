@@ -974,3 +974,58 @@ export async function getBoardCommentCount(boardId: string): Promise<number> {
         client.release();
     }
 }
+
+// ============= APP SETTINGS =============
+
+export async function getAppSettings(): Promise<Record<string, string>> {
+    const client = await getDbClient();
+    try {
+        const result = await client.query<{ key: string; value: string }>(
+            'SELECT key, value FROM app_settings'
+        );
+        const settings: Record<string, string> = {};
+        for (const row of result.rows) {
+            settings[row.key] = row.value;
+        }
+        return settings;
+    } catch (error) {
+        logger.error('Error getting app settings', error);
+        return {};
+    } finally {
+        client.release();
+    }
+}
+
+export async function getAppSetting(key: string): Promise<string | null> {
+    const client = await getDbClient();
+    try {
+        const result = await client.query<{ value: string }>(
+            'SELECT value FROM app_settings WHERE key = $1',
+            [key]
+        );
+        return result.rows.length > 0 ? result.rows[0].value : null;
+    } catch (error) {
+        logger.error('Error getting app setting', error, { key });
+        return null;
+    } finally {
+        client.release();
+    }
+}
+
+export async function updateAppSetting(key: string, value: string): Promise<void> {
+    const client = await getDbClient();
+    try {
+        await client.query(
+            `INSERT INTO app_settings (key, value, updated_at)
+             VALUES ($1, $2, CURRENT_TIMESTAMP)
+             ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = CURRENT_TIMESTAMP`,
+            [key, value]
+        );
+        logger.info('App setting updated', { key, value });
+    } catch (error) {
+        logger.error('Error updating app setting', error, { key });
+        throw error;
+    } finally {
+        client.release();
+    }
+}

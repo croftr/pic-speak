@@ -65,6 +65,13 @@ CREATE TABLE IF NOT EXISTS board_comments (
     is_edited BOOLEAN DEFAULT FALSE
 );
 
+-- App-wide settings (key-value store for admin-configurable values)
+CREATE TABLE IF NOT EXISTS app_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_boards_user_id ON boards(user_id);
 CREATE INDEX IF NOT EXISTS idx_boards_is_public ON boards(is_public) WHERE is_public = true;

@@ -3,14 +3,24 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { UserButton, SignedIn, SignedOut, SignInButton } from '@clerk/nextjs';
-import { Grid, Globe, Info } from 'lucide-react';
+import { UserButton, SignedIn, SignedOut, SignInButton, useUser } from '@clerk/nextjs';
+import { Grid, Globe, Info, Shield } from 'lucide-react';
 import Image from 'next/image';
+
+const ADMIN_EMAILS = [
+    'angelajanecroft@gmail.com',
+    ...(process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()).filter(Boolean) || []),
+];
 
 export default function GlobalHeader() {
     const [isVisible, setIsVisible] = useState(true);
     const [lastScrollY, setLastScrollY] = useState(0);
     const pathname = usePathname();
+    const { user } = useUser();
+
+    const isUserAdmin = user?.emailAddresses.some(
+        e => ADMIN_EMAILS.includes(e.emailAddress.toLowerCase())
+    ) ?? false;
 
     useEffect(() => {
         const handleScroll = () => {
@@ -103,7 +113,17 @@ export default function GlobalHeader() {
                                         avatarBox: 'w-8 h-8 sm:w-9 sm:h-9'
                                     }
                                 }}
-                            />
+                            >
+                                {isUserAdmin && (
+                                    <UserButton.MenuItems>
+                                        <UserButton.Link
+                                            label="Admin"
+                                            labelIcon={<Shield className="w-4 h-4" />}
+                                            href="/admin"
+                                        />
+                                    </UserButton.MenuItems>
+                                )}
+                            </UserButton>
                         </SignedIn>
                         <SignedOut>
                             <SignInButton mode="modal">

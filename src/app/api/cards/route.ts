@@ -5,7 +5,7 @@ import { auth } from '@clerk/nextjs/server';
 import { checkIsAdmin } from '@/lib/admin';
 import { logger } from '@/lib/logger';
 import { validateStringLength, validateColor } from '@/lib/validation';
-import { MAX_CARDS_PER_BOARD } from '@/lib/limits';
+import { getMaxCardsPerBoard } from '@/lib/limits';
 
 export async function GET(request: Request) {
     const startTime = Date.now();
@@ -163,11 +163,12 @@ export async function POST(request: Request) {
         }
 
         // Check card limit
+        const maxCards = await getMaxCardsPerBoard();
         const cardCount = await getCardCount(boardId);
-        if (cardCount >= MAX_CARDS_PER_BOARD) {
+        if (cardCount >= maxCards) {
             userLog.warn('Maximum cards per board reached', { cardCount });
             return NextResponse.json(
-                { error: `Maximum number of cards per board (${MAX_CARDS_PER_BOARD}) reached` },
+                { error: `Maximum number of cards per board (${maxCards}) reached` },
                 { status: 403 }
             );
         }

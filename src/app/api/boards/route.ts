@@ -3,7 +3,7 @@ import { getBoards, addBoard, getBoardCount } from '@/lib/storage';
 import { Board } from '@/types';
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { validateStringLength } from '@/lib/validation';
-import { MAX_BOARDS_PER_USER } from '@/lib/limits';
+import { getMaxBoardsPerUser } from '@/lib/limits';
 
 export async function GET() {
     const { userId } = await auth();
@@ -32,10 +32,11 @@ export async function POST(request: Request) {
         const { name, description } = body;
 
         // Check board limit
+        const maxBoards = await getMaxBoardsPerUser();
         const boardCount = await getBoardCount(userId);
-        if (boardCount >= MAX_BOARDS_PER_USER) {
+        if (boardCount >= maxBoards) {
             return NextResponse.json(
-                { error: `Maximum number of boards (${MAX_BOARDS_PER_USER}) reached` },
+                { error: `Maximum number of boards (${maxBoards}) reached` },
                 { status: 403 }
             );
         }
