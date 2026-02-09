@@ -110,6 +110,11 @@ test('can search, filter, and interact with cards', async ({ page }) => {
   // ── Test Search Functionality ────────────────────────────────────────
   // Verify search input is visible (requires > 6 cards)
   const searchInput = page.getByPlaceholder('Search cards...')
+
+  // Wait for cards to load first
+  await expect(page.getByText(`Hello ${timestamp}`)).toBeVisible({ timeout: 10000 })
+
+  // Now verify search input
   await expect(searchInput).toBeVisible()
 
   // Type "Apple"

@@ -51,8 +51,14 @@ test('can manage board settings and delete board via UI', async ({ page }) => {
   await expect(page.getByText(createdBoardName)).toBeVisible()
 
   // ── Edit Board Settings ──────────────────────────────────────────────
+  // Ensure we are scrolled to top to see the header
+  await page.evaluate(() => window.scrollTo(0, 0))
+
   // Expand settings panel
-  await page.getByRole('button', { name: /board settings/i }).click()
+  // Use a more specific locator if possible or force click if it's potentially obscured
+  const settingsButton = page.getByRole('button', { name: /board settings/i })
+  await expect(settingsButton).toBeVisible()
+  await settingsButton.click()
 
   // Verify inputs are visible
   await expect(page.getByPlaceholder('Enter board name...')).toBeVisible()
