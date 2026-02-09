@@ -94,7 +94,6 @@ export async function POST(request: Request) {
         const category = rawCategory ? rawCategory.trim().toLowerCase().replace(/^\w/, (c: string) => c.toUpperCase()) : rawCategory;
 
         userLog.info('Card details received', {
-            label: label || 'Untitled',
             boardId,
             hasImage: !!imageUrl,
             hasAudio: !!audioUrl,
@@ -166,7 +165,7 @@ export async function POST(request: Request) {
         if (cardLabel) {
             const existingLabels = await getCardLabels(boardId);
             if (existingLabels.has(cardLabel)) {
-                userLog.warn('Duplicate label', { label: cardLabel, boardId });
+                userLog.warn('Duplicate label', { boardId });
                 return NextResponse.json(
                     { error: `A card named "${label}" already exists on this board` },
                     { status: 409 }

@@ -57,7 +57,6 @@ export async function POST(request: Request) {
         }
 
         userLog.info('File received', {
-            fileName: file.name,
             fileType: file.type,
             fileSize: file.size,
             fileSizeKB: (file.size / 1024).toFixed(2)
@@ -127,7 +126,7 @@ export async function POST(request: Request) {
 
         // Upload to Vercel Blob with timeout
         const blobUploadStart = Date.now();
-        userLog.info('Starting Vercel Blob upload', { fileName });
+        userLog.info('Starting Vercel Blob upload');
 
         const blob = await Promise.race([
             put(fileName, fileToUpload, {

@@ -128,7 +128,6 @@ export async function POST(request: Request) {
 
         userLog.info('Generating audio', {
             textLength: trimmedText.length,
-            textSnippet: trimmedText.slice(0, 20),
             voice: selectedVoice,
             language: languageCode
         });

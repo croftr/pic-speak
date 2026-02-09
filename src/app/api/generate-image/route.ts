@@ -64,7 +64,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: promptError }, { status: 400 });
         }
 
-        userLog.info('Generating image', { prompt });
+        userLog.info('Generating image', { promptLength: prompt.length });
 
         const apiKey = process.env.GOOGLE_API_KEY;
 
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
 
 Subject to illustrate: ${prompt}`;
 
-        userLog.debug('Enhanced prompt created', { pecsPrompt });
+        userLog.debug('Enhanced prompt created', { pecsPromptLength: pecsPrompt.length });
 
         const genStart = Date.now();
 
