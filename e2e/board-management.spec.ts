@@ -55,8 +55,9 @@ test('can manage board settings and delete board via UI', async ({ page }) => {
   await page.evaluate(() => window.scrollTo(0, 0))
 
   // Expand settings panel
-  // Use a more specific locator if possible or force click if it's potentially obscured
-  const settingsButton = page.getByRole('button', { name: /board settings/i })
+  // Use a more generic regex to match "Settings" (mobile) or "Board Settings" (desktop)
+  // Ensure it's not the "Batch Upload" or "Merge Board" button if they have similar text (unlikely)
+  const settingsButton = page.getByRole('button', { name: /settings/i }).first()
   await expect(settingsButton).toBeVisible()
   await settingsButton.click()
 
