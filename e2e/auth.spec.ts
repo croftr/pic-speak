@@ -2,6 +2,30 @@ import { setupClerkTestingToken, clerk } from '@clerk/testing/playwright'
 import { test, expect } from '@playwright/test'
 import path from 'path'
 
+// Used to track the board created during the test for cleanup in case of failure
+let createdBoardName: string | undefined
+
+test.afterEach(async ({ page }) => {
+  if (createdBoardName) {
+    try {
+      // Add timestamp to bypass potential caching
+      const response = await page.request.get(`/api/boards?_=${Date.now()}`)
+      if (response.ok()) {
+        const boards = await response.json()
+        const board = boards.find((b: { name: string }) => b.name === createdBoardName)
+        if (board) {
+          console.log(`[Cleanup] Deleting board: ${createdBoardName} (${board.id})`)
+          await page.request.delete(`/api/boards/${board.id}`)
+        }
+      }
+    } catch (error) {
+      console.error('[Cleanup] Failed to clean up board:', error)
+    } finally {
+      createdBoardName = undefined
+    }
+  }
+})
+
 // The test account has 2FA enabled, so we use the email-based sign-in which
 // creates a backend sign-in token and bypasses the second factor step.
 async function signIn(page: import('@playwright/test').Page) {
@@ -25,7 +49,8 @@ test('can sign in and reach My Boards', async ({ page }) => {
   await expect(page.getByRole('heading', { name: /my boards/i })).toBeVisible({ timeout: 10000 })
 })
 
-test('logged-in user can create a board, add a card with image and audio, then delete both', { timeout: 60000 }, async ({ page }) => {
+test('logged-in user can create a board, add a card with image and audio, then delete both', async ({ page }) => {
+  test.setTimeout(60000)
   await signIn(page)
 
   await page.goto('/my-boards')
@@ -35,7 +60,11 @@ test('logged-in user can create a board, add a card with image and audio, then d
   // ── Create a new board ──────────────────────────────────────────────
   await page.getByRole('button', { name: /new board/i }).click()
 
-  const boardName = `E2E Test Board ${Date.now()}`
+  // Store in the top-level variable for cleanup
+  createdBoardName = `E2E Test Board ${Date.now()}`
+  // Use a local const for convenience, though they are the same string
+  const boardName = createdBoardName
+
   await page.getByPlaceholder('e.g., Daily Routine').fill(boardName)
   await page.locator('form').getByRole('button', { name: /create board/i }).click()
 
@@ -146,8 +175,13 @@ test('logged-in user can create a board, add a card with image and audio, then d
   await expect(page.getByText(updatedCardLabel)).not.toBeVisible({ timeout: 5000 })
 
   // ── Delete the board via the API ────────────────────────────────────
+  // Explicitly delete the board as part of the test verification
   const boardId = page.url().match(/\/board\/([^?]+)/)?.[1]
   if (boardId) {
-    await page.request.delete(`/api/boards/${boardId}`)
+    const response = await page.request.delete(`/api/boards/${boardId}`)
+    // If deletion succeeded, clear the tracker so afterEach doesn't try again
+    if (response.ok()) {
+      createdBoardName = undefined
+    }
   }
 })
