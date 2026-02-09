@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getCards, addCard, getBoard, getCardLabels } from '@/lib/storage';
+import { getCards, addCard, getBoard, getCardLabels, getCardCount } from '@/lib/storage';
 import { Card } from '@/types';
 import { auth } from '@clerk/nextjs/server';
 import { checkIsAdmin } from '@/lib/admin';
 import { logger } from '@/lib/logger';
 import { validateStringLength, validateColor } from '@/lib/validation';
+import { MAX_CARDS_PER_BOARD } from '@/lib/limits';
 
 export async function GET(request: Request) {
     const startTime = Date.now();
@@ -159,6 +160,16 @@ export async function POST(request: Request) {
         if (boardId.startsWith('starter-')) {
             userLog.warn('Attempted to add card to template board', { boardId });
             return new NextResponse("Cards cannot be added to template boards", { status: 403 });
+        }
+
+        // Check card limit
+        const cardCount = await getCardCount(boardId);
+        if (cardCount >= MAX_CARDS_PER_BOARD) {
+            userLog.warn('Maximum cards per board reached', { cardCount });
+            return NextResponse.json(
+                { error: `Maximum number of cards per board (${MAX_CARDS_PER_BOARD}) reached` },
+                { status: 403 }
+            );
         }
 
         // Check label uniqueness within the board

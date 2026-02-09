@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getBoards, addBoard } from '@/lib/storage';
+import { getBoards, addBoard, getBoardCount } from '@/lib/storage';
 import { Board } from '@/types';
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { validateStringLength } from '@/lib/validation';
+import { MAX_BOARDS_PER_USER } from '@/lib/limits';
 
 export async function GET() {
     const { userId } = await auth();
@@ -29,6 +30,15 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
         const { name, description } = body;
+
+        // Check board limit
+        const boardCount = await getBoardCount(userId);
+        if (boardCount >= MAX_BOARDS_PER_USER) {
+            return NextResponse.json(
+                { error: `Maximum number of boards (${MAX_BOARDS_PER_USER}) reached` },
+                { status: 403 }
+            );
+        }
 
         if (!name) {
             return NextResponse.json(

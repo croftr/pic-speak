@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { auth, clerkClient } from '@clerk/nextjs/server';
-import { addBoard, getCards, batchAddCards, getBoard } from '@/lib/storage';
+import { addBoard, getCards, batchAddCards, getBoard, getBoardCount } from '@/lib/storage';
 import { Board, Card } from '@/types';
+import { MAX_BOARDS_PER_USER, MAX_CARDS_PER_BOARD } from '@/lib/limits';
 
 export async function POST(request: Request) {
     const { userId } = await auth();
@@ -21,12 +22,30 @@ export async function POST(request: Request) {
             );
         }
 
+        // Check board limit
+        const boardCount = await getBoardCount(userId);
+        if (boardCount >= MAX_BOARDS_PER_USER) {
+            return NextResponse.json(
+                { error: `Maximum number of boards (${MAX_BOARDS_PER_USER}) reached` },
+                { status: 403 }
+            );
+        }
+
         // Get template board to verify it exists
         const templateBoard = await getBoard(templateBoardId);
         if (!templateBoard) {
             return NextResponse.json(
                 { error: 'Template board not found' },
                 { status: 404 }
+            );
+        }
+
+        // Get all cards from template and check limit
+        const templateCards = await getCards(templateBoardId);
+        if (templateCards.length > MAX_CARDS_PER_BOARD) {
+            return NextResponse.json(
+                { error: `Template has too many cards (${templateCards.length}). Max allowed is ${MAX_CARDS_PER_BOARD}.` },
+                { status: 403 }
             );
         }
 
@@ -56,9 +75,6 @@ export async function POST(request: Request) {
         };
 
         await addBoard(newBoard);
-
-        // Get all cards from template
-        const templateCards = await getCards(templateBoardId);
 
         // Clone all cards to new board, preserving their original order
         // Mark non-template cards with sourceBoardId so they can be identified as inherited
