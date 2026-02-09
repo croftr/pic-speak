@@ -50,7 +50,34 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      appearance={{
+        layout: {
+          logoImageUrl: '/logo.svg',
+          socialButtonsVariant: 'iconButton',
+        },
+        variables: {
+          colorPrimary: '#7c3aed',       // violet-600
+          colorTextOnPrimaryBackground: '#ffffff',
+          colorBackground: '#ffffff',
+          colorInputBackground: '#f8fafc', // slate-50
+          colorInputText: '#1e293b',       // slate-800
+          borderRadius: '0.75rem',
+          fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
+        },
+        elements: {
+          card: 'shadow-xl border border-slate-200',
+          headerTitle: 'text-slate-900 font-bold',
+          headerSubtitle: 'text-slate-500',
+          formButtonPrimary: 'bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-xl shadow-md',
+          footerActionLink: 'text-violet-600 hover:text-violet-700 font-medium',
+          socialButtonsBlockButton: 'border-slate-200 hover:border-violet-300 hover:bg-violet-50 rounded-xl',
+          formFieldInput: 'rounded-xl border-slate-200 focus:border-violet-500 focus:ring-violet-500',
+          dividerLine: 'bg-slate-200',
+          dividerText: 'text-slate-400',
+        },
+      }}
+    >
       <html lang="en">
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}

@@ -27,7 +27,8 @@
       "WebFetch(domain:clerk.com)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "Bash(npx next lint:*)"
     ]
   }
 }

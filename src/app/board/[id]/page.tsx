@@ -3,9 +3,33 @@ import { getBoard, getCards } from '@/lib/storage';
 import { checkIsAdmin } from '@/lib/admin';
 import BoardClient from '@/components/BoardClient';
 import { redirect } from 'next/navigation';
+import type { Metadata } from 'next';
 
 interface BoardPageProps {
     params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata({ params }: BoardPageProps): Promise<Metadata> {
+    const { id } = await params;
+    const board = await getBoard(id);
+
+    if (!board || !board.isPublic) {
+        return {
+            title: 'Board - My Voice Board',
+        };
+    }
+
+    const title = `${board.name} - My Voice Board`;
+    const description = board.description || `${board.name} - a communication board on My Voice Board`;
+
+    return {
+        title,
+        description,
+        openGraph: {
+            title: board.name,
+            description,
+        },
+    };
 }
 
 export default async function BoardPage({ params }: BoardPageProps) {

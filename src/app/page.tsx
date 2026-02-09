@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
-import { Globe, Grid, LogIn, UserPlus } from 'lucide-react';
+import { SignedIn, SignedOut, SignInButton } from '@clerk/nextjs';
+import { Globe, Grid, LogIn } from 'lucide-react';
 import { clsx } from 'clsx';
 import Image from 'next/image';
 
@@ -61,15 +60,6 @@ function NavCard({ icon, label, colorClass, delay = 0, href, className, style, a
 }
 
 export default function Home() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
-
   return (
     <main className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-violet-100 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-950 dark:to-slate-950 flex flex-col items-center justify-center p-4">
 

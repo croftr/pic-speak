@@ -2,6 +2,16 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Heart, Shield, Smartphone, Smile, Mic, Grid, Lock, Globe, Users, ArrowRight } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+    title: 'About - My Voice Board | Communication Boards for Non-Verbal Children',
+    description: 'Learn how My Voice Board helps parents and teachers create personalized PECS-style communication boards for non-verbal autistic children. Free, private, and ad-free.',
+    openGraph: {
+        title: 'About My Voice Board',
+        description: 'Giving a voice to every child. Create personalized communication boards with custom photos and familiar voices.',
+    },
+};
 
 export default function AboutPage() {
     return (
