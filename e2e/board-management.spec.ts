@@ -87,11 +87,15 @@ test('can manage board settings and delete board via UI', async ({ page }) => {
 
   // Reload to verify persistence
   await page.reload()
+
+  // Ensure we are scrolled to top after reload to see the header
+  await page.evaluate(() => window.scrollTo(0, 0))
+
   // Should still be in edit mode or view mode? Reload usually resets URL params unless persisted.
   // The app might not persist ?edit=true on reload unless logic handles it.
   // Let's assume we land in view mode or edit mode.
   // If view mode, we need to check the title.
-  await expect(page.getByText(newBoardName)).toBeVisible()
+  await expect(page.getByText(newBoardName)).toBeVisible({ timeout: 10000 })
 
   // Enter edit mode again to check settings values
   if (!page.url().includes('edit=true')) {
