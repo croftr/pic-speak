@@ -5,6 +5,18 @@ export interface LogContext {
   [key: string]: any;
 }
 
+const LOG_PRIORITIES: Record<LogLevel, number> = {
+  debug: 0,
+  info: 1,
+  warn: 2,
+  error: 3,
+};
+
+// Determine the minimum log level from environment variables.
+// Default to 'info' in production/test, 'debug' in development.
+const ENV_LOG_LEVEL = (process.env.LOG_LEVEL as LogLevel) || (process.env.NODE_ENV === 'development' ? 'debug' : 'info');
+const MIN_PRIORITY = LOG_PRIORITIES[ENV_LOG_LEVEL] ?? LOG_PRIORITIES.info;
+
 export class Logger {
   private context: LogContext;
 
@@ -20,6 +32,11 @@ export class Logger {
   }
 
   private output(level: LogLevel, message: string, data?: LogContext) {
+    // Check if the log level is sufficient to be logged
+    if (LOG_PRIORITIES[level] < MIN_PRIORITY) {
+      return;
+    }
+
     const entry = {
       timestamp: new Date().toISOString(),
       level,
