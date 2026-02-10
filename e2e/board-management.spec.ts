@@ -81,21 +81,23 @@ test('can manage board settings and delete board via UI', async ({ page }) => {
   // Save changes
   await page.getByRole('button', { name: 'Save' }).click()
 
-  // Verify toast or UI update (Save button usually shows a loader then checkmark, or toast)
-  // We can verify the name in the header changed
+  // Verify the name in the header changed
   await expect(page.getByRole('link', { name: 'Done Editing' }).locator('..').getByText(newBoardName)).toBeVisible()
+
+  // Wait for save-triggered navigation to view mode (router.push removes ?edit=true)
+  await expect(page).not.toHaveURL(/edit=true/, { timeout: 10000 })
+  // Verify the board name is visible in view mode before reloading
+  await expect(page.getByRole('heading', { name: newBoardName })).toBeVisible({ timeout: 10000 })
 
   // Reload to verify persistence
   await page.reload()
+  await page.waitForLoadState('networkidle')
 
   // Ensure we are scrolled to top after reload to see the header
   await page.evaluate(() => window.scrollTo(0, 0))
 
-  // Should still be in edit mode or view mode? Reload usually resets URL params unless persisted.
-  // The app might not persist ?edit=true on reload unless logic handles it.
-  // Let's assume we land in view mode or edit mode.
-  // If view mode, we need to check the title.
-  await expect(page.getByText(newBoardName)).toBeVisible({ timeout: 10000 })
+  // Verify the board name persisted after reload
+  await expect(page.getByRole('heading', { name: newBoardName })).toBeVisible({ timeout: 10000 })
 
   // Enter edit mode again to check settings values
   if (!page.url().includes('edit=true')) {
@@ -103,7 +105,7 @@ test('can manage board settings and delete board via UI', async ({ page }) => {
       await page.goto(`/board/${boardId}?edit=true`)
   }
 
-  await page.getByRole('button', { name: /board settings/i }).click()
+  await page.getByRole('button', { name: /settings/i }).first().click()
   await expect(page.getByPlaceholder('Enter board name...')).toHaveValue(newBoardName)
   await expect(page.getByPlaceholder('Add a description...')).toHaveValue(newDesc)
   await expect(page.getByLabel('Public Board')).toBeChecked() // Or getByRole('checkbox')
