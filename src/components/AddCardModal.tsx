@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { X, Image as ImageIcon, Check, Loader2, Mic, Upload, Music, Sparkles, Play, Pause, Volume2, Crop, Camera, ChevronRight, ChevronLeft, ArrowRight, ArrowLeft, Globe } from 'lucide-react';
+import { X, Image as ImageIcon, Check, Loader2, Mic, Upload, Music, Sparkles, Play, Pause, Camera, ChevronRight, ChevronLeft, Globe } from 'lucide-react';
 import AudioRecorder from './AudioRecorder';
 const ImageCropModal = dynamic(() => import('./ImageCropModal'), {
     loading: () => null
@@ -13,7 +13,7 @@ const PublicCardPickerModal = dynamic(() => import('./PublicCardPickerModal'), {
 import { clsx } from 'clsx';
 import { Card } from '@/types';
 import { toast } from 'sonner';
-import { PREDEFINED_CATEGORIES, getCategoryEmoji } from '@/lib/categories';
+import { PREDEFINED_CATEGORIES } from '@/lib/categories';
 
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -48,6 +48,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [generationPrompt, setGenerationPrompt] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [hasCamera, setHasCamera] = useState(false);
     const [isCameraActive, setIsCameraActive] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -135,9 +136,8 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                 // Try to play the video explicitly (in case autoplay fails)
                 try {
                     await videoRef.current.play();
-                } catch (playError) {
+                } catch {
                     // Autoplay might be blocked, but video will play when user interacts
-                    console.log('Autoplay prevented, video will play on interaction');
                 }
             }
         } catch (error) {
@@ -145,6 +145,26 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
             toast.error('Could not access camera. Please check permissions.');
             setImageType('upload'); // Fall back to upload mode
         }
+    }, []);
+
+    // Check for camera availability on mount
+    useEffect(() => {
+        const checkCamera = async () => {
+            try {
+                // Check if mediaDevices API is supported
+                if (typeof navigator !== 'undefined' && navigator.mediaDevices) {
+                    // Try to enumerate devices to check for camera
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    const hasVideoInput = devices.some(device => device.kind === 'videoinput');
+                    setHasCamera(hasVideoInput);
+                }
+            } catch (error) {
+                console.error('Error checking camera availability:', error);
+                setHasCamera(false);
+            }
+        };
+
+        checkCamera();
     }, []);
 
     // Reset form function
@@ -168,25 +188,6 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
         stopCamera();
     }, [stopCamera]);
 
-    // Check for camera availability on mount
-    useEffect(() => {
-        const checkCamera = async () => {
-            try {
-                // Check if mediaDevices API is supported
-                if (typeof navigator !== 'undefined' && navigator.mediaDevices) {
-                    // Try to enumerate devices to check for camera
-                    const devices = await navigator.mediaDevices.enumerateDevices();
-                    const hasVideoInput = devices.some(device => device.kind === 'videoinput');
-                    setHasCamera(hasVideoInput);
-                }
-            } catch (error) {
-                console.error('Error checking camera availability:', error);
-                setHasCamera(false);
-            }
-        };
-
-        checkCamera();
-    }, []);
 
     // Populate form when editing
     useEffect(() => {
@@ -475,7 +476,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
         const MAX_DIM = 800;
         const QUALITY = 0.85;
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             const img = new window.Image();
             img.onload = () => {
                 URL.revokeObjectURL(objectUrl);
@@ -506,8 +507,6 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                 return;
                             }
                             const jpgFilename = filename.replace(/\.[^/.]+$/, '.jpg');
-                            const savings = ((file.size - blob.size) / file.size * 100).toFixed(1);
-                            console.log(`[Frontend-Compress] ${(file.size / 1024).toFixed(1)}KB → ${(blob.size / 1024).toFixed(1)}KB (${savings}% smaller, ${width}x${height})`);
                             resolve({ blob, filename: jpgFilename });
                         },
                         'image/jpeg',
@@ -532,10 +531,6 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
         // Compress images client-side before uploading
         const { blob: fileToUpload, filename: finalFilename } = await compressImage(file, filename);
 
-        const startTime = Date.now();
-        const fileSize = (fileToUpload.size / 1024).toFixed(2);
-        console.log(`[Frontend-Upload] Starting upload: ${finalFilename} (${fileSize}KB, type: ${fileToUpload.type})`);
-
         const formData = new FormData();
         formData.append('file', fileToUpload, finalFilename);
 
@@ -559,20 +554,16 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
             }
 
             const data = await res.json();
-            const totalTime = Date.now() - startTime;
-            console.log(`[Frontend-Upload] SUCCESS in ${totalTime}ms (fetch: ${fetchTime}ms)`);
-            console.log(`[Frontend-Upload] URL: ${data.url}`);
             return data.url;
         } catch (error) {
             clearTimeout(timeoutId);
-            const totalTime = Date.now() - startTime;
 
             if (error instanceof Error && error.name === 'AbortError') {
-                console.error(`[Frontend-Upload] TIMEOUT after ${totalTime}ms`);
+                console.error('[Frontend-Upload] TIMEOUT');
                 throw new Error('Upload timeout - please try again with a smaller file');
             }
 
-            console.error(`[Frontend-Upload] ERROR after ${totalTime}ms:`, error);
+            console.error('[Frontend-Upload] ERROR:', error);
             throw error;
         }
     };
@@ -582,13 +573,11 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
 
         // Prevent submission if we just transitioned steps (prevents accidental double-submit)
         if (justTransitionedRef.current || isTransitioning) {
-            console.log('[AddCardModal] Blocked submission - just transitioned steps');
             return;
         }
 
         // Only allow submission from step 3 (or batch mode)
         if (!batchMode && step !== totalSteps) {
-            console.log('[AddCardModal] Blocked submission - not on final step');
             return;
         }
 
@@ -694,50 +683,27 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
 
         if (!label || !hasImage || !hasAudioOrExisting) return;
 
-        const operationStart = Date.now();
-        const operationId = crypto.randomUUID().slice(0, 8);
-        console.log(`[Frontend-CardOp-${operationId}] Starting ${editCard ? 'update' : 'create'} operation`);
-
         setIsSubmitting(true);
         try {
             // Upload Image and Audio in PARALLEL (not sequential)
-            const uploadsStart = Date.now();
-            console.log(`[Frontend-CardOp-${operationId}] Starting parallel uploads...`);
-
             const [imageUrl, audioUrl] = await Promise.all([
                 // Image upload
                 imageFile
-                    ? uploadFile(imageFile, imageFile.name).then(url => {
-                        console.log(`[Frontend-CardOp-${operationId}] Image upload completed`);
-                        return url;
-                    })
+                    ? uploadFile(imageFile, imageFile.name)
                     : Promise.resolve(editCard?.imageUrl || ''),
 
                 // Audio upload
                 (audioType === 'record' && audioBlob)
-                    ? uploadFile(audioBlob, `audio-${Date.now()}.${audioBlob.type.includes('webm') ? 'webm' : 'wav'}`).then(url => {
-                        console.log(`[Frontend-CardOp-${operationId}] Audio upload completed`);
-                        return url;
-                    })
+                    ? uploadFile(audioBlob, `audio-${Date.now()}.${audioBlob.type.includes('webm') ? 'webm' : 'wav'}`)
                     : (audioType === 'generate' && generatedAudioUrl)
-                        ? Promise.resolve(generatedAudioUrl).then(url => {
-                            console.log(`[Frontend-CardOp-${operationId}] Using generated audio URL`);
-                            return url;
-                        })
+                        ? Promise.resolve(generatedAudioUrl)
                         : (audioType === 'upload' && audioFile)
-                            ? uploadFile(audioFile, audioFile.name).then(url => {
-                                console.log(`[Frontend-CardOp-${operationId}] Audio upload completed`);
-                                return url;
-                            })
+                            ? uploadFile(audioFile, audioFile.name)
                             : Promise.resolve(editCard?.audioUrl || '')
             ]);
 
-            console.log(`[Frontend-CardOp-${operationId}] All uploads completed in ${Date.now() - uploadsStart}ms`);
-
             if (editCard) {
                 // 3a. Update existing card
-                console.log(`[Frontend-CardOp-${operationId}] Sending update request for card ${editCard.id}...`);
-                const apiCallStart = Date.now();
                 const res = await fetch(`/api/cards/${editCard.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -760,13 +726,10 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                 }
 
                 const updatedCard = await res.json();
-                console.log(`[Frontend-CardOp-${operationId}] Card updated successfully in ${Date.now() - apiCallStart}ms`);
                 onCardUpdated?.(updatedCard);
                 toast.success('Card updated successfully!');
             } else {
                 // 3b. Create new card
-                console.log(`[Frontend-CardOp-${operationId}] Sending create request...`);
-                const apiCallStart = Date.now();
                 const res = await fetch('/api/cards', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -792,9 +755,6 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                 }
 
                 const newCard = await res.json();
-                const apiCallTime = Date.now() - apiCallStart;
-                const totalTime = Date.now() - operationStart;
-                console.log(`[Frontend-CardOp-${operationId}] Card created successfully! API: ${apiCallTime}ms, Total: ${totalTime}ms`);
                 onCardAdded(newCard);
                 toast.success('Card created successfully!');
             }
@@ -802,8 +762,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
             onClose();
             resetForm();
         } catch (error) {
-            const totalTime = Date.now() - operationStart;
-            console.error(`[Frontend-CardOp-${operationId}] FAILED after ${totalTime}ms:`, error);
+            console.error('Card operation failed:', error);
             toast.error(editCard ? 'Error updating card' : 'Error creating card');
         } finally {
             setIsSubmitting(false);
