@@ -717,7 +717,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                 });
 
                 if (!res.ok) {
-                    console.error(`[Frontend-CardOp-${operationId}] Update failed: HTTP ${res.status}`);
+                    console.error(`Update failed: HTTP ${res.status}`);
                     if (res.status === 409) {
                         toast.error(`A card named "${label}" already exists on this board`);
                         return;
@@ -744,13 +744,13 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                 });
 
                 if (!res.ok) {
-                    console.error(`[Frontend-CardOp-${operationId}] Create failed: HTTP ${res.status}`);
+                    console.error(`Create failed: HTTP ${res.status}`);
                     if (res.status === 409) {
                         toast.error(`A card named "${label}" already exists on this board`);
                         return;
                     }
                     const errorText = await res.text();
-                    console.error(`[Frontend-CardOp-${operationId}] Error response:`, errorText);
+                    console.error('Error response:', errorText);
                     throw new Error('Failed to create card');
                 }
 
