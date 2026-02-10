@@ -29,7 +29,9 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(npm ls:*)",
       "Bash(npx next lint:*)",
-      "Bash(node -e:*)"
+      "Bash(node -e:*)",
+      "Bash(npm run test:e2e:*)",
+      "Bash(npx dotenv-cli:*)"
     ]
   }
 }
