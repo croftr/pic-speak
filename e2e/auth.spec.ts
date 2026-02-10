@@ -43,7 +43,8 @@ test('can sign in and reach My Boards', async ({ page }) => {
   await page.goto('/my-boards')
 
   // Verify we landed on the boards page (not redirected to Clerk sign-in)
-  await expect(page).toHaveURL(/localhost:\d+\/my-boards/, { timeout: 10000 })
+  // Check for path only to support both localhost and 127.0.0.1
+  await expect(page).toHaveURL(/\/my-boards/, { timeout: 10000 })
 
   // The heading only renders when server-side auth() succeeds
   await expect(page.getByRole('heading', { name: /my boards/i })).toBeVisible({ timeout: 10000 })
@@ -54,7 +55,8 @@ test('logged-in user can create a board, add a card with image and audio, then d
   await signIn(page)
 
   await page.goto('/my-boards')
-  await expect(page).toHaveURL(/localhost:\d+\/my-boards/, { timeout: 10000 })
+  // Check for path only to support both localhost and 127.0.0.1
+  await expect(page).toHaveURL(/\/my-boards/, { timeout: 10000 })
   await expect(page.getByRole('heading', { name: /my boards/i })).toBeVisible({ timeout: 10000 })
 
   // ── Create a new board ──────────────────────────────────────────────
