@@ -28,7 +28,7 @@ setup('global setup', async ({}) => {
 
       // Clean up orphaned test boards from previous failed runs
       const cleanup = await pool.query(
-        `DELETE FROM boards WHERE name LIKE 'Mgmt Test Board%' OR name LIKE 'E2E Test Board%' OR name LIKE 'Interaction Test Board%' OR name LIKE 'Renamed Board%'`
+        `DELETE FROM boards WHERE name LIKE 'Mgmt Test Board%' OR name LIKE 'E2E Test Board%' OR name LIKE 'Interaction Test Board%' OR name LIKE 'Renamed Board%' OR name LIKE 'Public Picker Test Board%'`
       );
       if (cleanup.rowCount && cleanup.rowCount > 0) {
         console.log(`Cleaned up ${cleanup.rowCount} orphaned test board(s).`);
