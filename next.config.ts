@@ -8,7 +8,7 @@ const cspDirectives = [
   "img-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://*.public.blob.vercel-storage.com data: blob:",
   "media-src 'self' https://*.public.blob.vercel-storage.com blob:",
   "font-src 'self'",
-  "connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://vitals.vercel-insights.com",
+  "connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://vitals.vercel-insights.com https://*.public.blob.vercel-storage.com",
   "frame-src 'self' https://*.clerk.com https://*.clerk.accounts.dev",
   "object-src 'none'",
   "base-uri 'self'",
