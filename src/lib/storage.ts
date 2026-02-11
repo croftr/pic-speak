@@ -32,6 +32,13 @@ type BoardRow = {
     email_notifications_enabled?: boolean;
 };
 
+export interface BoardWithStats {
+    board?: Board;
+    cardCount: number;
+    existingLabels: Set<string>;
+    maxCardsSetting: string | null;
+}
+
 // Create a connection pool for better performance
 // Pool reuses connections instead of creating new ones for each query
 const pool = new Pool({
@@ -271,31 +278,137 @@ export async function getCardLabels(boardId: string): Promise<Set<string>> {
     }
 }
 
+/**
+ * Optimized function to fetch everything needed for card creation in a single query.
+ * Returns board details, current card count, existing labels, and max cards setting.
+ */
+export async function getBoardForCardCreation(boardId: string): Promise<BoardWithStats> {
+    const startTime = Date.now();
+
+    // 1. Check if it's a starter board (fast path, no DB needed)
+    const starterBoard = STARTER_BOARDS.find(b => b.id === boardId);
+    if (starterBoard) {
+        const labels = new Set<string>();
+        if (STARTER_CARDS[boardId]) {
+            for (const card of STARTER_CARDS[boardId]) {
+                const normalized = card.label.trim().toLowerCase();
+                if (normalized) labels.add(normalized);
+            }
+        }
+        return {
+            board: starterBoard,
+            cardCount: starterBoard.cardCount || 0,
+            existingLabels: labels,
+            maxCardsSetting: null
+        };
+    }
+
+    // 2. DB Query - consolidated for performance
+    const client = await getDbClient();
+    try {
+        const queryStart = Date.now();
+
+        const result = await client.query(`
+            WITH board_info AS (
+                SELECT * FROM boards WHERE id = $1 LIMIT 1
+            ),
+            card_stats AS (
+                SELECT
+                    COUNT(*) as count,
+                    COALESCE(ARRAY_AGG(LOWER(TRIM(label))) FILTER (WHERE label != ''), '{}') as labels
+                FROM cards
+                WHERE board_id = $1
+            ),
+            settings AS (
+                SELECT value FROM app_settings WHERE key = 'max_cards_per_board'
+            )
+            SELECT
+                b.*,
+                s.count::int as card_count,
+                s.labels::text[] as existing_labels,
+                st.value as max_cards_setting
+            FROM board_info b
+            CROSS JOIN card_stats s
+            LEFT JOIN settings st ON true
+        `, [boardId]);
+
+        const queryTime = Date.now() - queryStart;
+        const totalTime = Date.now() - startTime;
+
+        if (result.rows.length === 0) {
+            logger.info('Board not found during card creation check', { boardId, query_duration_ms: queryTime });
+            return {
+                board: undefined,
+                cardCount: 0,
+                existingLabels: new Set(),
+                maxCardsSetting: null
+            };
+        }
+
+        const row = result.rows[0];
+
+        logger.debug('Board stats retrieved', {
+            boardId,
+            cardCount: row.card_count,
+            labelCount: row.existing_labels.length,
+            duration_ms: totalTime
+        });
+
+        const board: Board = {
+            id: row.id,
+            userId: row.user_id,
+            name: row.name,
+            description: row.description,
+            createdAt: row.created_at,
+            isPublic: row.is_public || false,
+            creatorName: row.creator_name,
+            creatorImageUrl: row.creator_image_url,
+            ownerEmail: row.owner_email,
+            emailNotificationsEnabled: row.email_notifications_enabled ?? true
+        };
+
+        return {
+            board,
+            cardCount: row.card_count,
+            existingLabels: new Set(row.existing_labels),
+            maxCardsSetting: row.max_cards_setting
+        };
+    } catch (error) {
+        logger.error('Error getting board for card creation', error, { boardId });
+        // Fallback to empty if critical failure, though route handler will handle missing board
+        return {
+            board: undefined,
+            cardCount: 0,
+            existingLabels: new Set(),
+            maxCardsSetting: null
+        };
+    } finally {
+        client.release();
+    }
+}
+
 export async function addCard(card: Card): Promise<void> {
     const startTime = Date.now();
     logger.info('Adding card', { cardId: card.id, boardId: card.boardId });
 
     const client = await getDbClient();
     try {
-        const queryStart = Date.now();
-
-        // Get the current minimum order value for this board, then insert below it.
-        // This avoids updating every existing card's order on each insert.
-        const minResult = await client.query(
-            'SELECT COALESCE(MIN("order"), 0) - 1 AS new_order FROM cards WHERE board_id = $1',
-            [card.boardId]
-        );
-        const newOrder = minResult.rows[0].new_order;
-
         // If this is a template card, only store the template key and minimal data
         if (card.templateKey) {
+            // For template cards, we still do the 2-step process as they are rare and logic is different
+            const minResult = await client.query(
+                'SELECT COALESCE(MIN("order"), 0) - 1 AS new_order FROM cards WHERE board_id = $1',
+                [card.boardId]
+            );
+            const newOrder = minResult.rows[0].new_order;
+
             logger.debug('Inserting template card', { templateKey: card.templateKey, cardId: card.id });
             await client.query(
                 'INSERT INTO cards (id, board_id, template_key, "order", color) VALUES ($1, $2, $3, $4, $5)',
                 [card.id, card.boardId, card.templateKey, newOrder, card.color || '#6366f1']
             );
         } else {
-            // Regular user card - insert at lowest order (top of board)
+            // Regular user card - Optimized to single query
             // Note: 'category' maps to 'type' column in database (NOT NULL with default 'Thing')
             logger.debug('Inserting user card', {
                 label: card.label,
@@ -303,17 +416,18 @@ export async function addCard(card: Card): Promise<void> {
                 audioUrl: card.audioUrl,
                 cardId: card.id
             });
+
+            // This INSERT uses a subquery to calculate the 'order' field atomically
             await client.query(
-                'INSERT INTO cards (id, board_id, label, image_url, audio_url, color, "order", type, source_board_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
-                [card.id, card.boardId, card.label, card.imageUrl, card.audioUrl, card.color || '#6366f1', newOrder, card.category || 'Thing', card.sourceBoardId || null]
+                `INSERT INTO cards (id, board_id, label, image_url, audio_url, color, "order", type, source_board_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, (SELECT COALESCE(MIN("order"), 0) - 1 FROM cards WHERE board_id = $2), $7, $8)`,
+                [card.id, card.boardId, card.label, card.imageUrl, card.audioUrl, card.color || '#6366f1', card.category || 'Thing', card.sourceBoardId || null]
             );
         }
 
-        const queryTime = Date.now() - queryStart;
         const totalTime = Date.now() - startTime;
         logger.info('Card added successfully', {
             cardId: card.id,
-            query_duration_ms: queryTime,
             total_duration_ms: totalTime
         });
     } catch (error) {

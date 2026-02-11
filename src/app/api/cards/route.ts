@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getCards, addCard, getBoard, getCardLabels, getCardCount } from '@/lib/storage';
+import { getCards, addCard, getBoard, getBoardForCardCreation } from '@/lib/storage';
 import { Card } from '@/types';
 import { auth } from '@clerk/nextjs/server';
 import { checkIsAdmin } from '@/lib/admin';
 import { logger } from '@/lib/logger';
 import { validateStringLength, validateColor } from '@/lib/validation';
-import { getMaxCardsPerBoard } from '@/lib/limits';
 
 export async function GET(request: Request) {
     const startTime = Date.now();
@@ -130,14 +129,20 @@ export async function POST(request: Request) {
             );
         }
 
-        // Verify board ownership or admin status
-        // Use retryOnNotFound=true to handle Postgres read replica lag on Vercel
-        const boardCheckStart = Date.now();
-        userLog.debug('Checking board ownership', { boardId });
+        // Fetch everything needed for validation in a single optimized query
+        const dbCheckStart = Date.now();
+        userLog.debug('Checking board details and stats', { boardId });
 
-        // Optimization: Check ownership first to avoid expensive admin check (external API call)
-        const board = await getBoard(boardId, true);
+        const { board, cardCount, existingLabels, maxCardsSetting } = await getBoardForCardCreation(boardId);
         const isOwner = board && board.userId === userId;
+
+        // Determine effective max cards
+        // Priority: Env Var > DB Setting > Default (100)
+        let maxCards = process.env.MAX_CARDS_PER_BOARD ? parseInt(process.env.MAX_CARDS_PER_BOARD) : undefined;
+        if (!maxCards && maxCardsSetting) {
+            maxCards = parseInt(maxCardsSetting);
+        }
+        if (!maxCards) maxCards = 100;
 
         let isAdmin = false;
         if (board && !isOwner) {
@@ -146,10 +151,12 @@ export async function POST(request: Request) {
         }
 
         userLog.debug('Board check completed', {
-            duration_ms: Date.now() - boardCheckStart,
+            duration_ms: Date.now() - dbCheckStart,
             found: !!board,
             isOwner,
-            isAdmin
+            isAdmin,
+            cardCount,
+            maxCards
         });
 
         if (!board || (!isOwner && !isAdmin)) {
@@ -163,10 +170,8 @@ export async function POST(request: Request) {
         }
 
         // Check card limit
-        const maxCards = await getMaxCardsPerBoard();
-        const cardCount = await getCardCount(boardId);
         if (cardCount >= maxCards) {
-            userLog.warn('Maximum cards per board reached', { cardCount });
+            userLog.warn('Maximum cards per board reached', { cardCount, maxCards });
             return NextResponse.json(
                 { error: `Maximum number of cards per board (${maxCards}) reached` },
                 { status: 403 }
@@ -176,7 +181,6 @@ export async function POST(request: Request) {
         // Check label uniqueness within the board
         const cardLabel = (label || 'Untitled').trim().toLowerCase();
         if (cardLabel) {
-            const existingLabels = await getCardLabels(boardId);
             if (existingLabels.has(cardLabel)) {
                 userLog.warn('Duplicate label', { label: cardLabel, boardId });
                 return NextResponse.json(
