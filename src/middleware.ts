@@ -1,8 +1,11 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 const isProtectedRoute = createRouteMatcher(["/my-boards(.*)", "/board(.*)", "/admin(.*)"]);
+const isPublicRoute = createRouteMatcher(["/", "/about", "/public-boards(.*)", "/sitemap.xml", "/robots.txt"]);
 
 export default clerkMiddleware(async (auth, req) => {
+    // Let public pages pass through without any Clerk processing for crawlers
+    if (isPublicRoute(req)) return;
     if (isProtectedRoute(req)) await auth.protect();
 });
 

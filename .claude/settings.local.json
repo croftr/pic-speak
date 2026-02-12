@@ -31,7 +31,9 @@
       "Bash(npx next lint:*)",
       "Bash(node -e:*)",
       "Bash(npm run test:e2e:*)",
-      "Bash(npx dotenv-cli:*)"
+      "Bash(npx dotenv-cli:*)",
+      "Bash(curl:*)",
+      "WebFetch(domain:www.myvoiceboard.com)"
     ]
   }
 }
