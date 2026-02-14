@@ -305,6 +305,10 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
                 batchMode={isBatchMode}
                 existingCategories={existingCategories}
                 existingCardLabels={cards.map(c => c.label)}
+                onBrowseExistingCards={() => {
+                    setIsModalOpen(false);
+                    setIsMergeBoardModalOpen(true);
+                }}
             />
 
             {moveCopyCard && (

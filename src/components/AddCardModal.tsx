@@ -2,12 +2,9 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { X, Image as ImageIcon, Check, Loader2, Mic, Upload, Music, Sparkles, Play, Pause, Camera, ChevronRight, ChevronLeft, Globe } from 'lucide-react';
+import { X, Image as ImageIcon, Check, Loader2, Mic, Upload, Music, Sparkles, Play, Pause, Camera, ChevronRight, ChevronLeft, Layers } from 'lucide-react';
 import AudioRecorder from './AudioRecorder';
 const ImageCropModal = dynamic(() => import('./ImageCropModal'), {
-    loading: () => null
-});
-const PublicCardPickerModal = dynamic(() => import('./PublicCardPickerModal'), {
     loading: () => null
 });
 import { clsx } from 'clsx';
@@ -26,9 +23,10 @@ interface AddCardModalProps {
     boardId: string;
     editCard?: Card | null;
     batchMode?: boolean;
+    onBrowseExistingCards?: () => void;
 }
 
-export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdated, boardId, editCard, batchMode = false, existingCategories = [], existingCardLabels = [] }: AddCardModalProps & { existingCategories?: string[]; existingCardLabels?: string[] }) {
+export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdated, boardId, editCard, batchMode = false, onBrowseExistingCards, existingCategories = [], existingCardLabels = [] }: AddCardModalProps & { existingCategories?: string[]; existingCardLabels?: string[] }) {
     const [label, setLabel] = useState('');
     const [category, setCategory] = useState('');
 
@@ -61,9 +59,6 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     // Crop state
     const [showCropModal, setShowCropModal] = useState(false);
     const [imageToCrop, setImageToCrop] = useState<string | null>(null);
-
-    // Public card picker state
-    const [showPublicCardPicker, setShowPublicCardPicker] = useState(false);
 
     // Audio State
     const [audioType, setAudioType] = useState<'record' | 'upload' | 'generate'>('record');
@@ -812,22 +807,6 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                 />
             )}
 
-            {showPublicCardPicker ? (
-                <PublicCardPickerModal
-                    isOpen={showPublicCardPicker}
-                    onClose={() => {
-                        setShowPublicCardPicker(false);
-                        onClose();
-                    }}
-                    onBack={() => setShowPublicCardPicker(false)}
-                    onCardSelected={(card) => {
-                        onCardAdded(card);
-                        onClose();
-                    }}
-                    boardId={boardId}
-                    existingCardLabels={existingCardLabels}
-                />
-            ) : (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
                 <div className="bg-white dark:bg-slate-900 w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-lg sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col">
 
@@ -1047,18 +1026,20 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                                 </div>
                                             </div>
 
-                                            {/* Browse Public Cards Option */}
+                                            {/* Browse Existing Cards Option */}
                                             <button
                                                 type="button"
-                                                onClick={() => setShowPublicCardPicker(true)}
+                                                onClick={() => {
+                                                    onBrowseExistingCards?.();
+                                                }}
                                                 className="w-full flex items-center justify-center gap-4 p-5 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-2 border-blue-200 dark:border-blue-800 hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-lg hover:shadow-blue-500/10 transition-all group"
                                             >
                                                 <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-500 shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                                                    <Globe className="w-7 h-7 text-white" />
+                                                    <Layers className="w-7 h-7 text-white" />
                                                 </div>
                                                 <div className="text-left flex-1">
-                                                    <span className="block font-bold text-lg text-gray-900 dark:text-white">Browse Public Cards</span>
-                                                    <span className="text-sm text-blue-600 dark:text-blue-400">Pick from community boards</span>
+                                                    <span className="block font-bold text-lg text-gray-900 dark:text-white">Browse Existing Cards</span>
+                                                    <span className="text-sm text-blue-600 dark:text-blue-400">Add from your boards or community</span>
                                                 </div>
                                                 <ChevronRight className="w-5 h-5 text-blue-400 group-hover:translate-x-1 transition-transform" />
                                             </button>
@@ -1408,7 +1389,6 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                     </div>
                 </div>
             </div>
-            )}
         </>
     );
 }

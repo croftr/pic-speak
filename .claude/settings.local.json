@@ -33,7 +33,8 @@
       "Bash(npm run test:e2e:*)",
       "Bash(npx dotenv-cli:*)",
       "Bash(curl:*)",
-      "WebFetch(domain:www.myvoiceboard.com)"
+      "WebFetch(domain:www.myvoiceboard.com)",
+      "Bash(del \"C:\\\\Users\\\\rob\\\\projects\\\\pic-speak\\\\src\\\\components\\\\PublicCardPickerModal.tsx\")"
     ]
   }
 }

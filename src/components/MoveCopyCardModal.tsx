@@ -38,11 +38,7 @@ export default function MoveCopyCardModal({ isOpen, onClose, onSuccess, card, cu
     const loadBoards = async () => {
         setIsLoadingBoards(true);
         try {
-            // Get user's boards
-            const userRes = await fetch('/api/user');
-            const userData = await userRes.json();
-
-            const boardsRes = await fetch(`/api/boards?userId=${userData.userId}`);
+            const boardsRes = await fetch('/api/boards');
             if (boardsRes.ok) {
                 const allBoards = await boardsRes.json();
                 // Filter out current board
