@@ -198,6 +198,53 @@ export async function getCardCount(boardId: string): Promise<number> {
     }
 }
 
+export async function getCard(id: string): Promise<Card | undefined> {
+    const client = await getDbClient();
+    try {
+        const result = await client.query<CardRow>(
+            'SELECT * FROM cards WHERE id = $1 LIMIT 1',
+            [id]
+        );
+
+        if (result.rows.length === 0) return undefined;
+
+        const row = result.rows[0];
+
+        // If this card has a template key, get data from the template registry
+        if (row.template_key && TEMPLATE_CARDS_REGISTRY[row.template_key]) {
+            const template = TEMPLATE_CARDS_REGISTRY[row.template_key];
+            return {
+                id: row.id,
+                boardId: row.board_id,
+                label: template.label,
+                imageUrl: template.imageUrl,
+                audioUrl: template.audioUrl,
+                color: row.color,
+                order: row.order,
+                category: template.category,
+                templateKey: row.template_key
+            };
+        }
+
+        return {
+            id: row.id,
+            boardId: row.board_id,
+            label: row.label,
+            imageUrl: row.image_url,
+            audioUrl: row.audio_url,
+            color: row.color,
+            order: row.order,
+            category: row.type || undefined,
+            sourceBoardId: row.source_board_id || undefined
+        };
+    } catch (error) {
+        logger.error('Error getting card', error, { cardId: id });
+        return undefined;
+    } finally {
+        client.release();
+    }
+}
+
 export async function getCards(boardId?: string): Promise<Card[]> {
     if (boardId && STARTER_CARDS[boardId]) {
         return STARTER_CARDS[boardId];
@@ -574,6 +621,36 @@ export async function deleteCard(id: string): Promise<void> {
     } catch (error) {
         logger.error('Error deleting card', error, { cardId: id });
         throw error;
+    } finally {
+        client.release();
+    }
+}
+
+/**
+ * Get blob URLs for all cards in a board. Used for cleanup when deleting a board.
+ * Only returns Vercel Blob URLs (https://*.blob.vercel-storage.com), not local/prebuilt URLs.
+ */
+export async function getBoardCardBlobUrls(boardId: string): Promise<string[]> {
+    const client = await getDbClient();
+    try {
+        const result = await client.query<{ image_url: string; audio_url: string }>(
+            `SELECT image_url, audio_url FROM cards WHERE board_id = $1`,
+            [boardId]
+        );
+
+        const urls: string[] = [];
+        for (const row of result.rows) {
+            if (row.image_url && row.image_url.includes('.blob.vercel-storage.com')) {
+                urls.push(row.image_url);
+            }
+            if (row.audio_url && row.audio_url.includes('.blob.vercel-storage.com')) {
+                urls.push(row.audio_url);
+            }
+        }
+        return urls;
+    } catch (error) {
+        logger.error('Error getting board card blob URLs', error, { boardId });
+        return [];
     } finally {
         client.release();
     }

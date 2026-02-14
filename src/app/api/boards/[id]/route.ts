@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getBoard, updateBoard, deleteBoard } from '@/lib/storage';
+import { getBoard, updateBoard, deleteBoard, getBoardCardBlobUrls } from '@/lib/storage';
+import { del } from '@vercel/blob';
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { checkIsAdmin } from '@/lib/admin';
 import { validateStringLength } from '@/lib/validation';
+import { logger } from '@/lib/logger';
 
 export async function GET(
     request: Request,
@@ -137,7 +139,18 @@ export async function DELETE(
     }
 
     try {
+        // Collect blob URLs before deleting (cards cascade-delete with the board)
+        const blobUrls = await getBoardCardBlobUrls(id);
+
         await deleteBoard(id);
+
+        // Clean up orphaned blobs in the background (don't block the response)
+        if (blobUrls.length > 0) {
+            del(blobUrls).catch(err => {
+                logger.error('Failed to clean up board blobs', err, { boardId: id, urlCount: blobUrls.length });
+            });
+        }
+
         return new NextResponse(null, { status: 204 });
     } catch (error) {
         return NextResponse.json(

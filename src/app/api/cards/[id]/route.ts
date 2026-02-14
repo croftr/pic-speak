@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getCards, deleteCard, updateCard, getBoard, getCardLabels } from '@/lib/storage';
+import { getCard, deleteCard, updateCard, getBoard, getCardLabels } from '@/lib/storage';
+import { del } from '@vercel/blob';
 import { auth } from '@clerk/nextjs/server';
 import { checkIsAdmin } from '@/lib/admin';
 import { validateStringLength, validateColor } from '@/lib/validation';
+import { logger } from '@/lib/logger';
 
 export async function PUT(
     request: Request,
@@ -16,9 +18,8 @@ export async function PUT(
     const { id } = await params;
 
     try {
-        // Verification step: Ensure user owns the board that this card belongs to
-        const allCards = await getCards();
-        const existingCard = allCards.find(c => c.id === id);
+        // Fetch only this card by ID (not all cards in the DB)
+        const existingCard = await getCard(id);
 
         if (!existingCard) {
             return new NextResponse("Card not found", { status: 404 });
@@ -40,6 +41,19 @@ export async function PUT(
 
         const body = await request.json();
         const { label, imageUrl, audioUrl, color, category: rawCategory, boardId } = body;
+
+        // Cards inherited from public boards cannot be edited (only moved/deleted)
+        // Allow boardId changes (move) but block content changes
+        if (existingCard.sourceBoardId) {
+            const hasContentChanges = (label !== undefined && label !== existingCard.label) ||
+                (imageUrl !== undefined && imageUrl !== existingCard.imageUrl) ||
+                (audioUrl !== undefined && audioUrl !== existingCard.audioUrl) ||
+                (color !== undefined && color !== existingCard.color) ||
+                (rawCategory !== undefined && rawCategory !== existingCard.category);
+            if (hasContentChanges) {
+                return new NextResponse("Inherited cards from public boards cannot be edited", { status: 403 });
+            }
+        }
         const category = rawCategory ? rawCategory.trim().toLowerCase().replace(/^\w/, (c: string) => c.toUpperCase()) : rawCategory;
 
         if (label !== undefined) {
@@ -129,9 +143,8 @@ export async function DELETE(
     const { id } = await params;
 
     try {
-        // Verification step: Ensure user owns the board that this card belongs to
-        const allCards = await getCards();
-        const card = allCards.find(c => c.id === id);
+        // Fetch only this card by ID (not all cards in the DB)
+        const card = await getCard(id);
 
         if (!card) {
             return new NextResponse("Card not found", { status: 404 });
@@ -152,6 +165,16 @@ export async function DELETE(
         }
 
         await deleteCard(id);
+
+        // Clean up orphaned blobs in the background (don't block the response)
+        const blobUrls: string[] = [];
+        if (card.imageUrl?.includes('.blob.vercel-storage.com')) blobUrls.push(card.imageUrl);
+        if (card.audioUrl?.includes('.blob.vercel-storage.com')) blobUrls.push(card.audioUrl);
+        if (blobUrls.length > 0) {
+            del(blobUrls).catch(err => {
+                logger.error('Failed to clean up card blobs', err, { cardId: id, urls: blobUrls });
+            });
+        }
 
         return new NextResponse(null, { status: 204 });
     } catch (error) {
