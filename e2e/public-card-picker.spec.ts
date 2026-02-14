@@ -53,12 +53,15 @@ test('can add a card from a public board via the public card picker', async ({ p
   await page.getByRole('button', { name: /add your first card/i }).click()
   await expect(page.getByRole('heading', { name: /what is it/i })).toBeVisible()
 
-  // ── Click "Browse Public Cards" ─────────────────────────────────────
-  await page.getByRole('button', { name: /browse public cards/i }).click()
+  // ── Click "Browse Existing Cards" ───────────────────────────────────
+  await page.getByRole('button', { name: /browse existing cards/i }).click()
 
-  // ── Verify the Public Card Picker modal opened ──────────────────────
-  await expect(page.getByRole('heading', { name: /browse public cards/i })).toBeVisible({ timeout: 10000 })
-  await expect(page.getByText('Pick from community boards')).toBeVisible()
+  // ── Verify the Merge Board modal opened ─────────────────────────────
+  await expect(page.getByRole('heading', { name: /merge board/i })).toBeVisible({ timeout: 10000 })
+  await expect(page.getByText('Choose a board to merge cards from')).toBeVisible()
+
+  // ── Switch to Public Boards tab ─────────────────────────────────────
+  await page.getByRole('button', { name: /public boards/i }).click()
   await expect(page.getByPlaceholder('Search boards...')).toBeVisible()
 
   // ── Verify the Starter Template board appears ───────────────────────
@@ -70,65 +73,46 @@ test('can add a card from a public board via the public card picker', async ({ p
 
   // Verify the heading changed to the board name and cards are loading
   await expect(page.getByRole('heading', { name: /starter template/i })).toBeVisible()
-  await expect(page.getByText('by My Voice Board')).toBeVisible()
-  await expect(page.getByPlaceholder('Search cards...')).toBeVisible()
 
   // Wait for cards to load — check for a known card from the Starter Template
   await expect(page.getByText('Yes', { exact: true }).first()).toBeVisible({ timeout: 10000 })
   await expect(page.getByText('Hello', { exact: true }).first()).toBeVisible()
 
-  // ── Search for a specific card ──────────────────────────────────────
-  await page.getByPlaceholder('Search cards...').fill('Apple')
-  // "Apple" card should be visible, "Hello" should be filtered out
-  await expect(page.getByText('Apple', { exact: true }).first()).toBeVisible()
-  await expect(page.getByText('Hello', { exact: true })).not.toBeVisible()
-
-  // Clear search to see all cards again
-  await page.getByPlaceholder('Search cards...').fill('')
-  await expect(page.getByText('Hello', { exact: true }).first()).toBeVisible()
-
-  // ── Select a card to add to the board ───────────────────────────────
-  // Pick "Apple" since it's a simple, unique label
-  await page.getByPlaceholder('Search cards...').fill('Apple')
-  await expect(page.getByText('Apple', { exact: true }).first()).toBeVisible()
-
-  // Click the "Select" button on the Apple card
-  await page.getByRole('button', { name: 'Select' }).click()
+  // ── Merge selected cards into the board ─────────────────────────────
+  // All non-conflict cards are pre-selected, so just click Merge
+  await page.getByRole('button', { name: /merge \d+ cards?/i }).click()
 
   // ── Verify success ──────────────────────────────────────────────────
-  // Toast should confirm the card was added
-  await expect(page.getByText(/"Apple" added to your board!/)).toBeVisible({ timeout: 5000 })
+  // Toast should confirm the cards were merged
+  await expect(page.getByText(/merged successfully/)).toBeVisible({ timeout: 5000 })
 
-  // Modal should close and we should be back on the board
-  await expect(page.getByRole('heading', { name: /browse public cards/i })).not.toBeVisible()
+  // The cards should now appear on the board
+  await expect(page.getByRole('button', { name: /Yes/ })).toBeVisible({ timeout: 10000 })
+  await expect(page.getByRole('button', { name: /Hello/ })).toBeVisible()
 
-  // The card should now appear on the board (use role to avoid matching the toast)
-  await expect(page.getByRole('button', { name: /Apple/ })).toBeVisible({ timeout: 10000 })
-
-  // ── Verify "Already Added" state ────────────────────────────────────
-  // Open the Add Card modal again and go back to the public picker
+  // ── Verify conflict state ──────────────────────────────────────────
+  // Open the Add Card modal again and go back to merge
   await page.getByRole('button', { name: /add new card/i }).click()
   await expect(page.getByRole('heading', { name: /what is it/i })).toBeVisible()
 
-  await page.getByRole('button', { name: /browse public cards/i }).click()
-  await expect(page.getByRole('heading', { name: /browse public cards/i })).toBeVisible({ timeout: 10000 })
+  await page.getByRole('button', { name: /browse existing cards/i }).click()
+  await expect(page.getByRole('heading', { name: /merge board/i })).toBeVisible({ timeout: 10000 })
 
-  // Click the Starter Template board again
+  // Switch to public boards and click the Starter Template board again
+  await page.getByRole('button', { name: /public boards/i }).click()
   await page.getByRole('button', { name: /starter template/i }).click()
   await expect(page.getByRole('heading', { name: /starter template/i })).toBeVisible()
 
-  // Search for Apple again — it should now show "Already Added" instead of "Select"
-  await page.getByPlaceholder('Search cards...').fill('Apple')
-  await expect(page.getByText('Already Added')).toBeVisible({ timeout: 10000 })
+  // All cards should now show as conflicts since they were already added
+  await expect(page.getByText(/already on your board/i)).toBeVisible({ timeout: 10000 })
+  await expect(page.getByText('All cards from this board already exist on your board.')).toBeVisible()
 
   // ── Navigate back to board list ─────────────────────────────────────
-  // Click the back button (ChevronLeft) to go back to the board list
-  // The back button is the first button in the header area
   const backButton = page.locator('button').filter({ has: page.locator('svg.lucide-chevron-left') })
   await backButton.click()
 
   // Verify we're back at the board list
-  await expect(page.getByRole('heading', { name: /browse public cards/i })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /merge board/i })).toBeVisible()
   await expect(page.getByPlaceholder('Search boards...')).toBeVisible()
 
   // ── Delete the board via API for cleanup ────────────────────────────
