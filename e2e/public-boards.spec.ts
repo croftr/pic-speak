@@ -27,7 +27,7 @@ test('can browse public boards and open the Starter Template', async ({ page }) 
   await expect(page).toHaveURL(/\/board\/starter-template/, { timeout: 10000 })
 
   // Verify the board name is displayed
-  await expect(page.getByText('Starter Template')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Starter Template' })).toBeVisible()
 
   // Verify some of the known communication cards are rendered (use button role since
   // cards are interactive buttons on the board)
