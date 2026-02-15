@@ -35,6 +35,29 @@ interface CardGridProps {
     onStartEditing?: () => void;
 }
 
+const getColumnCount = (width: number, cardSize: string) => {
+    if (cardSize === 'small') {
+        if (width >= 1280) return 8;
+        if (width >= 1024) return 6;
+        if (width >= 768) return 5;
+        if (width >= 640) return 4;
+        return 3;
+    } else if (cardSize === 'large') {
+        if (width >= 1280) return 5;
+        if (width >= 1024) return 4;
+        if (width >= 768) return 3;
+        if (width >= 640) return 2;
+        return 1;
+    } else {
+        // medium (default)
+        if (width >= 1280) return 6;
+        if (width >= 1024) return 5;
+        if (width >= 768) return 4;
+        if (width >= 640) return 3;
+        return 2;
+    }
+};
+
 export default function CardGrid({
     cards,
     totalCardsCount,
@@ -49,7 +72,35 @@ export default function CardGrid({
     onStartEditing
 }: CardGridProps) {
     const [focusedCardIndex, setFocusedCardIndex] = useState<number>(-1);
+    const [columns, setColumns] = useState<number>(() => {
+        if (typeof window !== 'undefined') {
+            return getColumnCount(window.innerWidth, cardSize);
+        }
+        return 2; // Default for SSR
+    });
     const gridRef = useRef<HTMLDivElement>(null);
+
+    // Update columns on resize or cardSize change
+    useEffect(() => {
+        let timeoutId: ReturnType<typeof setTimeout>;
+
+        const handleResize = () => {
+            // Debounce the resize event to avoid layout thrashing during active resizing
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                setColumns(getColumnCount(window.innerWidth, cardSize));
+            }, 150);
+        };
+
+        // No need to call handleResize() here because the columns state is already
+        // initialized via the lazy initializer, which runs on the client.
+
+        window.addEventListener('resize', handleResize);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            clearTimeout(timeoutId);
+        };
+    }, [cardSize]);
 
     // Drag and drop sensors
     const sensors = useSensors(
@@ -112,13 +163,6 @@ export default function CardGrid({
                 return;
             }
 
-            const width = window.innerWidth;
-            let cols = 2; // mobile
-            if (width >= 640) cols = 3;   // sm
-            if (width >= 768) cols = 4;   // md
-            if (width >= 1024) cols = 5;  // lg
-            if (width >= 1280) cols = 6;  // xl
-
             let newIndex = focusedCardIndex;
 
             switch (e.key) {
@@ -140,14 +184,14 @@ export default function CardGrid({
                     e.preventDefault();
                     if (focusedCardIndex === -1) {
                         newIndex = 0;
-                    } else if (focusedCardIndex + cols < cards.length) {
-                        newIndex = focusedCardIndex + cols;
+                    } else if (focusedCardIndex + columns < cards.length) {
+                        newIndex = focusedCardIndex + columns;
                     }
                     break;
                 case 'ArrowUp':
                     e.preventDefault();
-                    if (focusedCardIndex - cols >= 0) {
-                        newIndex = focusedCardIndex - cols;
+                    if (focusedCardIndex - columns >= 0) {
+                        newIndex = focusedCardIndex - columns;
                     }
                     break;
                 case 'Enter':
@@ -170,7 +214,7 @@ export default function CardGrid({
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [cards, focusedCardIndex]);
+    }, [cards, focusedCardIndex, columns]);
 
     return (
         <div ref={gridRef} className="max-w-7xl mx-auto">
