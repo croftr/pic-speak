@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { getBoard, getCards } from '@/lib/storage';
 import { checkIsAdmin } from '@/lib/admin';
 import BoardClient from '@/components/BoardClient';
-import { redirect } from 'next/navigation';
+import { redirect, notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
 interface BoardPageProps {
@@ -45,7 +45,7 @@ export default async function BoardPage({ params }: BoardPageProps) {
 
     // Check if board exists
     if (!board) {
-        redirect('/my-boards');
+        notFound();
     }
 
     const isOwner = board.userId === userId;
