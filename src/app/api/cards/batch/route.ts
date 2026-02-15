@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { batchAddCards, getBoard, getCardLabels, getCardCount } from '@/lib/storage';
-import { Card } from '@/types';
+import { Card, BatchCardInput } from '@/types';
 import { validateColor } from '@/lib/validation';
 import { getMaxCardsPerBoard } from '@/lib/limits';
 
@@ -40,11 +40,11 @@ export async function POST(request: Request) {
         const existingLabels = await getCardLabels(boardId);
         const duplicateLabels: string[] = [];
         const seenInBatch = new Set<string>();
-        const filteredCards = cards.filter((cardData: any) => {
+        const filteredCards = (cards as BatchCardInput[]).filter((cardData: BatchCardInput) => {
             const normalized = (cardData.label || '').trim().toLowerCase();
             if (!normalized) return true; // Allow empty labels through
             if (existingLabels.has(normalized) || seenInBatch.has(normalized)) {
-                duplicateLabels.push(cardData.label);
+                if (cardData.label) duplicateLabels.push(cardData.label);
                 return false;
             }
             seenInBatch.add(normalized);
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
         }
 
         // Create full card objects with IDs
-        const cardsToInsert: Card[] = filteredCards.map((cardData: any, index: number) => ({
+        const cardsToInsert: Card[] = filteredCards.map((cardData: BatchCardInput, index: number) => ({
             id: crypto.randomUUID(),
             boardId,
             label: cardData.label || '',

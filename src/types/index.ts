@@ -11,6 +11,17 @@ export interface Card {
   sourceBoardId?: string; // If set, this card was inherited from a public board template and cannot be edited
 }
 
+export interface BatchCardInput {
+  label?: string;
+  imageUrl: string;
+  audioUrl?: string;
+  color?: string;
+  category?: string;
+  order?: number;
+  sourceBoardId?: string;
+  templateKey?: string;
+}
+
 export interface Board {
   id: string;
   userId: string;
