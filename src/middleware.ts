@@ -1,11 +1,17 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
 const isProtectedRoute = createRouteMatcher(["/my-boards(.*)", "/admin(.*)"]);
 const isPublicRoute = createRouteMatcher(["/", "/about", "/public-boards(.*)", "/board(.*)", "/sitemap.xml", "/robots.txt"]);
 
 export default clerkMiddleware(async (auth, req) => {
-    // Let public pages pass through without any Clerk processing for crawlers
-    if (isPublicRoute(req)) return;
+    if (isPublicRoute(req)) {
+        // Clerk injects X-Robots-Tag: noindex on every response it touches.
+        // Strip it so public pages remain crawlable.
+        const response = NextResponse.next();
+        response.headers.delete('X-Robots-Tag');
+        return response;
+    }
     if (isProtectedRoute(req)) await auth.protect();
 });
 
