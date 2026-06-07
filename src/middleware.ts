@@ -5,6 +5,16 @@ const isProtectedRoute = createRouteMatcher(["/my-boards(.*)", "/admin(.*)"]);
 const isPublicRoute = createRouteMatcher(["/", "/about", "/public-boards(.*)", "/board(.*)", "/sitemap.xml", "/robots.txt"]);
 
 export default clerkMiddleware(async (auth, req) => {
+    // Redirect the Vercel-generated domain to the canonical custom domain.
+    // pic-speak.vercel.app serves the full site and would otherwise compete
+    // with www.myvoiceboard.com as duplicate content in search results.
+    if (req.headers.get('host') === 'pic-speak.vercel.app') {
+        const url = req.nextUrl.clone();
+        url.protocol = 'https';
+        url.host = 'www.myvoiceboard.com';
+        return NextResponse.redirect(url, 308);
+    }
+
     if (isPublicRoute(req)) {
         // Clerk injects X-Robots-Tag: noindex on every response it touches.
         // Strip it so public pages remain crawlable.

@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { getBoard, getCards } from '@/lib/storage';
 import { checkIsAdmin } from '@/lib/admin';
 import BoardClient from '@/components/BoardClient';
-import { redirect, notFound } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
 interface BoardPageProps {
@@ -25,6 +25,9 @@ export async function generateMetadata({ params }: BoardPageProps): Promise<Meta
     return {
         title,
         description,
+        alternates: {
+            canonical: `/board/${id}`,
+        },
         openGraph: {
             title: board.name,
             description,
@@ -51,8 +54,11 @@ export default async function BoardPage({ params }: BoardPageProps) {
     const isOwner = board.userId === userId;
 
     // Check if user has access to board (public or owner)
+    // Return 404 rather than redirecting: redirecting unauthenticated crawlers
+    // to the robots-disallowed /my-boards page causes "Redirect error" in Google
+    // Search Console. A 404 is handled cleanly by crawlers.
     if (!board.isPublic && !isOwner) {
-        redirect('/my-boards');
+        notFound();
     }
 
     // Fetch cards and admin status in parallel

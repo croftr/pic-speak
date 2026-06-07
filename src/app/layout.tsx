@@ -14,6 +14,9 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.myvoiceboard.com'),
+  alternates: {
+    canonical: '/',
+  },
   title: "My Voice Board - Custom Autism Communication Boards",
   description: "Create personalized communication boards for non-verbal children. My Voice Board helps parents and teachers build custom communication board style boards with familiar photos and voices.",
   robots: {

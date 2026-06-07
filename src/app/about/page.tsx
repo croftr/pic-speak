@@ -7,6 +7,9 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
     title: 'About - My Voice Board | Communication Boards for Non-Verbal Children',
     description: 'Learn how My Voice Board helps parents and teachers create personalized PECS-style communication boards for non-verbal autistic children. Free, private, and ad-free.',
+    alternates: {
+        canonical: '/about',
+    },
     openGraph: {
         title: 'About My Voice Board',
         description: 'Giving a voice to every child. Create personalized communication boards with custom photos and familiar voices.',
