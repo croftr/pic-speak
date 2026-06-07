@@ -39,6 +39,8 @@ const nextConfig: NextConfig = {
     removeConsole: false,
   },
 
+  allowedDevOrigins: ['127.0.0.1'],
+
   // Optimize images
   images: {
     formats: ['image/avif', 'image/webp'],
