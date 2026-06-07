@@ -103,7 +103,7 @@ export default function AboutPage() {
                             <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Join Our Community</h2>
                         </div>
                         <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mt-2">
-                            My Voice Board isn't just a tool; it's a growing library of shared resources.
+                            My Voice Board isn&apos;t just a tool; it&apos;s a growing library of shared resources.
                         </p>
                     </div>
 
@@ -117,7 +117,7 @@ export default function AboutPage() {
                                 <h3 className="text-xl font-bold text-slate-900 dark:text-white">Public Board Library</h3>
                             </div>
                             <p className="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
-                                Browse boards created by other parents, teachers, and therapists. Find pre-made boards for specific needs like "School Morning Routine," "Sensory Activities," or "Restaurant Visits."
+                                Browse boards created by other parents, teachers, and therapists. Find pre-made boards for specific needs like &quot;School Morning Routine,&quot; &quot;Sensory Activities,&quot; or &quot;Restaurant Visits.&quot;
                             </p>
                             <Link href="/public-boards" className="text-blue-600 dark:text-blue-400 font-bold hover:underline inline-flex items-center gap-1 group">
                                 Explore Public Boards <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />

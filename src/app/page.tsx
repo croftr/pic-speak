@@ -53,7 +53,7 @@ function NavCard({ icon, label, colorClass, delay = 0, href, className, style, a
   const Component = as;
 
   return (
-    <Component type={as === 'button' ? "button" : undefined} className={containerClasses} style={combinedStyle} {...(props as any)}>
+    <Component type={as === 'button' ? "button" : undefined} className={containerClasses} style={combinedStyle} {...(props as React.HTMLAttributes<HTMLElement>)}>
       {content}
     </Component>
   );

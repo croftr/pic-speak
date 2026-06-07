@@ -34,9 +34,12 @@ const nextConfig: NextConfig = {
 
   // Performance optimizations
   compiler: {
-    // Keep console logs for debugging card creation issues
-    // We can re-enable this optimization once the issue is resolved
-    removeConsole: false,
+    // Strip console.* in production builds, but keep console.error/warn so
+    // real problems are still visible. Dev keeps all logs for debugging.
+    removeConsole:
+      process.env.NODE_ENV === 'production'
+        ? { exclude: ['error', 'warn'] }
+        : false,
   },
 
   allowedDevOrigins: ['127.0.0.1'],

@@ -187,6 +187,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     // Populate form when editing
     useEffect(() => {
         if (editCard && isOpen) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing form fields from the editCard prop when the modal opens
             setLabel(editCard.label);
             setCategory(editCard.category || '');
             setImagePreview(editCard.imageUrl);
@@ -209,6 +210,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
             return () => clearTimeout(timeoutId);
         } else if (imageType !== 'camera' || !isOpen) {
             // Stop camera when switching away or closing modal
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- camera lifecycle cleanup updates state intentionally
             stopCamera();
         }
     }, [imageType, isOpen, isCameraActive, startCamera, stopCamera]);

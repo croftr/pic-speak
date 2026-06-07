@@ -40,9 +40,11 @@ export default function MergeBoardModal({ isOpen, onClose, onMergeComplete, boar
 
     useEffect(() => {
         if (isOpen) {
+            // eslint-disable-next-line react-hooks/immutability -- loadBoards is defined below; only invoked after mount
             loadBoards();
         } else {
             // Reset all state when modal closes
+            /* eslint-disable react-hooks/set-state-in-effect -- intentional state reset when the modal closes */
             setPhase('pick-board');
             setBoardSource('mine');
             setSelectedBoard(null);
@@ -50,6 +52,7 @@ export default function MergeBoardModal({ isOpen, onClose, onMergeComplete, boar
             setSelectedCardIds(new Set());
             setConflictCardIds(new Set());
             setSearchQuery('');
+            /* eslint-enable react-hooks/set-state-in-effect */
         }
     }, [isOpen]);
 

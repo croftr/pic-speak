@@ -24,6 +24,7 @@ export default function MoveCopyCardModal({ isOpen, onClose, onSuccess, card, cu
 
     useEffect(() => {
         if (isOpen) {
+            // eslint-disable-next-line react-hooks/immutability -- loadBoards is defined below; only invoked after mount
             loadBoards();
         }
     }, [isOpen]);
@@ -31,6 +32,7 @@ export default function MoveCopyCardModal({ isOpen, onClose, onSuccess, card, cu
     // Auto-select if only one board available
     useEffect(() => {
         if (boards.length === 1 && !selectedBoardId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- auto-select the only available board
             setSelectedBoardId(boards[0].id);
         }
     }, [boards, selectedBoardId]);

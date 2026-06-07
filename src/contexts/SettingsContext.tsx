@@ -20,6 +20,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         const savedHighContrast = localStorage.getItem('highContrastMode') === 'true';
         const savedCardSize = localStorage.getItem('cardSize') as 'small' | 'medium' | 'large' | null;
 
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrating UI prefs from localStorage after mount (SSR-safe pattern)
         setHighContrastMode(savedHighContrast);
         if (savedCardSize) {
             setCardSize(savedCardSize);

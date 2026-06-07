@@ -52,7 +52,7 @@ test('can search, filter, and interact with cards', async ({ page }) => {
         return Promise.resolve();
       }
       pause() {}
-    } as any;
+    } as unknown as typeof Audio;
   });
 
   await signIn(page)
