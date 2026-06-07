@@ -3,13 +3,14 @@ import type { NextConfig } from "next";
 // Content Security Policy — controls which resources the browser is allowed to load
 const cspDirectives = [
   "default-src 'self'",
-  "script-src 'self' https://*.clerk.com https://*.clerk.accounts.dev 'unsafe-inline' 'unsafe-eval'",
+  "script-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://*.public.blob.vercel-storage.com data: blob:",
   "media-src 'self' https://*.public.blob.vercel-storage.com blob:",
   "font-src 'self'",
   "connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://clerk-telemetry.com https://*.clerk-telemetry.com https://vitals.vercel-insights.com https://*.vercel-insights.com https://*.public.blob.vercel-storage.com",
-  "frame-src 'self' https://*.clerk.com https://*.clerk.accounts.dev",
+  "frame-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com",
+  "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
