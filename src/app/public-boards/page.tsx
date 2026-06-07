@@ -77,12 +77,19 @@ function PublicBoardsContent() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {displayedBoards.map((board) => (
-                        <Link
+                        <div
                             key={board.id}
-                            href={`/board/${board.id}`}
                             className="group relative block p-6 bg-gradient-to-br from-white to-gray-50 dark:from-slate-900 dark:to-slate-800 rounded-2xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl hover:scale-105 transition-all duration-300"
                         >
-                            <div className="absolute top-3 right-3 flex items-center gap-2">
+                            {/* Stretched link covers the whole card; interactive
+                                children below use relative z-10 to stay clickable.
+                                Avoids nesting <a> inside <a> (invalid HTML). */}
+                            <Link
+                                href={`/board/${board.id}`}
+                                aria-label={board.name}
+                                className="absolute inset-0 z-0 rounded-2xl"
+                            />
+                            <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
                                 {isAdmin && !board.id.startsWith('starter-') && (
                                     <button
                                         onClick={(e) => {
@@ -133,10 +140,7 @@ function PublicBoardsContent() {
                                         {board.userId && (
                                             <Link
                                                 href={`/public-boards?creator=${board.userId}`}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                }}
-                                                className="text-[10px] text-primary hover:underline"
+                                                className="relative z-10 text-[10px] text-primary hover:underline"
                                             >
                                                 View more boards
                                             </Link>
@@ -167,7 +171,7 @@ function PublicBoardsContent() {
                                 </span>
                                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </div>
-                        </Link>
+                        </div>
                     ))}
                 </div>
             )}
