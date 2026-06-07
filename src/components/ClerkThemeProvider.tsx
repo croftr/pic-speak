@@ -51,6 +51,11 @@ export default function ClerkThemeProvider({ children }: { children: React.React
                     colorBackground: isDark ? '#1e293b' : '#ffffff',
                     colorInputBackground: isDark ? '#0f172a' : '#f8fafc',
                     colorInputText: isDark ? '#f8fafc' : '#1e293b',
+                    // Set text colors explicitly rather than relying solely on
+                    // baseTheme: dark. If the base theme doesn't fully apply, text
+                    // would fall back to black on the dark colorBackground above.
+                    colorText: isDark ? '#f8fafc' : '#1e293b',
+                    colorTextSecondary: isDark ? '#94a3b8' : '#64748b',
                 },
             }}
         >
