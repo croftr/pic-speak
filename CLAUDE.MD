@@ -45,7 +45,7 @@ src/
 │   └── storage.ts           # Data storage utilities
 ├── types/
 │   └── index.ts             # TypeScript type definitions
-└── middleware.ts            # Clerk authentication middleware
+└── proxy.ts                 # Clerk authentication proxy (Next.js middleware)
 
 ```
 
@@ -80,7 +80,7 @@ See `src/types/index.ts` for all type definitions. Key models: `Board`, `Card`, 
 ## Authentication
 
 - Clerk is used for user authentication
-- Protected routes use middleware.ts
+- Protected routes use proxy.ts
 - SignIn/SignUp available on landing page
 - User-specific data isolation via userId
 
