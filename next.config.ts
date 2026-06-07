@@ -25,6 +25,13 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   /* config options here */
 
+  // Pin the workspace root to this project directory. Without this, Turbopack
+  // infers the root by walking up for a lockfile, which can land outside the
+  // project and break module resolution (e.g. "Can't resolve 'tailwindcss'").
+  turbopack: {
+    root: process.cwd(),
+  },
+
   // Performance optimizations
   compiler: {
     // Keep console logs for debugging card creation issues
