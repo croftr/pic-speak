@@ -43,6 +43,7 @@ export default function ClerkThemeProvider({ children }: { children: React.React
 
     return (
         <ClerkProvider
+            telemetry={false}
             appearance={{
                 ...clerkAppearance,
                 baseTheme: isDark ? dark : undefined,
