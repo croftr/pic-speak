@@ -5,13 +5,13 @@ import { dark } from '@clerk/themes';
 import { useSyncExternalStore } from 'react';
 
 const clerkAppearance = {
-    layout: {
+    options: {
         logoImageUrl: '/logo.svg',
         socialButtonsVariant: 'iconButton' as const,
     },
     variables: {
         colorPrimary: '#7c3aed',
-        colorTextOnPrimaryBackground: '#ffffff',
+        colorPrimaryForeground: '#ffffff',
         borderRadius: '0.75rem',
         fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
     },
@@ -21,6 +21,7 @@ const clerkAppearance = {
         footerActionLink: 'font-medium',
         socialButtonsBlockButton: 'rounded-xl',
         formFieldInput: 'rounded-xl',
+        userButtonPopoverActionButton: 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800',
     },
 };
 
@@ -51,6 +52,8 @@ export default function ClerkThemeProvider({ children }: { children: React.React
                     colorBackground: isDark ? '#1e293b' : '#ffffff',
                     colorInputBackground: isDark ? '#0f172a' : '#f8fafc',
                     colorInputText: isDark ? '#f8fafc' : '#1e293b',
+                    colorForeground: isDark ? '#ffffff' : '#1e293b',
+                    colorText: isDark ? '#ffffff' : '#1e293b',
                 },
             }}
         >

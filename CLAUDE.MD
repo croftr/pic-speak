@@ -6,9 +6,9 @@ Pic Speak is a communication board builder designed to help non-verbal children 
 
 ## Tech Stack
 
-- **Framework**: Next.js 16.1.1 (App Router)
+- **Framework**: Next.js 16.2.7 (App Router)
 - **Language**: TypeScript
-- **UI**: React 19.2.3
+- **UI**: React 19.2.7
 - **Styling**: Tailwind CSS v4
 - **Authentication**: Clerk
 - **AI**: Google Generative AI (@google/genai)
@@ -45,7 +45,7 @@ src/
 │   └── storage.ts           # Data storage utilities
 ├── types/
 │   └── index.ts             # TypeScript type definitions
-└── middleware.ts            # Clerk authentication middleware
+└── proxy.ts                 # Clerk request interception proxy
 
 ```
 
@@ -80,7 +80,7 @@ See `src/types/index.ts` for all type definitions. Key models: `Board`, `Card`, 
 ## Authentication
 
 - Clerk is used for user authentication
-- Protected routes use middleware.ts
+- Protected routes use proxy.ts
 - SignIn/SignUp available on landing page
 - User-specific data isolation via userId
 
@@ -158,5 +158,5 @@ When setting up this project, you'll likely need:
 - The app uses Next.js App Router (not Pages Router)
 - All API routes are in the `app/api` directory
 - Client components use 'use client' directive
-- Middleware handles authentication protection
+- Request proxy handles authentication protection
 - TypeScript types are centralized in `src/types/index.ts`

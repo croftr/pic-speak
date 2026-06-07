@@ -16,7 +16,7 @@ export function validateStringLength(
  * Validates a color string. Allows hex colors (#fff, #ffffff, #ffffffff)
  * and CSS variables (var(--name)). Returns an error message or null if valid.
  */
-const COLOR_REGEX = /^(#[0-9a-fA-F]{3,8}|var\(--[a-zA-Z0-9-]+\))$/;
+const COLOR_REGEX = /^(#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})|var\(--[a-zA-Z0-9-]+\))$/;
 
 export function validateColor(value: string): string | null {
     if (!COLOR_REGEX.test(value)) {

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { SignedIn } from '@clerk/nextjs';
+import { Show } from '@clerk/nextjs';
 import { Home, Grid, Globe } from 'lucide-react';
 
 export default function BottomNav() {
@@ -29,12 +29,12 @@ export default function BottomNav() {
                         <span className="text-[10px] font-semibold">Home</span>
                     </Link>
 
-                    <SignedIn>
+                    <Show when="signed-in">
                         <Link href="/my-boards" className={linkClass('/my-boards')}>
                             <Grid className="w-5 h-5" />
                             <span className="text-[10px] font-semibold">My Boards</span>
                         </Link>
-                    </SignedIn>
+                    </Show>
 
                     <Link href="/public-boards" className={linkClass('/public-boards')}>
                         <Globe className="w-5 h-5" />

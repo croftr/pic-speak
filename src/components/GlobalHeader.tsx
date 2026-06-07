@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { UserButton, SignedIn, SignedOut, SignInButton, useUser } from '@clerk/nextjs';
+import { UserButton, Show, SignInButton, useUser } from '@clerk/nextjs';
 import { Grid, Globe, Info, Shield } from 'lucide-react';
 import Image from 'next/image';
 
@@ -70,7 +70,7 @@ export default function GlobalHeader() {
 
                     {/* Desktop Nav Links - absolutely centered */}
                     <nav className="hidden sm:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
-                        <SignedIn>
+                        <Show when="signed-in">
                             <Link
                                 href="/my-boards"
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${isActive('/my-boards')
@@ -81,7 +81,7 @@ export default function GlobalHeader() {
                                 <Grid className="w-4 h-4" />
                                 My Boards
                             </Link>
-                        </SignedIn>
+                        </Show>
                         <Link
                             href="/public-boards"
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${isActive('/public-boards')
@@ -106,7 +106,7 @@ export default function GlobalHeader() {
 
                     {/* User Menu - right */}
                     <div className="flex items-center gap-3">
-                        <SignedIn>
+                        <Show when="signed-in">
                             <UserButton
                                 appearance={{
                                     elements: {
@@ -124,14 +124,14 @@ export default function GlobalHeader() {
                                     </UserButton.MenuItems>
                                 )}
                             </UserButton>
-                        </SignedIn>
-                        <SignedOut>
+                        </Show>
+                        <Show when="signed-out">
                             <SignInButton mode="modal">
                                 <button className="px-3 sm:px-4 py-2 font-semibold text-sm text-gray-900 dark:text-white hover:opacity-80 transition-opacity">
                                     Login
                                 </button>
                             </SignInButton>
-                        </SignedOut>
+                        </Show>
                     </div>
                 </div>
             </div>

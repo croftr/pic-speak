@@ -23,10 +23,28 @@ export default function MoveCopyCardModal({ isOpen, onClose, onSuccess, card, cu
     const [isLoadingBoards, setIsLoadingBoards] = useState(true);
 
     useEffect(() => {
+        const loadBoards = async () => {
+            setIsLoadingBoards(true);
+            try {
+                const boardsRes = await fetch('/api/boards');
+                if (boardsRes.ok) {
+                    const allBoards = await boardsRes.json();
+                    // Filter out current board
+                    const otherBoards = allBoards.filter((b: Board) => b.id !== currentBoardId);
+                    setBoards(otherBoards);
+                }
+            } catch (error) {
+                console.error('Error loading boards:', error);
+                toast.error('Failed to load boards');
+            } finally {
+                setIsLoadingBoards(false);
+            }
+        };
+
         if (isOpen) {
             loadBoards();
         }
-    }, [isOpen]);
+    }, [isOpen, currentBoardId]);
 
     // Auto-select if only one board available
     useEffect(() => {
@@ -34,24 +52,6 @@ export default function MoveCopyCardModal({ isOpen, onClose, onSuccess, card, cu
             setSelectedBoardId(boards[0].id);
         }
     }, [boards, selectedBoardId]);
-
-    const loadBoards = async () => {
-        setIsLoadingBoards(true);
-        try {
-            const boardsRes = await fetch('/api/boards');
-            if (boardsRes.ok) {
-                const allBoards = await boardsRes.json();
-                // Filter out current board
-                const otherBoards = allBoards.filter((b: Board) => b.id !== currentBoardId);
-                setBoards(otherBoards);
-            }
-        } catch (error) {
-            console.error('Error loading boards:', error);
-            toast.error('Failed to load boards');
-        } finally {
-            setIsLoadingBoards(false);
-        }
-    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

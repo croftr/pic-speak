@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { SignedIn, SignedOut, SignInButton } from '@clerk/nextjs';
+import { Show, SignInButton } from '@clerk/nextjs';
 import { Globe, Grid, LogIn } from 'lucide-react';
 import { clsx } from 'clsx';
 import Image from 'next/image';
@@ -81,7 +81,7 @@ export default function Home() {
         {/* Action Grid */}
         <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8 px-4">
 
-          <SignedOut>
+          <Show when="signed-out">
             <SignInButton mode="modal">
               <NavCard
                 as="div"
@@ -99,9 +99,9 @@ export default function Home() {
               colorClass="border-blue-100 dark:border-blue-900/30 hover:border-blue-300 dark:hover:border-blue-700 hover:ring-4 ring-blue-400/30"
               delay={200}
             />
-          </SignedOut>
+          </Show>
 
-          <SignedIn>
+          <Show when="signed-in">
             <NavCard
               href="/my-boards"
               icon={<Grid size={64} className="text-purple-500" />}
@@ -117,7 +117,7 @@ export default function Home() {
               colorClass="border-blue-100 dark:border-blue-900/30 hover:border-blue-300 dark:hover:border-blue-700 hover:ring-4 ring-blue-400/30"
               delay={200}
             />
-          </SignedIn>
+          </Show>
         </div>
 
         {/* Footer/Info */}

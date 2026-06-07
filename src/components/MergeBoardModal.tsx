@@ -39,6 +39,30 @@ export default function MergeBoardModal({ isOpen, onClose, onMergeComplete, boar
     }, [existingCards]);
 
     useEffect(() => {
+        const loadBoards = async () => {
+            setIsLoadingBoards(true);
+            try {
+                const [myRes, publicRes] = await Promise.all([
+                    fetch('/api/boards'),
+                    fetch('/api/boards/public'),
+                ]);
+
+                if (myRes.ok) {
+                    const boards: Board[] = await myRes.json();
+                    setMyBoards(boards.filter(b => b.id !== boardId));
+                }
+                if (publicRes.ok) {
+                    const boards: Board[] = await publicRes.json();
+                    setPublicBoards(boards.filter(b => b.id !== boardId));
+                }
+            } catch (error) {
+                console.error('Error loading boards:', error);
+                toast.error('Failed to load boards');
+            } finally {
+                setIsLoadingBoards(false);
+            }
+        };
+
         if (isOpen) {
             loadBoards();
         } else {
@@ -51,31 +75,7 @@ export default function MergeBoardModal({ isOpen, onClose, onMergeComplete, boar
             setConflictCardIds(new Set());
             setSearchQuery('');
         }
-    }, [isOpen]);
-
-    const loadBoards = async () => {
-        setIsLoadingBoards(true);
-        try {
-            const [myRes, publicRes] = await Promise.all([
-                fetch('/api/boards'),
-                fetch('/api/boards/public'),
-            ]);
-
-            if (myRes.ok) {
-                const boards: Board[] = await myRes.json();
-                setMyBoards(boards.filter(b => b.id !== boardId));
-            }
-            if (publicRes.ok) {
-                const boards: Board[] = await publicRes.json();
-                setPublicBoards(boards.filter(b => b.id !== boardId));
-            }
-        } catch (error) {
-            console.error('Error loading boards:', error);
-            toast.error('Failed to load boards');
-        } finally {
-            setIsLoadingBoards(false);
-        }
-    };
+    }, [isOpen, boardId]);
 
     const handleSelectBoard = async (board: Board) => {
         setSelectedBoard(board);
