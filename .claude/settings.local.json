@@ -34,7 +34,16 @@
       "Bash(npx dotenv-cli:*)",
       "Bash(curl:*)",
       "WebFetch(domain:www.myvoiceboard.com)",
-      "Bash(del \"C:\\\\Users\\\\rob\\\\projects\\\\pic-speak\\\\src\\\\components\\\\PublicCardPickerModal.tsx\")"
+      "Bash(del \"C:\\\\Users\\\\rob\\\\projects\\\\pic-speak\\\\src\\\\components\\\\PublicCardPickerModal.tsx\")",
+      "Bash(grep -rEoh \".{0,40}\\(proxy|middleware\\).{0,20}\" node_modules/next/dist/lib/constants.js)",
+      "Bash(git commit -m '@ *)",
+      "Bash(git reset *)",
+      "Bash(git restore *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git mv *)",
+      "Read(//c/Users/rob/**)",
+      "Bash(npm view *)"
     ]
   }
 }

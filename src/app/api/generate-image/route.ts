@@ -93,28 +93,24 @@ Subject to illustrate: ${prompt}`;
 
         const genStart = Date.now();
 
-        const response = await client.models.generateImages({
-            model: 'models/imagen-4.0-generate-001',
-            prompt: imagePrompt,
+        const response = await client.models.generateContent({
+            model: 'models/gemini-3.1-flash-image',
+            contents: imagePrompt,
             config: {
-                numberOfImages: 1,
-                aspectRatio: "1:1"
+                responseModalities: ['IMAGE']
             }
         });
 
         const genTime = Date.now() - genStart;
 
-        if (!response.generatedImages || response.generatedImages.length === 0) {
-            throw new Error("No image generated");
+        const candidate = response.candidates?.[0];
+        const part = candidate?.content?.parts?.find(p => p.inlineData);
+        if (!part || !part.inlineData || !part.inlineData.data) {
+            throw new Error("No image data received from Gemini");
         }
 
-        const image = response.generatedImages[0];
-
-        if (!image.image) {
-            throw new Error("No image data received");
-        }
-
-        const base64 = image.image.imageBytes;
+        const base64 = part.inlineData.data;
+        const mimeType = part.inlineData.mimeType || 'image/jpeg';
 
         userLog.info('Image generated successfully', {
             duration_ms: genTime,
@@ -122,7 +118,7 @@ Subject to illustrate: ${prompt}`;
         });
 
         return NextResponse.json({
-            image: `data:image/png;base64,${base64}`
+            image: `data:${mimeType};base64,${base64}`
         });
 
     } catch (error) {
