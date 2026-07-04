@@ -1,5 +1,31 @@
 import { test, expect } from '@playwright/test';
-import { validateColor } from './validation';
+import { validateColor, validateStringLength } from './validation';
+
+test.describe('validateStringLength', () => {
+    test('should return null for strings shorter than maxLength', () => {
+        expect(validateStringLength('hello', 10, 'Label')).toBeNull();
+        expect(validateStringLength('a', 1, 'Label')).toBeNull();
+    });
+
+    test('should return null for strings exactly maxLength', () => {
+        expect(validateStringLength('12345', 5, 'Label')).toBeNull();
+    });
+
+    test('should return null for empty strings (within maxLength)', () => {
+        expect(validateStringLength('', 5, 'Label')).toBeNull();
+        expect(validateStringLength('', 0, 'Label')).toBeNull();
+    });
+
+    test('should return error for strings exceeding maxLength', () => {
+        const result = validateStringLength('too long', 5, 'Label');
+        expect(result).toBe('Label must be 5 characters or less.');
+    });
+
+    test('should return error for string length 1 with maxLength 0', () => {
+        const result = validateStringLength('a', 0, 'Name');
+        expect(result).toBe('Name must be 0 characters or less.');
+    });
+});
 
 test.describe('validateColor', () => {
     test('should return null for valid 3-character hex colors', () => {
