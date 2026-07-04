@@ -2,7 +2,7 @@
 
 import { Grid3X3, Grid2X2, LayoutGrid } from 'lucide-react';
 import { useSettings } from '@/contexts/SettingsContext';
-import HoldToUnlockButton from './HoldToUnlockButton';
+import UnlockButton from './UnlockButton';
 
 interface LockedBarProps {
     boardName: string;
@@ -31,7 +31,7 @@ export default function LockedBar({ boardName }: LockedBarProps) {
                     {userCardSize === 'medium' && <Grid2X2 className="w-5 h-5 text-gray-500 dark:text-gray-400" />}
                     {userCardSize === 'large' && <LayoutGrid className="w-5 h-5 text-gray-500 dark:text-gray-400" />}
                 </button>
-                <HoldToUnlockButton />
+                <UnlockButton />
             </div>
         </header>
     );

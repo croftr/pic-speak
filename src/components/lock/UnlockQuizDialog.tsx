@@ -57,9 +57,9 @@ export default function UnlockQuizDialog({ isOpen, onClose, onUnlock }: UnlockQu
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[200] flex items-start justify-center p-4 pt-24 sm:pt-32">
             <div
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in"
+                className="fixed inset-0 -z-10 bg-black/50 backdrop-blur-sm animate-in fade-in"
                 onClick={onClose}
             />
 

@@ -57,7 +57,7 @@ async function main() {
 
         console.log('3. Clicking lock button ...');
         await lockButton.click();
-        const unlockButton = page.locator('button[aria-label="Hold to unlock board"]');
+        const unlockButton = page.locator('button[aria-label="Unlock board"]');
         await unlockButton.waitFor({ state: 'visible', timeout: 10_000 });
         const headerGone = await page.locator('a[href="/my-boards"]').count();
         if (headerGone !== 0) {
@@ -65,23 +65,8 @@ async function main() {
         }
         console.log('   OK — chrome hidden, unlock button present');
 
-        console.log('4. Short tap on unlock button (should not open quiz) ...');
+        console.log('4. Clicking unlock button ...');
         await unlockButton.click();
-        await page.waitForTimeout(300);
-        const quizVisibleAfterTap = await page.getByText('Carer check').count();
-        if (quizVisibleAfterTap !== 0) {
-            throw new Error('quiz opened after a short tap');
-        }
-        console.log('   OK — still locked after short tap');
-
-        console.log('5. Holding unlock button for 3.2s ...');
-        const box = await unlockButton.boundingBox();
-        if (!box) throw new Error('could not locate unlock button');
-        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-        await page.mouse.down();
-        await page.waitForTimeout(3200);
-        await page.mouse.up();
-
         await page.waitForSelector('[data-testid="quiz-question"]', { timeout: 5_000 });
         const readQuestion = async () => {
             const text = await page.textContent('[data-testid="quiz-question"]');
@@ -112,7 +97,7 @@ async function main() {
         if (wrongValue === undefined) throw new Error('no wrong-answer option found');
         if (!(await clickOption(wrongValue))) throw new Error('failed to click wrong answer');
         await page.waitForTimeout(200);
-        const stillLocked = await page.locator('button[aria-label="Hold to unlock board"]').count();
+        const stillLocked = await page.locator('button[aria-label="Unlock board"]').count();
         if (stillLocked === 0) {
             throw new Error('board unlocked after wrong answer');
         }
@@ -134,7 +119,7 @@ async function main() {
         if (!page.url().includes('/board/starter-template')) {
             throw new Error(`back navigation escaped the board: ${page.url()}`);
         }
-        const stillLockedAfterBack = await page.locator('button[aria-label="Hold to unlock board"]').count();
+        const stillLockedAfterBack = await page.locator('button[aria-label="Unlock board"]').count();
         if (stillLockedAfterBack === 0) {
             throw new Error('lock UI gone after back navigation');
         }
@@ -142,7 +127,7 @@ async function main() {
 
         console.log('9. Reloading while locked ...');
         await page.reload({ waitUntil: 'load' });
-        await page.locator('button[aria-label="Hold to unlock board"]').waitFor({ state: 'visible', timeout: 10_000 });
+        await page.locator('button[aria-label="Unlock board"]').waitFor({ state: 'visible', timeout: 10_000 });
         console.log('   OK — lock state restored after reload');
 
         await browser.close();
