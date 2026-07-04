@@ -131,16 +131,16 @@ export default function BoardToolbar({
                                 className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg transition-colors touch-manipulation"
                             >
                                 <Upload className="w-4 h-4" />
-                                <span className="hidden sm:inline">Batch Upload</span>
-                                <span className="sm:hidden">Batch</span>
+                                <span className="hidden sm:inline">Add Many Photos</span>
+                                <span className="sm:hidden">Upload</span>
                             </button>
                             <button
                                 onClick={onMergeBoard}
                                 className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors touch-manipulation"
                             >
                                 <Layers className="w-4 h-4" />
-                                <span className="hidden sm:inline">Merge Board</span>
-                                <span className="sm:hidden">Merge</span>
+                                <span className="hidden sm:inline">Copy cards from another board</span>
+                                <span className="sm:hidden">Copy</span>
                             </button>
                             <button
                                 onClick={onDelete}

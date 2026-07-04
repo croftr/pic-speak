@@ -27,16 +27,19 @@ const API_MAX_ENTRIES = 100;
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches
-            .open(STATIC_CACHE)
-            .then((cache) =>
+        Promise.all([
+            caches.open(STATIC_CACHE).then((cache) =>
                 cache.addAll([
                     OFFLINE_URL,
                     '/logo.svg',
                     '/icons/icon-192.png',
                 ])
-            )
-            .then(() => self.skipWaiting())
+            ),
+            // Precache the landing page so the very first visit's document
+            // (which loads before this worker controls the page) is available
+            // offline. Never fail install over it.
+            caches.open(PAGES_CACHE).then((cache) => cache.add('/').catch(() => {})),
+        ]).then(() => self.skipWaiting())
     );
 });
 
@@ -157,7 +160,15 @@ self.addEventListener('fetch', (event) => {
     }
 
     // 3. Page navigations — network-first, cached copy offline, else offline page.
-    if (request.mode === 'navigate') {
+    //    Also matches DocumentCacheWarmer's plain HTML fetches: client-side
+    //    (RSC) navigations never produce a real `navigate` request, so the
+    //    warmer refetches the full document to make the page launchable offline.
+    const wantsHtml =
+        request.mode === 'navigate' ||
+        (request.destination === '' &&
+            !request.headers.get('RSC') &&
+            (request.headers.get('accept') || '').includes('text/html'));
+    if (wantsHtml) {
         event.respondWith(networkFirst(request, PAGES_CACHE, PAGES_MAX_ENTRIES, OFFLINE_URL));
         return;
     }

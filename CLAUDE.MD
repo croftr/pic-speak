@@ -135,7 +135,9 @@ The app is an installable PWA with offline support:
 - `src/app/manifest.ts` - web app manifest (standalone display, icons in `public/icons/`)
 - `public/sw.js` - hand-written service worker. Cache strategies: cache-first for immutable Vercel Blob media and `/_next/static`, network-first with cache fallback for navigations/RSC/API GETs, `public/offline.html` fallback for never-visited pages. Bump `CACHE_VERSION` in `sw.js` to invalidate all caches.
 - `src/components/ServiceWorkerRegistration.tsx` - registers the worker (production only)
+- `src/components/DocumentCacheWarmer.tsx` - refetches key pages (`/`, `/my-boards`, `/public-boards`, `/board/*`) as full HTML after client-side navigations, because Next.js soft navigations only fetch RSC payloads and would otherwise leave nothing launchable offline
 - `src/hooks/useAudioPreload.ts` - prefetches all card audio when a board opens so taps speak instantly and work offline
+- PWA `start_url` is `/my-boards` (cached board list) so an offline app launch lands somewhere useful
 - `next.config.ts` serves `/sw.js` with `no-cache` so worker updates deploy immediately
 
 Commands: `npm run icons` regenerates PNG icons from `public/logo.svg`; `npm run test:offline` runs a Playwright end-to-end offline test (requires `npm run build` first — it starts its own server, kills it, and asserts cached pages + offline fallback still work).

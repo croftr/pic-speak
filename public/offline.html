@@ -30,18 +30,28 @@
         }
         h1 { font-size: 28px; font-weight: 800; margin-bottom: 12px; }
         p { font-size: 16px; line-height: 1.6; color: #64748b; margin-bottom: 28px; }
-        button {
-            background: #7C63F4;
-            color: #fff;
-            border: none;
+        button, .secondary {
+            display: inline-block;
             font-size: 17px;
             font-weight: 700;
             padding: 14px 36px;
             border-radius: 16px;
             cursor: pointer;
             touch-action: manipulation;
+            text-decoration: none;
         }
-        button:active { transform: scale(0.97); }
+        button {
+            background: #7C63F4;
+            color: #fff;
+            border: none;
+        }
+        .secondary {
+            background: transparent;
+            color: #7C63F4;
+            border: 2px solid #7C63F4;
+            margin-top: 12px;
+        }
+        button:active, .secondary:active { transform: scale(0.97); }
     </style>
 </head>
 <body>
@@ -54,6 +64,12 @@
             go back and try one of those, or reconnect to the internet.
         </p>
         <button onclick="location.reload()">Try Again</button>
+        <br>
+        <a class="secondary" href="/my-boards">Go to My Boards</a>
     </div>
+    <script>
+        // Reconnecting is the moment "Try Again" would work — do it automatically.
+        window.addEventListener('online', function () { location.reload(); });
+    </script>
 </body>
 </html>

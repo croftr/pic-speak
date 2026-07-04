@@ -67,6 +67,7 @@ import BottomNav from '@/components/BottomNav'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import ClerkThemeProvider from '@/components/ClerkThemeProvider'
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
+import DocumentCacheWarmer from '@/components/DocumentCacheWarmer'
 
 export default function RootLayout({
   children,
@@ -87,6 +88,7 @@ export default function RootLayout({
             <BottomNav />
             <Toaster position="top-center" richColors />
             <ServiceWorkerRegistration />
+            <DocumentCacheWarmer />
             <SpeedInsights />
           </SettingsProvider>
         </body>

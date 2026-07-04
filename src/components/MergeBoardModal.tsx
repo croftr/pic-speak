@@ -187,16 +187,16 @@ export default function MergeBoardModal({ isOpen, onClose, onMergeComplete, boar
                     toast.error('All selected cards already exist on your board');
                     return;
                 }
-                throw new Error('Failed to merge cards');
+                throw new Error('Failed to add cards');
             }
 
             const newCards: Card[] = await res.json();
-            toast.success(`${newCards.length} card${newCards.length !== 1 ? 's' : ''} merged successfully!`);
+            toast.success(`${newCards.length} card${newCards.length !== 1 ? 's' : ''} added successfully!`);
             onMergeComplete(newCards);
             onClose();
         } catch (error) {
-            console.error('Error merging cards:', error);
-            toast.error('Failed to merge cards');
+            console.error('Error adding cards:', error);
+            toast.error('Failed to add cards');
         } finally {
             setIsMerging(false);
         }
@@ -228,11 +228,11 @@ export default function MergeBoardModal({ isOpen, onClose, onMergeComplete, boar
                         )}
                         <div>
                             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                                {phase === 'pick-board' ? 'Merge Board' : selectedBoard?.name}
+                                {phase === 'pick-board' ? 'Copy cards from another board' : selectedBoard?.name}
                             </h2>
                             <p className="text-sm text-gray-500">
                                 {phase === 'pick-board'
-                                    ? 'Choose a board to merge cards from'
+                                    ? 'Choose a board to copy cards from'
                                     : `Review cards to add${selectedBoard?.creatorName ? ` from ${selectedBoard.creatorName}` : ''}`
                                 }
                             </p>
@@ -530,12 +530,12 @@ export default function MergeBoardModal({ isOpen, onClose, onMergeComplete, boar
                                         {isMerging ? (
                                             <>
                                                 <Loader2 className="w-5 h-5 animate-spin" />
-                                                Merging...
+                                                Adding...
                                             </>
                                         ) : (
                                             <>
                                                 <Check className="w-5 h-5" />
-                                                Merge {selectedCount} Card{selectedCount !== 1 ? 's' : ''}
+                                                Add {selectedCount} Card{selectedCount !== 1 ? 's' : ''}
                                             </>
                                         )}
                                     </button>

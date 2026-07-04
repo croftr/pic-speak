@@ -6,7 +6,10 @@ export default function manifest(): MetadataRoute.Manifest {
         short_name: 'Voice Board',
         description:
             'Create personalized communication boards with custom photos and audio for non-verbal children.',
-        start_url: '/',
+        // Launch straight into the user's boards: this page (and each opened
+        // board) is cached for offline, so an installed app with no connection
+        // still lands somewhere useful.
+        start_url: '/my-boards',
         display: 'standalone',
         orientation: 'any',
         background_color: '#f8fafc',

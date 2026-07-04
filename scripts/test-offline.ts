@@ -64,20 +64,50 @@ async function main() {
             throw new Error('static cache missing — precache failed');
         }
 
-        console.log('4. Killing server to go truly offline ...');
+        // Reproduce the real-world flow: reach a page by CLIENT-SIDE navigation
+        // only (no full document request), then later cold-launch it offline.
+        // This only works if DocumentCacheWarmer cached the page's HTML.
+        console.log('4. Client-side navigating to /public-boards ...');
+        await page.click('a[href="/public-boards"]');
+        await page.waitForSelector('h1');
+        await page.waitForFunction(
+            () => caches.match('/public-boards').then((r) => !!r),
+            undefined,
+            { timeout: 10_000 }
+        );
+        console.log('   OK — page HTML warmed into cache');
+
+        console.log('5. Killing server to go truly offline ...');
         killServer();
         await new Promise((r) => setTimeout(r, 1000));
 
-        console.log('5. Reloading previously-visited page while offline ...');
-        await page.reload({ waitUntil: 'load' });
+        console.log('6. Cold-loading the client-side-visited page while offline ...');
+        await page.goto(`${BASE_URL}/public-boards`, { waitUntil: 'load' });
+        const warmedHeading = await page.textContent('h1');
+        if (!warmedHeading?.includes('Public Boards')) {
+            throw new Error(`expected cached Public Boards page, got h1: "${warmedHeading}"`);
+        }
+        console.log(`   OK — served from cache (h1: "${warmedHeading}")`);
+
+        console.log('7. Cold-loading the landing page while offline ...');
+        await page.goto(BASE_URL, { waitUntil: 'load' });
         const title = await page.title();
         if (!title.includes('My Voice Board')) {
             throw new Error(`offline reload served wrong page: "${title}"`);
         }
         console.log(`   OK — served from cache (title: "${title}")`);
 
-        console.log('6. Navigating offline to a never-visited page ...');
-        await page.goto(`${BASE_URL}/public-boards`, { waitUntil: 'load' });
+        console.log('8. Client-side navigating while offline (RSC fetch must fall back) ...');
+        await page.click('a[href="/public-boards"]');
+        await page.waitForFunction(
+            () => document.querySelector('h1')?.textContent?.includes('Public Boards'),
+            undefined,
+            { timeout: 15_000 }
+        );
+        console.log('   OK — offline client-side navigation landed on cached page');
+
+        console.log('9. Navigating offline to a never-visited page ...');
+        await page.goto(`${BASE_URL}/about`, { waitUntil: 'load' });
         const heading = await page.textContent('h1');
         if (!heading?.toLowerCase().includes('offline')) {
             throw new Error(`expected offline fallback page, got h1: "${heading}"`);
