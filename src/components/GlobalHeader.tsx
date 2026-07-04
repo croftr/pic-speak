@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { UserButton, SignedIn, SignedOut, SignInButton, useUser } from '@clerk/nextjs';
 import { Grid, Globe, Info, Shield } from 'lucide-react';
 import { useOfflineAuth } from '@/hooks/useOfflineAuth';
+import { useLockMode } from '@/contexts/LockModeContext';
 import Image from 'next/image';
 
 const ADMIN_EMAILS = [
@@ -21,6 +22,7 @@ export default function GlobalHeader() {
     // Offline-aware: keep the My Boards link visible when the user's boards
     // are cached but Clerk can't confirm the session without a connection.
     const { isSignedIn } = useOfflineAuth();
+    const { lockedBoardId } = useLockMode();
 
     const isUserAdmin = user?.emailAddresses.some(
         e => ADMIN_EMAILS.includes(e.emailAddress.toLowerCase())
@@ -45,6 +47,8 @@ export default function GlobalHeader() {
     }, [lastScrollY]);
 
     const isActive = (path: string) => pathname === path || pathname.startsWith(path + '/');
+
+    if (lockedBoardId) return null;
 
     return (
         <header

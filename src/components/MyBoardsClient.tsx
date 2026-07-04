@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Pencil, X, Plus, Sparkles, Play, Layers } from 'lucide-react';
 import { Board } from '@/types';
 import { toast } from 'sonner';
+import { useLockMode } from '@/contexts/LockModeContext';
 
 interface MyBoardsClientProps {
     initialBoards: Board[];
@@ -19,6 +20,7 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
     const [publicBoards] = useState<Board[]>(initialPublicBoards);
 
     const router = useRouter();
+    const { lock } = useLockMode();
 
     // Create Mode State
     const [isCreating, setIsCreating] = useState(false);
@@ -374,6 +376,10 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
                                 <div className="flex gap-3 mt-auto">
                                     <Link
                                         href={`/board/${board.id}`}
+                                        onClick={() => {
+                                            document.documentElement.requestFullscreen?.().catch(() => {});
+                                            lock(board.id);
+                                        }}
                                         className="flex-1 bg-primary text-white px-4 py-3 rounded-xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center justify-center gap-2 text-sm sm:text-base touch-manipulation min-h-[48px]"
                                     >
                                         <Play className="w-4 h-4 sm:w-5 sm:h-5" />

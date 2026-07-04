@@ -155,6 +155,23 @@ body {
   color: #000000 !important;
 }
 
+/* Locked "use mode" — suppress pull-to-refresh so a stray gesture can't
+   navigate away while a child is using the board unsupervised. */
+body.lock-mode {
+  overscroll-behavior-y: contain;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
 /* Hide scrollbar but keep functionality */
 .scrollbar-hide {
   -ms-overflow-style: none;

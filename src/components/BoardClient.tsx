@@ -10,7 +10,10 @@ import { Plus } from 'lucide-react';
 
 import { useBoardCards } from '@/hooks/useBoardCards';
 import { useAudioPreload } from '@/hooks/useAudioPreload';
+import { useLockEffects } from '@/hooks/useLockEffects';
+import { useLockMode } from '@/contexts/LockModeContext';
 import BoardToolbar from '@/components/board/BoardToolbar';
+import LockedBar from '@/components/lock/LockedBar';
 import CardGrid from '@/components/board/CardGrid';
 import BoardFilter from '@/components/board/BoardFilter';
 
@@ -47,6 +50,9 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
     const searchParams = useSearchParams();
     const requestedEdit = searchParams.get('edit') === 'true';
     const { cardSize: userCardSize } = useSettings();
+    const { lockedBoardId, lock } = useLockMode();
+    const isLocked = lockedBoardId === boardId;
+    useLockEffects(isLocked, boardId);
 
     // Custom hook for card operations
     const {
@@ -90,7 +96,7 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
 
     // Computed
     const isStarterBoard = boardId.startsWith('starter-');
-    const isEditing = requestedEdit && (isOwner || isAdmin) && !isStarterBoard;
+    const isEditing = !isLocked && requestedEdit && (isOwner || isAdmin) && !isStarterBoard;
     const cardSize = isEditing ? 'large' : userCardSize;
 
     // Filter logic
@@ -224,23 +230,28 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
 
     return (
         <main className={`min-h-screen p-2 sm:p-4 md:p-8 relative ${isEditing ? 'pb-28 sm:pb-32' : 'pb-8'}`}>
-            <BoardToolbar
-                board={board}
-                isEditing={isEditing}
-                editName={editName}
-                setEditName={setEditName}
-                editDesc={editDesc}
-                setEditDesc={setEditDesc}
-                isPublic={isPublic}
-                setIsPublic={setIsPublic}
-                isSaving={isSaving}
-                onSave={handleSaveBoard}
-                onDelete={() => setIsDeleteDialogOpen(true)}
-                onShare={handleShare}
-                isCopied={isCopied}
-                onBatchUpload={handleBatchUpload}
-                onMergeBoard={() => setIsMergeBoardModalOpen(true)}
-            />
+            {isLocked ? (
+                <LockedBar boardName={board.name} />
+            ) : (
+                <BoardToolbar
+                    board={board}
+                    isEditing={isEditing}
+                    editName={editName}
+                    setEditName={setEditName}
+                    editDesc={editDesc}
+                    setEditDesc={setEditDesc}
+                    isPublic={isPublic}
+                    setIsPublic={setIsPublic}
+                    isSaving={isSaving}
+                    onSave={handleSaveBoard}
+                    onDelete={() => setIsDeleteDialogOpen(true)}
+                    onShare={handleShare}
+                    isCopied={isCopied}
+                    onBatchUpload={handleBatchUpload}
+                    onMergeBoard={() => setIsMergeBoardModalOpen(true)}
+                    onLock={() => lock(boardId)}
+                />
+            )}
 
             <BoardFilter
                 cards={cards}
@@ -268,8 +279,8 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
                 }
             />
 
-            {/* Like and Comments Section - Show for public boards */}
-            {board?.isPublic && (
+            {/* Like and Comments Section - Show for public boards, hidden while locked */}
+            {!isLocked && board?.isPublic && (
                 <div className="mt-12 space-y-8 max-w-4xl mx-auto px-4">
                     {!isOwner && (
                         <div className="flex justify-center">

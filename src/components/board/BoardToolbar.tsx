@@ -7,7 +7,7 @@ import { useSettings } from '@/contexts/SettingsContext';
 import {
     Upload, ArrowLeft, Loader2, Trash2,
     Share2, Check,
-    Grid3X3, Grid2X2, LayoutGrid, Layers, ChevronDown, ChevronUp, Settings
+    Grid3X3, Grid2X2, LayoutGrid, Layers, ChevronDown, ChevronUp, Settings, Lock
 } from 'lucide-react';
 
 interface BoardToolbarProps {
@@ -26,6 +26,7 @@ interface BoardToolbarProps {
     isCopied: boolean;
     onBatchUpload: () => void;
     onMergeBoard: () => void;
+    onLock: () => void;
 }
 
 export default function BoardToolbar({
@@ -43,7 +44,8 @@ export default function BoardToolbar({
     onShare,
     isCopied,
     onBatchUpload,
-    onMergeBoard
+    onMergeBoard,
+    onLock
 }: BoardToolbarProps) {
     const { cardSize: userCardSize, setCardSize } = useSettings();
     const [isSettingsExpanded, setIsSettingsExpanded] = useState(false);
@@ -196,6 +198,18 @@ export default function BoardToolbar({
                                 {userCardSize === 'small' && <Grid3X3 className="w-5 h-5 text-gray-500 dark:text-gray-400" />}
                                 {userCardSize === 'medium' && <Grid2X2 className="w-5 h-5 text-gray-500 dark:text-gray-400" />}
                                 {userCardSize === 'large' && <LayoutGrid className="w-5 h-5 text-gray-500 dark:text-gray-400" />}
+                            </button>
+                            {/* Lock board for child/kiosk use */}
+                            <button
+                                onClick={() => {
+                                    document.documentElement.requestFullscreen?.().catch(() => {});
+                                    onLock();
+                                }}
+                                className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors touch-manipulation"
+                                aria-label="Lock board for child use"
+                                title="Lock board for child use"
+                            >
+                                <Lock className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                             </button>
                         </div>
                     </div>

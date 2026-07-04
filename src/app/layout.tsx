@@ -62,8 +62,10 @@ export const viewport: Viewport = {
 
 import { Toaster } from 'sonner'
 import { SettingsProvider } from '@/contexts/SettingsContext'
+import { LockModeProvider } from '@/contexts/LockModeContext'
 import GlobalHeader from '@/components/GlobalHeader'
 import BottomNav from '@/components/BottomNav'
+import MainFrame from '@/components/MainFrame'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import ClerkThemeProvider from '@/components/ClerkThemeProvider'
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
@@ -81,15 +83,17 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
           <SettingsProvider>
-            <GlobalHeader />
-            <div className="pt-14 pb-16 sm:pt-16 sm:pb-0">
-              {children}
-            </div>
-            <BottomNav />
-            <Toaster position="top-center" richColors />
-            <ServiceWorkerRegistration />
-            <DocumentCacheWarmer />
-            <SpeedInsights />
+            <LockModeProvider>
+              <GlobalHeader />
+              <MainFrame>
+                {children}
+              </MainFrame>
+              <BottomNav />
+              <Toaster position="top-center" richColors />
+              <ServiceWorkerRegistration />
+              <DocumentCacheWarmer />
+              <SpeedInsights />
+            </LockModeProvider>
           </SettingsProvider>
         </body>
       </html>
