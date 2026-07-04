@@ -17,8 +17,8 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/',
   },
-  title: "My Voice Board - Custom Autism Communication Boards",
-  description: "Create personalized communication boards for non-verbal children. My Voice Board helps parents and teachers build custom communication board style boards with familiar photos and voices.",
+  title: "My Voice Board | Custom AAC & Communication Boards for All Ages",
+  description: "Create personalized communication boards for non-verbal children and adults. An intuitive AAC app ideal for autism, PECS alternatives, stroke recovery, and aphasia. Add familiar photos and voices.",
   robots: {
     index: true,
     follow: true,
@@ -40,15 +40,15 @@ export const metadata: Metadata = {
     title: 'Voice Board',
   },
   openGraph: {
-    title: "My Voice Board - Custom Autism Communication Boards",
-    description: "Empower non-verbal children with My Voice Board. The easy way for parents and teachers to create personalized communication boards.",
+    title: "My Voice Board | Custom AAC & Communication Boards for All Ages",
+    description: "Create personalized communication boards for non-verbal children and adults. Ideal for autism, stroke recovery, and aphasia.",
     images: ['/logo.svg'],
     type: 'website',
   },
   twitter: {
     card: 'summary',
-    title: "My Voice Board - Custom Autism Communication Boards",
-    description: "Create personalized communication boards with custom photos and audio for non-verbal children.",
+    title: "My Voice Board | Custom AAC & Communication Boards for All Ages",
+    description: "Create personalized communication boards with custom photos and audio for non-verbal children and adults.",
     images: ['/logo.svg'],
   },
 };

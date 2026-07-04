@@ -79,7 +79,7 @@ export default function Home() {
             My Voice Board
           </h1>
           <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 font-medium max-w-md mx-auto">
-            Giving a voice to every child
+            Giving a voice to everyone
           </p>
         </div>
 
@@ -118,10 +118,18 @@ export default function Home() {
         </div>
 
         {/* Footer/Info */}
-        <div className="mt-8 text-center text-slate-400 text-sm animate-in fade-in duration-1000 delay-500">
+        <div className="mt-8 flex flex-col items-center gap-2 text-center text-slate-400 text-sm animate-in fade-in duration-1000 delay-500">
           <Link href="/about" className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors underline underline-offset-4 decoration-slate-300 dark:decoration-slate-700">
             About My Voice Board & Privacy
           </Link>
+          <div className="flex gap-4 mt-2">
+            <Link href="/use-cases/autism-communication" className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+              For Autism & PECS
+            </Link>
+            <Link href="/use-cases/stroke-recovery" className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+              For Stroke & Aphasia
+            </Link>
+          </div>
         </div>
 
       </div>
