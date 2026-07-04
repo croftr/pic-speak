@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { SignedIn, SignedOut, SignInButton } from '@clerk/nextjs';
+import { SignedOut, SignInButton } from '@clerk/nextjs';
 import { Globe, Grid, LogIn } from 'lucide-react';
+import { useOfflineAuth } from '@/hooks/useOfflineAuth';
 import { clsx } from 'clsx';
 import Image from 'next/image';
 
@@ -60,6 +61,10 @@ function NavCard({ icon, label, colorClass, delay = 0, href, className, style, a
 }
 
 export default function Home() {
+  // Offline-aware: keeps "My Boards" reachable with no connection, when
+  // Clerk can't confirm the session but the user's boards are cached.
+  const { isSignedIn } = useOfflineAuth();
+
   return (
     <main className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-violet-100 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-950 dark:to-slate-950 flex flex-col items-center justify-center p-4">
 
@@ -81,6 +86,16 @@ export default function Home() {
         {/* Action Grid */}
         <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8 px-4">
 
+          {isSignedIn && (
+            <NavCard
+              href="/my-boards"
+              icon={<Grid size={64} className="text-purple-500" />}
+              label="My Boards"
+              colorClass="border-purple-100 dark:border-purple-900/30 hover:border-purple-300 dark:hover:border-purple-700 hover:ring-4 ring-purple-400/30"
+              delay={100}
+            />
+          )}
+
           <SignedOut>
             <SignInButton mode="modal">
               <NavCard
@@ -91,33 +106,15 @@ export default function Home() {
                 delay={100}
               />
             </SignInButton>
-
-            <NavCard
-              href="/public-boards"
-              icon={<Globe size={64} className="text-blue-500" />}
-              label="Public Boards"
-              colorClass="border-blue-100 dark:border-blue-900/30 hover:border-blue-300 dark:hover:border-blue-700 hover:ring-4 ring-blue-400/30"
-              delay={200}
-            />
           </SignedOut>
 
-          <SignedIn>
-            <NavCard
-              href="/my-boards"
-              icon={<Grid size={64} className="text-purple-500" />}
-              label="My Boards"
-              colorClass="border-purple-100 dark:border-purple-900/30 hover:border-purple-300 dark:hover:border-purple-700 hover:ring-4 ring-purple-400/30"
-              delay={100}
-            />
-
-            <NavCard
-              href="/public-boards"
-              icon={<Globe size={64} className="text-blue-500" />}
-              label="Public Boards"
-              colorClass="border-blue-100 dark:border-blue-900/30 hover:border-blue-300 dark:hover:border-blue-700 hover:ring-4 ring-blue-400/30"
-              delay={200}
-            />
-          </SignedIn>
+          <NavCard
+            href="/public-boards"
+            icon={<Globe size={64} className="text-blue-500" />}
+            label="Public Boards"
+            colorClass="border-blue-100 dark:border-blue-900/30 hover:border-blue-300 dark:hover:border-blue-700 hover:ring-4 ring-blue-400/30"
+            delay={200}
+          />
         </div>
 
         {/* Footer/Info */}

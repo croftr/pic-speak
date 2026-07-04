@@ -114,6 +114,18 @@ async function main() {
         }
         console.log(`   OK — offline fallback shown ("${heading}")`);
 
+        // A previously-signed-in user must keep their "My Boards" entrance
+        // offline (Clerk can't confirm the session, but the boards are cached).
+        // setOffline makes navigator.onLine false and blocks page-initiated
+        // requests like clerk-js, mirroring a device with wifi/data off.
+        console.log('10. Offline landing page for a remembered signed-in user ...');
+        await page.context().setOffline(true);
+        await page.goto(BASE_URL, { waitUntil: 'load' });
+        await page.evaluate(() => localStorage.setItem('mvb:was-signed-in', '1'));
+        await page.reload({ waitUntil: 'load' });
+        await page.waitForSelector('a[href="/my-boards"]', { timeout: 10_000 });
+        console.log('   OK — My Boards link shown from offline auth memory');
+
         await browser.close();
         console.log('\nAll offline checks passed.');
     } finally {

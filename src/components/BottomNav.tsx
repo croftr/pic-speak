@@ -2,11 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { SignedIn } from '@clerk/nextjs';
 import { Home, Grid, Globe } from 'lucide-react';
+import { useOfflineAuth } from '@/hooks/useOfflineAuth';
 
 export default function BottomNav() {
     const pathname = usePathname();
+    // Offline-aware: keep My Boards reachable when boards are cached but
+    // Clerk can't confirm the session without a connection.
+    const { isSignedIn } = useOfflineAuth();
 
     // Hide on board pages — the board view is the primary interaction surface
     if (pathname.startsWith('/board/')) return null;
@@ -29,12 +32,12 @@ export default function BottomNav() {
                         <span className="text-[10px] font-semibold">Home</span>
                     </Link>
 
-                    <SignedIn>
+                    {isSignedIn && (
                         <Link href="/my-boards" className={linkClass('/my-boards')}>
                             <Grid className="w-5 h-5" />
                             <span className="text-[10px] font-semibold">My Boards</span>
                         </Link>
-                    </SignedIn>
+                    )}
 
                     <Link href="/public-boards" className={linkClass('/public-boards')}>
                         <Globe className="w-5 h-5" />

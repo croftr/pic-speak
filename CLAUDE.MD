@@ -137,6 +137,7 @@ The app is an installable PWA with offline support:
 - `src/components/ServiceWorkerRegistration.tsx` - registers the worker (production only)
 - `src/components/DocumentCacheWarmer.tsx` - refetches key pages (`/`, `/my-boards`, `/public-boards`, `/board/*`) as full HTML after client-side navigations, because Next.js soft navigations only fetch RSC payloads and would otherwise leave nothing launchable offline
 - `src/hooks/useAudioPreload.ts` - prefetches all card audio when a board opens so taps speak instantly and work offline
+- `src/hooks/useOfflineAuth.ts` - Clerk can't confirm sessions offline, so this remembers "device had a signed-in user" in localStorage and keeps My Boards navigation visible offline (used by the landing page, GlobalHeader, BottomNav). Cached pages are server-rendered per-user and display without live auth.
 - PWA `start_url` is `/my-boards` (cached board list) so an offline app launch lands somewhere useful
 - `next.config.ts` serves `/sw.js` with `no-cache` so worker updates deploy immediately
 

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserButton, SignedIn, SignedOut, SignInButton, useUser } from '@clerk/nextjs';
 import { Grid, Globe, Info, Shield } from 'lucide-react';
+import { useOfflineAuth } from '@/hooks/useOfflineAuth';
 import Image from 'next/image';
 
 const ADMIN_EMAILS = [
@@ -17,6 +18,9 @@ export default function GlobalHeader() {
     const [lastScrollY, setLastScrollY] = useState(0);
     const pathname = usePathname();
     const { user } = useUser();
+    // Offline-aware: keep the My Boards link visible when the user's boards
+    // are cached but Clerk can't confirm the session without a connection.
+    const { isSignedIn } = useOfflineAuth();
 
     const isUserAdmin = user?.emailAddresses.some(
         e => ADMIN_EMAILS.includes(e.emailAddress.toLowerCase())
@@ -70,7 +74,7 @@ export default function GlobalHeader() {
 
                     {/* Desktop Nav Links - absolutely centered */}
                     <nav className="hidden sm:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
-                        <SignedIn>
+                        {isSignedIn && (
                             <Link
                                 href="/my-boards"
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${isActive('/my-boards')
@@ -81,7 +85,7 @@ export default function GlobalHeader() {
                                 <Grid className="w-4 h-4" />
                                 My Boards
                             </Link>
-                        </SignedIn>
+                        )}
                         <Link
                             href="/public-boards"
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${isActive('/public-boards')
