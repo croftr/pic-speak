@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 interface UnlockQuizDialogProps {
     isOpen: boolean;
@@ -34,8 +35,18 @@ export default function UnlockQuizDialog({ isOpen, onClose, onUnlock }: UnlockQu
     const [question, setQuestion] = useState(generateQuestion);
     const [wrongAttempts, setWrongAttempts] = useState(0);
     const [isShaking, setIsShaking] = useState(false);
+    const [mounted, setMounted] = useState(false);
 
-    if (!isOpen) return null;
+    // Portal to <body> — a fixed-position dialog nested inside an ancestor
+    // with backdrop-blur (LockedBar's header) gets trapped in that ancestor's
+    // containing block per spec, so it paints behind the card grid instead of
+    // the viewport. Escaping to body avoids that entirely.
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- document.body only exists client-side; this is the standard portal-mount pattern
+        setMounted(true);
+    }, []);
+
+    if (!isOpen || !mounted) return null;
 
     const handleAnswer = (value: number) => {
         if (value === question.answer) {
@@ -56,7 +67,7 @@ export default function UnlockQuizDialog({ isOpen, onClose, onUnlock }: UnlockQu
         setQuestion(generateQuestion());
     };
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[200] flex items-start justify-center p-4 pt-24 sm:pt-32">
             <div
                 className="fixed inset-0 -z-10 bg-black/50 backdrop-blur-sm animate-in fade-in"
@@ -90,6 +101,7 @@ export default function UnlockQuizDialog({ isOpen, onClose, onUnlock }: UnlockQu
                     ))}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
