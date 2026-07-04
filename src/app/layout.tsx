@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -32,7 +32,12 @@ export const metadata: Metadata = {
       { url: '/logo.svg', sizes: 'any' },
       { url: '/logo.svg', type: 'image/svg+xml' },
     ],
-    apple: '/logo.svg',
+    apple: '/icons/apple-touch-icon.png',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Voice Board',
   },
   openGraph: {
     title: "My Voice Board - Custom Autism Communication Boards",
@@ -48,12 +53,20 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f8fafc' },
+    { media: '(prefers-color-scheme: dark)', color: '#020617' },
+  ],
+};
+
 import { Toaster } from 'sonner'
 import { SettingsProvider } from '@/contexts/SettingsContext'
 import GlobalHeader from '@/components/GlobalHeader'
 import BottomNav from '@/components/BottomNav'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import ClerkThemeProvider from '@/components/ClerkThemeProvider'
+import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
 
 export default function RootLayout({
   children,
@@ -73,6 +86,7 @@ export default function RootLayout({
             </div>
             <BottomNav />
             <Toaster position="top-center" richColors />
+            <ServiceWorkerRegistration />
             <SpeedInsights />
           </SettingsProvider>
         </body>

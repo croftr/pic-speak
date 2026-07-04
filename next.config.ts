@@ -78,6 +78,14 @@ const nextConfig: NextConfig = {
         source: '/(.*)',
         headers: securityHeaders,
       },
+      {
+        // The service worker must never be served stale, or deployed updates
+        // (and cache-strategy fixes) take up to 24h to reach installed clients.
+        source: '/sw.js',
+        headers: [
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+        ],
+      },
     ];
   },
 };

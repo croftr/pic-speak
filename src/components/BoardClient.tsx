@@ -9,6 +9,7 @@ import { useSettings } from '@/contexts/SettingsContext';
 import { Plus } from 'lucide-react';
 
 import { useBoardCards } from '@/hooks/useBoardCards';
+import { useAudioPreload } from '@/hooks/useAudioPreload';
 import BoardToolbar from '@/components/board/BoardToolbar';
 import CardGrid from '@/components/board/CardGrid';
 import BoardFilter from '@/components/board/BoardFilter';
@@ -57,6 +58,9 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
         handleMoveCopySuccess,
         handleMergeComplete
     } = useBoardCards(initialCards, boardId);
+
+    // Warm all card audio so taps speak instantly and work offline
+    useAudioPreload(cards);
 
     const [board, setBoard] = useState<Board>(initialBoard);
     const [isOwner] = useState(initialIsOwner);
