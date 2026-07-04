@@ -7,7 +7,7 @@ import { useSettings } from '@/contexts/SettingsContext';
 import {
     Upload, ArrowLeft, Loader2, Trash2,
     Share2, Check,
-    Grid3X3, Grid2X2, LayoutGrid, Layers, ChevronDown, ChevronUp, Settings, Lock
+    Grid3X3, Grid2X2, LayoutGrid, Layers, ChevronDown, ChevronUp, Settings, LockOpen
 } from 'lucide-react';
 
 interface BoardToolbarProps {
@@ -209,7 +209,7 @@ export default function BoardToolbar({
                                 aria-label="Lock board for child use"
                                 title="Lock board for child use"
                             >
-                                <Lock className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                                <LockOpen className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                             </button>
                         </div>
                     </div>

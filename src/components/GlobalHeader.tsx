@@ -48,7 +48,9 @@ export default function GlobalHeader() {
 
     const isActive = (path: string) => pathname === path || pathname.startsWith(path + '/');
 
-    if (lockedBoardId) return null;
+    // Scoped to the locked board's own route — a stale lockedBoardId (e.g. the
+    // user navigated away without unlocking) must not hide the header everywhere.
+    if (lockedBoardId && pathname === `/board/${lockedBoardId}`) return null;
 
     return (
         <header

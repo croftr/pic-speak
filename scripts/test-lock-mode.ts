@@ -130,6 +130,24 @@ async function main() {
         await page.locator('button[aria-label="Unlock board"]').waitFor({ state: 'visible', timeout: 10_000 });
         console.log('   OK — lock state restored after reload');
 
+        // Regression check: a stale `mvb:locked-board` in sessionStorage (e.g. the
+        // user ends up away from the board without going through unlock) must not
+        // hide the GlobalHeader or strip its top padding on other pages — both are
+        // scoped to the locked board's own route.
+        console.log('10. Navigating to home while a stale lock is still set ...');
+        await page.goto(BASE_URL, { waitUntil: 'load' });
+        await page.waitForSelector('a[href="/my-boards"], a[href="/public-boards"]', { timeout: 10_000 });
+        const headerVisible = await page.locator('header').first().isVisible();
+        if (!headerVisible) throw new Error('header did not render on home page despite stale lock');
+        const paddingTop = await page.evaluate(() => {
+            const el = document.querySelector('body > header + div');
+            return el ? parseFloat(getComputedStyle(el).paddingTop) : null;
+        });
+        if (!paddingTop || paddingTop < 20) {
+            throw new Error(`expected top padding to clear the fixed header on home page, got ${paddingTop}px`);
+        }
+        console.log(`   OK — header visible and content padded correctly on home page (padding-top: ${paddingTop}px)`);
+
         await browser.close();
         console.log('\nAll lock-mode checks passed.');
     } finally {

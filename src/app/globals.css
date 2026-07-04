@@ -172,6 +172,22 @@ body.lock-mode {
   animation: shake 0.4s ease-in-out;
 }
 
+/* Draws attention to the unlock button when a board first becomes locked. */
+@keyframes lock-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
+  }
+  50% {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+  }
+}
+
+.animate-lock-pulse {
+  animation: lock-pulse 0.6s ease-in-out 3;
+}
+
 /* Hide scrollbar but keep functionality */
 .scrollbar-hide {
   -ms-overflow-style: none;

@@ -85,7 +85,7 @@ const STARTER_BOARDS: Board[] = [
         isPublic: true,
         creatorName: 'My Voice Board',
         creatorImageUrl: '/logo.svg',
-        cardCount: 34
+        cardCount: 37
     }
 ];
 
@@ -104,6 +104,10 @@ const TEMPLATE_CARDS_REGISTRY: Record<string, Omit<Card, 'id' | 'boardId' | 'ord
     'tpl-mobile-phone': { label: 'Mobile Phone', imageUrl: '/prebuilt/mobile_phone.webp', audioUrl: '/prebuilt/mobile_phone.mp3', category: 'Activities', templateKey: 'tpl-mobile-phone' },
     'tpl-toilet': { label: 'Toilet', imageUrl: '/prebuilt/toilet.webp', audioUrl: '/prebuilt/toilet.mp3', category: 'Activities', templateKey: 'tpl-toilet' },
     'tpl-brush-teeth': { label: 'Brush Teeth', imageUrl: '/prebuilt/brush_teeth.webp', audioUrl: '/prebuilt/brush_teeth.mp3', category: 'Activities', templateKey: 'tpl-brush-teeth' },
+    'tpl-car': { label: 'Car', imageUrl: '/prebuilt/car.webp', audioUrl: '/prebuilt/car.wav', category: 'Activities', templateKey: 'tpl-car' },
+    'tpl-tv': { label: 'TV', imageUrl: '/prebuilt/tv.webp', audioUrl: '/prebuilt/tv.wav', category: 'Activities', templateKey: 'tpl-tv' },
+    'tpl-wash-hands': { label: 'Wash Hands', imageUrl: '/prebuilt/wash_hands.webp', audioUrl: '/prebuilt/wash_hands.wav', category: 'Activities', templateKey: 'tpl-wash-hands' },
+    'tpl-book': { label: 'Book', imageUrl: '/prebuilt/book.webp', audioUrl: '/prebuilt/book.wav', category: 'Activities', templateKey: 'tpl-book' },
     // Places
     'tpl-bed': { label: 'Bed', imageUrl: '/prebuilt/bed.webp', audioUrl: '/prebuilt/bed.mp3', category: 'Places', templateKey: 'tpl-bed' },
     'tpl-school': { label: 'School', imageUrl: '/prebuilt/school.webp', audioUrl: '/prebuilt/school.wav', category: 'Places', templateKey: 'tpl-school' },
@@ -131,8 +135,6 @@ const TEMPLATE_CARDS_REGISTRY: Record<string, Omit<Card, 'id' | 'boardId' | 'ord
     'tpl-dog': { label: 'Dog', imageUrl: '/prebuilt/dog.webp', audioUrl: '/prebuilt/dog.wav', category: 'Animals', templateKey: 'tpl-dog' },
     'tpl-cat': { label: 'Cat', imageUrl: '/prebuilt/cat.webp', audioUrl: '/prebuilt/cat.wav', category: 'Animals', templateKey: 'tpl-cat' },
     'tpl-fish': { label: 'Fish', imageUrl: '/prebuilt/fish.webp', audioUrl: '/prebuilt/fish.wav', category: 'Animals', templateKey: 'tpl-fish' },
-    // Activities
-    'tpl-car': { label: 'Car', imageUrl: '/prebuilt/car.webp', audioUrl: '/prebuilt/car.wav', category: 'Activities', templateKey: 'tpl-car' },
 };
 
 // Export for use in other modules
@@ -155,35 +157,37 @@ const STARTER_CARDS: Record<string, Card[]> = {
         { id: 'sbp-9', boardId: 'starter-template', label: 'Mobile Phone', imageUrl: '/prebuilt/mobile_phone.webp', audioUrl: '/prebuilt/mobile_phone.mp3', category: 'Activities', order: 8, templateKey: 'tpl-mobile-phone' },
         { id: 'sbp-10', boardId: 'starter-template', label: 'Toilet', imageUrl: '/prebuilt/toilet.webp', audioUrl: '/prebuilt/toilet.mp3', category: 'Activities', order: 9, templateKey: 'tpl-toilet' },
         { id: 'sbp-11', boardId: 'starter-template', label: 'Brush Teeth', imageUrl: '/prebuilt/brush_teeth.webp', audioUrl: '/prebuilt/brush_teeth.mp3', category: 'Activities', order: 10, templateKey: 'tpl-brush-teeth' },
+        { id: 'sbp-30', boardId: 'starter-template', label: 'Car', imageUrl: '/prebuilt/car.webp', audioUrl: '/prebuilt/car.wav', category: 'Activities', order: 11, templateKey: 'tpl-car' },
+        { id: 'sbp-35', boardId: 'starter-template', label: 'TV', imageUrl: '/prebuilt/tv.webp', audioUrl: '/prebuilt/tv.wav', category: 'Activities', order: 12, templateKey: 'tpl-tv' },
+        { id: 'sbp-36', boardId: 'starter-template', label: 'Wash Hands', imageUrl: '/prebuilt/wash_hands.webp', audioUrl: '/prebuilt/wash_hands.wav', category: 'Activities', order: 13, templateKey: 'tpl-wash-hands' },
+        { id: 'sbp-37', boardId: 'starter-template', label: 'Book', imageUrl: '/prebuilt/book.webp', audioUrl: '/prebuilt/book.wav', category: 'Activities', order: 14, templateKey: 'tpl-book' },
         // Places
-        { id: 'sbp-12', boardId: 'starter-template', label: 'Bed', imageUrl: '/prebuilt/bed.webp', audioUrl: '/prebuilt/bed.mp3', category: 'Places', order: 11, templateKey: 'tpl-bed' },
-        { id: 'sbp-13', boardId: 'starter-template', label: 'School', imageUrl: '/prebuilt/school.webp', audioUrl: '/prebuilt/school.wav', category: 'Places', order: 12, templateKey: 'tpl-school' },
+        { id: 'sbp-12', boardId: 'starter-template', label: 'Bed', imageUrl: '/prebuilt/bed.webp', audioUrl: '/prebuilt/bed.mp3', category: 'Places', order: 15, templateKey: 'tpl-bed' },
+        { id: 'sbp-13', boardId: 'starter-template', label: 'School', imageUrl: '/prebuilt/school.webp', audioUrl: '/prebuilt/school.wav', category: 'Places', order: 16, templateKey: 'tpl-school' },
         // Food
-        { id: 'sbp-14', boardId: 'starter-template', label: 'Juice', imageUrl: '/prebuilt/juice.webp', audioUrl: '/prebuilt/juice.wav', category: 'Food', order: 13, templateKey: 'tpl-juice' },
-        { id: 'sbp-15', boardId: 'starter-template', label: 'Chocolate', imageUrl: '/prebuilt/chocolate.webp', audioUrl: '/prebuilt/chocolate.wav', category: 'Food', order: 14, templateKey: 'tpl-chocolate' },
-        { id: 'sbp-16', boardId: 'starter-template', label: 'Sweets', imageUrl: '/prebuilt/sweets.webp', audioUrl: '/prebuilt/sweets.wav', category: 'Food', order: 15, templateKey: 'tpl-sweets' },
-        { id: 'sbp-17', boardId: 'starter-template', label: 'Cake', imageUrl: '/prebuilt/cake.webp', audioUrl: '/prebuilt/cake.wav', category: 'Food', order: 16, templateKey: 'tpl-cake' },
-        { id: 'sbp-18', boardId: 'starter-template', label: 'Apple', imageUrl: '/prebuilt/apple.webp', audioUrl: '/prebuilt/apple.wav', category: 'Food', order: 17, templateKey: 'tpl-apple' },
-        { id: 'sbp-31', boardId: 'starter-template', label: 'Water', imageUrl: '/prebuilt/water.webp', audioUrl: '/prebuilt/water.wav', category: 'Food', order: 18, templateKey: 'tpl-water' },
-        { id: 'sbp-32', boardId: 'starter-template', label: 'Milk', imageUrl: '/prebuilt/milk.webp', audioUrl: '/prebuilt/milk.wav', category: 'Food', order: 19, templateKey: 'tpl-milk' },
-        { id: 'sbp-33', boardId: 'starter-template', label: 'Banana', imageUrl: '/prebuilt/banana.webp', audioUrl: '/prebuilt/banana.wav', category: 'Food', order: 20, templateKey: 'tpl-banana' },
-        { id: 'sbp-34', boardId: 'starter-template', label: 'Bread', imageUrl: '/prebuilt/bread.webp', audioUrl: '/prebuilt/bread.wav', category: 'Food', order: 21, templateKey: 'tpl-bread' },
+        { id: 'sbp-14', boardId: 'starter-template', label: 'Juice', imageUrl: '/prebuilt/juice.webp', audioUrl: '/prebuilt/juice.wav', category: 'Food', order: 17, templateKey: 'tpl-juice' },
+        { id: 'sbp-15', boardId: 'starter-template', label: 'Chocolate', imageUrl: '/prebuilt/chocolate.webp', audioUrl: '/prebuilt/chocolate.wav', category: 'Food', order: 18, templateKey: 'tpl-chocolate' },
+        { id: 'sbp-16', boardId: 'starter-template', label: 'Sweets', imageUrl: '/prebuilt/sweets.webp', audioUrl: '/prebuilt/sweets.wav', category: 'Food', order: 19, templateKey: 'tpl-sweets' },
+        { id: 'sbp-17', boardId: 'starter-template', label: 'Cake', imageUrl: '/prebuilt/cake.webp', audioUrl: '/prebuilt/cake.wav', category: 'Food', order: 20, templateKey: 'tpl-cake' },
+        { id: 'sbp-18', boardId: 'starter-template', label: 'Apple', imageUrl: '/prebuilt/apple.webp', audioUrl: '/prebuilt/apple.wav', category: 'Food', order: 21, templateKey: 'tpl-apple' },
+        { id: 'sbp-31', boardId: 'starter-template', label: 'Water', imageUrl: '/prebuilt/water.webp', audioUrl: '/prebuilt/water.wav', category: 'Food', order: 22, templateKey: 'tpl-water' },
+        { id: 'sbp-32', boardId: 'starter-template', label: 'Milk', imageUrl: '/prebuilt/milk.webp', audioUrl: '/prebuilt/milk.wav', category: 'Food', order: 23, templateKey: 'tpl-milk' },
+        { id: 'sbp-33', boardId: 'starter-template', label: 'Banana', imageUrl: '/prebuilt/banana.webp', audioUrl: '/prebuilt/banana.wav', category: 'Food', order: 24, templateKey: 'tpl-banana' },
+        { id: 'sbp-34', boardId: 'starter-template', label: 'Bread', imageUrl: '/prebuilt/bread.webp', audioUrl: '/prebuilt/bread.wav', category: 'Food', order: 25, templateKey: 'tpl-bread' },
         // Core - New
-        { id: 'sbp-19', boardId: 'starter-template', label: 'Help', imageUrl: '/prebuilt/help.webp', audioUrl: '/prebuilt/help.wav', category: 'Core', order: 22, templateKey: 'tpl-help' },
-        { id: 'sbp-20', boardId: 'starter-template', label: 'Start', imageUrl: '/prebuilt/start.webp', audioUrl: '/prebuilt/start.wav', category: 'Core', order: 23, templateKey: 'tpl-start' },
-        { id: 'sbp-21', boardId: 'starter-template', label: 'Stop', imageUrl: '/prebuilt/stop.webp', audioUrl: '/prebuilt/stop.wav', category: 'Core', order: 24, templateKey: 'tpl-stop' },
-        { id: 'sbp-22', boardId: 'starter-template', label: 'More', imageUrl: '/prebuilt/more.webp', audioUrl: '/prebuilt/more.wav', category: 'Core', order: 25, templateKey: 'tpl-more' },
+        { id: 'sbp-19', boardId: 'starter-template', label: 'Help', imageUrl: '/prebuilt/help.webp', audioUrl: '/prebuilt/help.wav', category: 'Core', order: 26, templateKey: 'tpl-help' },
+        { id: 'sbp-20', boardId: 'starter-template', label: 'Start', imageUrl: '/prebuilt/start.webp', audioUrl: '/prebuilt/start.wav', category: 'Core', order: 27, templateKey: 'tpl-start' },
+        { id: 'sbp-21', boardId: 'starter-template', label: 'Stop', imageUrl: '/prebuilt/stop.webp', audioUrl: '/prebuilt/stop.wav', category: 'Core', order: 28, templateKey: 'tpl-stop' },
+        { id: 'sbp-22', boardId: 'starter-template', label: 'More', imageUrl: '/prebuilt/more.webp', audioUrl: '/prebuilt/more.wav', category: 'Core', order: 29, templateKey: 'tpl-more' },
         // Feelings
-        { id: 'sbp-23', boardId: 'starter-template', label: 'Hungry', imageUrl: '/prebuilt/hungry.webp', audioUrl: '/prebuilt/hungry.wav', category: 'Feelings', order: 26, templateKey: 'tpl-hungry' },
-        { id: 'sbp-24', boardId: 'starter-template', label: 'Tired', imageUrl: '/prebuilt/tired.webp', audioUrl: '/prebuilt/tired.wav', category: 'Feelings', order: 27, templateKey: 'tpl-tired' },
-        { id: 'sbp-25', boardId: 'starter-template', label: 'Happy', imageUrl: '/prebuilt/happy.webp', audioUrl: '/prebuilt/happy.wav', category: 'Feelings', order: 28, templateKey: 'tpl-happy' },
-        { id: 'sbp-26', boardId: 'starter-template', label: 'Sad', imageUrl: '/prebuilt/sad.webp', audioUrl: '/prebuilt/sad.wav', category: 'Feelings', order: 29, templateKey: 'tpl-sad' },
+        { id: 'sbp-23', boardId: 'starter-template', label: 'Hungry', imageUrl: '/prebuilt/hungry.webp', audioUrl: '/prebuilt/hungry.wav', category: 'Feelings', order: 30, templateKey: 'tpl-hungry' },
+        { id: 'sbp-24', boardId: 'starter-template', label: 'Tired', imageUrl: '/prebuilt/tired.webp', audioUrl: '/prebuilt/tired.wav', category: 'Feelings', order: 31, templateKey: 'tpl-tired' },
+        { id: 'sbp-25', boardId: 'starter-template', label: 'Happy', imageUrl: '/prebuilt/happy.webp', audioUrl: '/prebuilt/happy.wav', category: 'Feelings', order: 32, templateKey: 'tpl-happy' },
+        { id: 'sbp-26', boardId: 'starter-template', label: 'Sad', imageUrl: '/prebuilt/sad.webp', audioUrl: '/prebuilt/sad.wav', category: 'Feelings', order: 33, templateKey: 'tpl-sad' },
         // Animals
-        { id: 'sbp-27', boardId: 'starter-template', label: 'Dog', imageUrl: '/prebuilt/dog.webp', audioUrl: '/prebuilt/dog.wav', category: 'Animals', order: 30, templateKey: 'tpl-dog' },
-        { id: 'sbp-28', boardId: 'starter-template', label: 'Cat', imageUrl: '/prebuilt/cat.webp', audioUrl: '/prebuilt/cat.wav', category: 'Animals', order: 31, templateKey: 'tpl-cat' },
-        { id: 'sbp-29', boardId: 'starter-template', label: 'Fish', imageUrl: '/prebuilt/fish.webp', audioUrl: '/prebuilt/fish.wav', category: 'Animals', order: 32, templateKey: 'tpl-fish' },
-        // Activities
-        { id: 'sbp-30', boardId: 'starter-template', label: 'Car', imageUrl: '/prebuilt/car.webp', audioUrl: '/prebuilt/car.wav', category: 'Activities', order: 33, templateKey: 'tpl-car' },
+        { id: 'sbp-27', boardId: 'starter-template', label: 'Dog', imageUrl: '/prebuilt/dog.webp', audioUrl: '/prebuilt/dog.wav', category: 'Animals', order: 34, templateKey: 'tpl-dog' },
+        { id: 'sbp-28', boardId: 'starter-template', label: 'Cat', imageUrl: '/prebuilt/cat.webp', audioUrl: '/prebuilt/cat.wav', category: 'Animals', order: 35, templateKey: 'tpl-cat' },
+        { id: 'sbp-29', boardId: 'starter-template', label: 'Fish', imageUrl: '/prebuilt/fish.webp', audioUrl: '/prebuilt/fish.wav', category: 'Animals', order: 36, templateKey: 'tpl-fish' },
     ]
 };
 

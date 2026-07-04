@@ -18,9 +18,10 @@ export default function UnlockButton() {
                     setIsQuizOpen(true);
                 }}
                 aria-label="Unlock board"
-                className="p-2 rounded-full bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 transition-colors touch-manipulation"
+                title="Board locked — tap to unlock"
+                className="p-2 rounded-full bg-red-500 hover:bg-red-600 shadow-md shadow-red-500/30 transition-colors touch-manipulation animate-lock-pulse"
             >
-                <Lock className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                <Lock className="w-5 h-5 text-white" />
             </button>
 
             <UnlockQuizDialog
