@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { SignedOut, SignInButton } from '@clerk/nextjs';
-import { Globe, Grid, LogIn } from 'lucide-react';
+import { Globe, Grid, LogIn, Play } from 'lucide-react';
 import { useOfflineAuth } from '@/hooks/useOfflineAuth';
 import { clsx } from 'clsx';
 import Image from 'next/image';
@@ -79,7 +79,7 @@ export default function Home() {
             My Voice Board
           </h1>
           <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 font-medium max-w-md mx-auto">
-            Giving a voice to everyone
+            Build picture boards with your own photos and your own voice. Tap a card — it speaks.
           </p>
         </div>
 
@@ -96,17 +96,15 @@ export default function Home() {
             />
           )}
 
-          <SignedOut>
-            <SignInButton mode="modal">
-              <NavCard
-                as="div"
-                icon={<LogIn size={64} className="text-green-500" />}
-                label="Log In"
-                colorClass="border-green-100 dark:border-green-900/30 hover:border-green-300 dark:hover:border-green-700 hover:ring-4 ring-green-400/30"
-                delay={100}
-              />
-            </SignInButton>
-          </SignedOut>
+          {!isSignedIn && (
+            <NavCard
+              href="/board/starter-template"
+              icon={<Play size={64} className="text-orange-500" />}
+              label="Try a Board"
+              colorClass="border-orange-100 dark:border-orange-900/30 hover:border-orange-300 dark:hover:border-orange-700 hover:ring-4 ring-orange-400/30"
+              delay={100}
+            />
+          )}
 
           <NavCard
             href="/public-boards"
@@ -115,6 +113,19 @@ export default function Home() {
             colorClass="border-blue-100 dark:border-blue-900/30 hover:border-blue-300 dark:hover:border-blue-700 hover:ring-4 ring-blue-400/30"
             delay={200}
           />
+
+          <SignedOut>
+            <SignInButton mode="modal">
+              <NavCard
+                as="div"
+                icon={<LogIn size={64} className="text-green-500" />}
+                label="Log In"
+                colorClass="border-green-100 dark:border-green-900/30 hover:border-green-300 dark:hover:border-green-700 hover:ring-4 ring-green-400/30"
+                delay={300}
+                className="sm:col-span-2 cursor-pointer"
+              />
+            </SignInButton>
+          </SignedOut>
         </div>
 
         {/* Footer/Info */}
