@@ -85,7 +85,7 @@ const STARTER_BOARDS: Board[] = [
         isPublic: true,
         creatorName: 'My Voice Board',
         creatorImageUrl: '/logo.svg',
-        cardCount: 29
+        cardCount: 30
     }
 ];
 
@@ -127,6 +127,8 @@ const TEMPLATE_CARDS_REGISTRY: Record<string, Omit<Card, 'id' | 'boardId' | 'ord
     'tpl-dog': { label: 'Dog', imageUrl: '/prebuilt/dog.webp', audioUrl: '/prebuilt/dog.wav', category: 'Animals', templateKey: 'tpl-dog' },
     'tpl-cat': { label: 'Cat', imageUrl: '/prebuilt/cat.webp', audioUrl: '/prebuilt/cat.wav', category: 'Animals', templateKey: 'tpl-cat' },
     'tpl-fish': { label: 'Fish', imageUrl: '/prebuilt/fish.webp', audioUrl: '/prebuilt/fish.wav', category: 'Animals', templateKey: 'tpl-fish' },
+    // Activities
+    'tpl-car': { label: 'Car', imageUrl: '/prebuilt/car.webp', audioUrl: '/prebuilt/car.wav', category: 'Activities', templateKey: 'tpl-car' },
 };
 
 // Export for use in other modules
@@ -172,6 +174,8 @@ const STARTER_CARDS: Record<string, Card[]> = {
         { id: 'sbp-27', boardId: 'starter-template', label: 'Dog', imageUrl: '/prebuilt/dog.webp', audioUrl: '/prebuilt/dog.wav', category: 'Animals', order: 26, templateKey: 'tpl-dog' },
         { id: 'sbp-28', boardId: 'starter-template', label: 'Cat', imageUrl: '/prebuilt/cat.webp', audioUrl: '/prebuilt/cat.wav', category: 'Animals', order: 27, templateKey: 'tpl-cat' },
         { id: 'sbp-29', boardId: 'starter-template', label: 'Fish', imageUrl: '/prebuilt/fish.webp', audioUrl: '/prebuilt/fish.wav', category: 'Animals', order: 28, templateKey: 'tpl-fish' },
+        // Activities
+        { id: 'sbp-30', boardId: 'starter-template', label: 'Car', imageUrl: '/prebuilt/car.webp', audioUrl: '/prebuilt/car.wav', category: 'Activities', order: 29, templateKey: 'tpl-car' },
     ]
 };
 
