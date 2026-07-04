@@ -6,6 +6,12 @@ import { useSearchParams } from 'next/navigation';
 import { ArrowRight, Eye, User, Heart, MessageCircle, Layers, Trash2 } from 'lucide-react';
 import { Board } from '@/types';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
+import { toast } from 'sonner';
+
+const ConfirmDialog = dynamic(() => import('@/components/ConfirmDialog'), {
+    loading: () => null
+});
 
 function PublicBoardsContent() {
     const searchParams = useSearchParams();
@@ -33,21 +39,28 @@ function PublicBoardsContent() {
             .catch(() => {});
     }, []);
 
-    const handleDeleteBoard = async (boardId: string) => {
-        if (!confirm('Are you sure you want to delete this board? This cannot be undone.')) return;
+    const [boardToDelete, setBoardToDelete] = useState<Board | null>(null);
+
+    const handleDeleteClick = (board: Board) => {
+        setBoardToDelete(board);
+    };
+
+    const executeDeleteBoard = async (boardId: string) => {
         setDeletingBoardId(boardId);
         try {
             const res = await fetch(`/api/boards/${boardId}`, { method: 'DELETE' });
             if (res.ok) {
                 setPublicBoards(boards => boards.filter(b => b.id !== boardId));
+                toast.success('Board deleted successfully');
             } else {
                 const text = await res.text();
-                alert(`Failed to delete board: ${text}`);
+                toast.error(`Failed to delete board: ${text}`);
             }
         } catch {
-            alert('Failed to delete board. Please try again.');
+            toast.error('Failed to delete board. Please try again.');
         } finally {
             setDeletingBoardId(null);
+            setBoardToDelete(null);
         }
     };
 
@@ -95,7 +108,7 @@ function PublicBoardsContent() {
                                         onClick={(e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
-                                            handleDeleteBoard(board.id);
+                                            handleDeleteClick(board);
                                         }}
                                         disabled={deletingBoardId === board.id}
                                         className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full text-xs font-bold flex items-center gap-1 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors cursor-pointer"
@@ -175,6 +188,21 @@ function PublicBoardsContent() {
                     ))}
                 </div>
             )}
+
+            <ConfirmDialog
+                isOpen={boardToDelete !== null}
+                onClose={() => setBoardToDelete(null)}
+                onConfirm={() => {
+                    if (boardToDelete) {
+                        executeDeleteBoard(boardToDelete.id);
+                    }
+                }}
+                title="Delete Board?"
+                message={`Are you sure you want to delete "${boardToDelete?.name}"? This will permanently delete the board and all its cards. This action cannot be undone.`}
+                confirmText="Delete"
+                cancelText="Cancel"
+                variant="danger"
+            />
         </div>
     );
 }
