@@ -70,6 +70,75 @@ async function trimCache(cacheName, maxEntries) {
     await Promise.all(keys.slice(0, keys.length - maxEntries).map((key) => cache.delete(key)));
 }
 
+/**
+ * Answer a Range request by slicing the requested bytes out of a full 200
+ * response. Media elements — iOS/Safari in particular — request audio with
+ * `Range: bytes=0-...` and refuse a plain 200 reply, so serving cached audio
+ * requires building a real 206 Partial Content response.
+ */
+async function sliceResponse(response, rangeHeader) {
+    const match = /bytes=(\d*)-(\d*)/i.exec(rangeHeader || '');
+    if (!match || (match[1] === '' && match[2] === '')) return response;
+
+    const buffer = await response.clone().arrayBuffer();
+    const size = buffer.byteLength;
+    let start;
+    let end;
+    if (match[1] === '') {
+        // Suffix form: bytes=-N (last N bytes)
+        start = Math.max(0, size - Number(match[2]));
+        end = size - 1;
+    } else {
+        start = Number(match[1]);
+        end = match[2] === '' ? size - 1 : Math.min(Number(match[2]), size - 1);
+    }
+
+    if (start >= size || start > end) {
+        return new Response(null, {
+            status: 416,
+            statusText: 'Range Not Satisfiable',
+            headers: { 'Content-Range': `bytes */${size}` },
+        });
+    }
+
+    const body = buffer.slice(start, end + 1);
+    const headers = new Headers();
+    const contentType = response.headers.get('Content-Type');
+    if (contentType) headers.set('Content-Type', contentType);
+    headers.set('Content-Range', `bytes ${start}-${end}/${size}`);
+    headers.set('Content-Length', String(body.byteLength));
+    headers.set('Accept-Ranges', 'bytes');
+    return new Response(body, { status: 206, statusText: 'Partial Content', headers });
+}
+
+/**
+ * Handle a request that carries a Range header. Cached full copy -> slice it.
+ * Not cached -> fetch the FULL file once (media URLs are immutable), cache it,
+ * and return the requested slice, so future taps work offline.
+ */
+async function rangeRequest(request) {
+    // ignoreVary: the preload fetch (cors) and the audio element (no-cors)
+    // present different headers; both must hit the same cached entry.
+    const cached = await caches.match(request.url, { ignoreVary: true });
+    if (cached && cached.status === 200) {
+        return sliceResponse(cached, request.headers.get('range'));
+    }
+
+    try {
+        const full = await fetch(request.url, { mode: 'cors' });
+        if (full.status === 200) {
+            const cache = await caches.open(MEDIA_CACHE);
+            cache.put(request.url, full.clone());
+            trimCache(MEDIA_CACHE, MEDIA_MAX_ENTRIES);
+            return sliceResponse(full, request.headers.get('range'));
+        }
+        return full;
+    } catch {
+        // CORS refetch failed — fall back to passing the request through.
+        return fetch(request);
+    }
+}
+
 /** Cache-first for immutable content (blob media, hashed build assets). */
 async function cacheFirst(request, cacheName, maxEntries) {
     const cached = await caches.match(request);
@@ -150,6 +219,13 @@ self.addEventListener('fetch', (event) => {
 
     // Leave third-party requests (Clerk, analytics) to the browser.
     if (!sameOrigin && !isBlobMedia) return;
+
+    // 0. Byte-range requests (audio/video playback) get real 206 responses
+    //    sliced from the cached full file — required for iOS audio.
+    if (request.headers.get('range')) {
+        event.respondWith(rangeRequest(request));
+        return;
+    }
 
     // 1. Card images and audio — immutable, cache-first.
     if (isBlobMedia) {

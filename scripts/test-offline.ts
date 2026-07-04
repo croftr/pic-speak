@@ -77,11 +77,23 @@ async function main() {
         );
         console.log('   OK — page HTML warmed into cache');
 
-        console.log('5. Killing server to go truly offline ...');
+        console.log('5. Warming an audio file into the cache ...');
+        await page.evaluate(async () => {
+            const res = await fetch('/prebuilt/banana.wav');
+            if (!res.ok) throw new Error(`audio warm fetch failed: ${res.status}`);
+        });
+        await page.waitForFunction(
+            () => caches.match('/prebuilt/banana.wav', { ignoreVary: true }).then((r) => !!r),
+            undefined,
+            { timeout: 10_000 }
+        );
+        console.log('   OK — audio cached');
+
+        console.log('6. Killing server to go truly offline ...');
         killServer();
         await new Promise((r) => setTimeout(r, 1000));
 
-        console.log('6. Cold-loading the client-side-visited page while offline ...');
+        console.log('7. Cold-loading the client-side-visited page while offline ...');
         await page.goto(`${BASE_URL}/public-boards`, { waitUntil: 'load' });
         const warmedHeading = await page.textContent('h1');
         if (!warmedHeading?.includes('Public Boards')) {
@@ -89,7 +101,7 @@ async function main() {
         }
         console.log(`   OK — served from cache (h1: "${warmedHeading}")`);
 
-        console.log('7. Cold-loading the landing page while offline ...');
+        console.log('8. Cold-loading the landing page while offline ...');
         await page.goto(BASE_URL, { waitUntil: 'load' });
         const title = await page.title();
         if (!title.includes('My Voice Board')) {
@@ -97,7 +109,7 @@ async function main() {
         }
         console.log(`   OK — served from cache (title: "${title}")`);
 
-        console.log('8. Client-side navigating while offline (RSC fetch must fall back) ...');
+        console.log('9. Client-side navigating while offline (RSC fetch must fall back) ...');
         await page.click('a[href="/public-boards"]');
         await page.waitForFunction(
             () => document.querySelector('h1')?.textContent?.includes('Public Boards'),
@@ -106,7 +118,7 @@ async function main() {
         );
         console.log('   OK — offline client-side navigation landed on cached page');
 
-        console.log('9. Navigating offline to a never-visited page ...');
+        console.log('10. Navigating offline to a never-visited page ...');
         await page.goto(`${BASE_URL}/about`, { waitUntil: 'load' });
         const heading = await page.textContent('h1');
         if (!heading?.toLowerCase().includes('offline')) {
@@ -118,13 +130,49 @@ async function main() {
         // offline (Clerk can't confirm the session, but the boards are cached).
         // setOffline makes navigator.onLine false and blocks page-initiated
         // requests like clerk-js, mirroring a device with wifi/data off.
-        console.log('10. Offline landing page for a remembered signed-in user ...');
+        console.log('11. Offline landing page for a remembered signed-in user ...');
         await page.context().setOffline(true);
         await page.goto(BASE_URL, { waitUntil: 'load' });
         await page.evaluate(() => localStorage.setItem('mvb:was-signed-in', '1'));
         await page.reload({ waitUntil: 'load' });
         await page.waitForSelector('a[href="/my-boards"]', { timeout: 10_000 });
         console.log('   OK — My Boards link shown from offline auth memory');
+
+        // Audio elements (iOS especially) request media with a Range header and
+        // require a genuine 206 Partial Content reply — a cached 200 is refused.
+        console.log('12. Byte-range request for cached audio while offline ...');
+        const rangeResult = await page.evaluate(async () => {
+            const res = await fetch('/prebuilt/banana.wav', {
+                headers: { Range: 'bytes=0-99' },
+            });
+            const bytes = (await res.arrayBuffer()).byteLength;
+            return {
+                status: res.status,
+                contentRange: res.headers.get('Content-Range'),
+                bytes,
+            };
+        });
+        if (rangeResult.status !== 206 || rangeResult.bytes !== 100) {
+            throw new Error(
+                `expected 206 with 100 bytes, got ${rangeResult.status} with ${rangeResult.bytes} bytes (Content-Range: ${rangeResult.contentRange})`
+            );
+        }
+        console.log(
+            `   OK — 206 Partial Content served from cache (${rangeResult.contentRange})`
+        );
+
+        const openEnded = await page.evaluate(async () => {
+            const res = await fetch('/prebuilt/banana.wav', {
+                headers: { Range: 'bytes=0-' },
+            });
+            return { status: res.status, bytes: (await res.arrayBuffer()).byteLength };
+        });
+        if (openEnded.status !== 206 || openEnded.bytes < 1000) {
+            throw new Error(
+                `expected 206 with full body for open-ended range, got ${openEnded.status} with ${openEnded.bytes} bytes`
+            );
+        }
+        console.log(`   OK — open-ended range (bytes=0-) served ${openEnded.bytes} bytes`);
 
         await browser.close();
         console.log('\nAll offline checks passed.');
