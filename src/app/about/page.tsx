@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, Shield, Smartphone, Smile, Mic, Grid, Lock, Globe, Users, ArrowRight } from 'lucide-react';
+import { Heart, Shield, Smartphone, Smile, Mic, Grid, Lock, Globe, Users, ArrowRight, Gift } from 'lucide-react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -49,6 +49,25 @@ export default function AboutPage() {
                             </h2>
                             <p className="text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
                                 My Voice Board is designed for families, caregivers, and teachers to create customized communication boards for non-verbal children and adults. We believe that everyone deserves to be heard, and communication tools should be accessible, personal, and easy to use.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 100% Free Guarantee */}
+                <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-3xl p-8 sm:p-10 border border-emerald-100 dark:border-emerald-800">
+                    <div className="flex flex-col sm:flex-row items-start gap-6">
+                        <div className="p-4 bg-emerald-100 dark:bg-emerald-800/50 rounded-2xl text-emerald-600 dark:text-emerald-400 shrink-0">
+                            <Gift size={32} strokeWidth={2.5} />
+                        </div>
+                        <div>
+                            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mb-4">
+                                100% Free. No Subscriptions. No Fees.
+                            </h2>
+                            <p className="text-lg text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
+                                As a parent of two non-verbal children, I know firsthand how challenging and expensive communication tools can be. I built My Voice Board to help other families and individuals going through the exact same struggles.
+                            </p>
+                            <p className="text-lg text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
                             </p>
                         </div>
                     </div>
