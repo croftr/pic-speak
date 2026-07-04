@@ -14,6 +14,8 @@
     "test:blob": "tsx scripts/test-blob.ts",
     "test:api": "tsx scripts/test-api-e2e.ts",
     "test:compression": "tsx scripts/test-compression.ts",
+    "test:offline": "tsx scripts/test-offline.ts",
+    "icons": "tsx scripts/generate-icons.ts",
     "test:unit": "npx playwright test src/**/*.spec.ts",
     "test:e2e": "npx playwright test",
     "test:e2e:headed": "npx playwright test --headed",

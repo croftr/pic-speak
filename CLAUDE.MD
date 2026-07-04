@@ -128,6 +128,18 @@ DB uses `snake_case`, app uses `camelCase`. Notable: DB column `type` maps to ap
 
 The project uses Vercel Storage (Postgres + Blob) for managing boards and cards data. See `ARCHITECTURE.md` for details.
 
+## Offline Support / PWA
+
+The app is an installable PWA with offline support:
+
+- `src/app/manifest.ts` - web app manifest (standalone display, icons in `public/icons/`)
+- `public/sw.js` - hand-written service worker. Cache strategies: cache-first for immutable Vercel Blob media and `/_next/static`, network-first with cache fallback for navigations/RSC/API GETs, `public/offline.html` fallback for never-visited pages. Bump `CACHE_VERSION` in `sw.js` to invalidate all caches.
+- `src/components/ServiceWorkerRegistration.tsx` - registers the worker (production only)
+- `src/hooks/useAudioPreload.ts` - prefetches all card audio when a board opens so taps speak instantly and work offline
+- `next.config.ts` serves `/sw.js` with `no-cache` so worker updates deploy immediately
+
+Commands: `npm run icons` regenerates PNG icons from `public/logo.svg`; `npm run test:offline` runs a Playwright end-to-end offline test (requires `npm run build` first — it starts its own server, kills it, and asserts cached pages + offline fallback still work).
+
 ## Design Philosophy
 
 - Accessibility-first design with large, clear buttons

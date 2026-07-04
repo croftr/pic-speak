@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>You're offline - My Voice Board</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            color: #1e293b;
+            padding: 24px;
+            text-align: center;
+        }
+        @media (prefers-color-scheme: dark) {
+            body { background: #020617; color: #f1f5f9; }
+            p { color: #94a3b8 !important; }
+        }
+        .card { max-width: 420px; }
+        .logo {
+            width: 96px;
+            height: 96px;
+            margin: 0 auto 24px;
+            display: block;
+        }
+        h1 { font-size: 28px; font-weight: 800; margin-bottom: 12px; }
+        p { font-size: 16px; line-height: 1.6; color: #64748b; margin-bottom: 28px; }
+        button {
+            background: #7C63F4;
+            color: #fff;
+            border: none;
+            font-size: 17px;
+            font-weight: 700;
+            padding: 14px 36px;
+            border-radius: 16px;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        button:active { transform: scale(0.97); }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <img class="logo" src="/icons/icon-192.png" alt="My Voice Board">
+        <h1>You're offline</h1>
+        <p>
+            This page isn't saved on your device yet.
+            Boards you've opened before will still work —
+            go back and try one of those, or reconnect to the internet.
+        </p>
+        <button onclick="location.reload()">Try Again</button>
+    </div>
+</body>
+</html>
