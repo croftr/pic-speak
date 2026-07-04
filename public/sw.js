@@ -11,10 +11,14 @@
  * Bump CACHE_VERSION to invalidate all caches on deploy of breaking changes.
  */
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
+// Media (card images/audio) lives at immutable URLs and never goes stale, so
+// it survives version bumps — wiping it would silence boards until the next
+// online visit.
+const MEDIA_VERSION = 'v1';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const PAGES_CACHE = `pages-${CACHE_VERSION}`;
-const MEDIA_CACHE = `media-${CACHE_VERSION}`;
+const MEDIA_CACHE = `media-${MEDIA_VERSION}`;
 const API_CACHE = `api-${CACHE_VERSION}`;
 const ALL_CACHES = [STATIC_CACHE, PAGES_CACHE, MEDIA_CACHE, API_CACHE];
 

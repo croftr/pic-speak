@@ -27,16 +27,25 @@ export default function DocumentCacheWarmer() {
         if (!('serviceWorker' in navigator)) return;
         if (!WARM_PATHS.test(pathname) || warmed.has(pathname)) return;
 
-        warmed.add(pathname);
         let cancelled = false;
+
+        const warmPath = (path: string) => {
+            if (warmed.has(path)) return;
+            warmed.add(path);
+            fetch(path, { headers: { Accept: 'text/html' } }).catch(() => {
+                // Offline or transient failure — allow a retry on a later visit.
+                warmed.delete(path);
+            });
+        };
 
         // Wait for the worker so the fetch is guaranteed to pass through it.
         navigator.serviceWorker.ready.then(() => {
             if (cancelled) return;
-            fetch(pathname, { headers: { Accept: 'text/html' } }).catch(() => {
-                // Offline or transient failure — allow a retry on a later visit.
-                warmed.delete(pathname);
-            });
+            warmPath(pathname);
+            // The landing page is the offline entry point — refresh its cached
+            // copy every session, not only when the user happens to visit it,
+            // so it can't go stale across deploys.
+            warmPath('/');
         });
 
         return () => {
