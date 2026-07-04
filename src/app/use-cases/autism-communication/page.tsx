@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import Image from 'next/image';
 import { ArrowRight, Heart, Sparkles, LayoutGrid } from 'lucide-react';
 
 export const metadata: Metadata = {
@@ -64,7 +63,7 @@ export default function AutismCommunicationPage() {
               </div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">No More Lost Cards</h3>
               <p className="text-slate-600 dark:text-slate-400">
-                Forget printing, laminating, and losing velcro cards. Carry your child's entire vocabulary right on your phone or tablet wherever you go.
+                Forget printing, laminating, and losing velcro cards. Carry your child&apos;s entire vocabulary right on your phone or tablet wherever you go.
               </p>
             </div>
             
@@ -74,7 +73,7 @@ export default function AutismCommunicationPage() {
               </div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">Grows With Them</h3>
               <p className="text-slate-600 dark:text-slate-400">
-                Start with a simple 4-card choice board, and easily expand to larger, categorized boards as your child's communication skills develop.
+                Start with a simple 4-card choice board, and easily expand to larger, categorized boards as your child&apos;s communication skills develop.
               </p>
             </div>
           </div>
@@ -94,7 +93,7 @@ export default function AutismCommunicationPage() {
         </p>
         <h3>How It Works</h3>
         <ul>
-          <li><strong>Take Photos:</strong> Snap a quick photo of your child's favorite snack or toy.</li>
+          <li><strong>Take Photos:</strong> Snap a quick photo of your child&apos;s favorite snack or toy.</li>
           <li><strong>Add Voice:</strong> Record yourself (or a sibling) saying the word.</li>
           <li><strong>Communicate:</strong> Your child taps the photo to hear the word and express their needs instantly.</li>
         </ul>

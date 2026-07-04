@@ -90,7 +90,7 @@ export default function StrokeRecoveryPage() {
         </p>
         <h3>Bridging the Communication Gap</h3>
         <ul>
-          <li><strong>Reduce Frustration:</strong> Quickly express urgent needs like "water," "bathroom," or "pain" without struggling for words.</li>
+          <li><strong>Reduce Frustration:</strong> Quickly express urgent needs like &quot;water,&quot; &quot;bathroom,&quot; or &quot;pain&quot; without struggling for words.</li>
           <li><strong>Enhance Therapy:</strong> Speech-Language Pathologists (SLPs) frequently recommend visual aids and AAC devices to bridge the gap during active speech therapy.</li>
           <li><strong>Maintain Connection:</strong> Stay engaged with family and friends by easily participating in conversations using pre-recorded custom phrases.</li>
         </ul>

@@ -43,7 +43,8 @@
       "Bash(git commit *)",
       "Bash(git mv *)",
       "Read(//c/Users/rob/**)",
-      "Bash(npm view *)"
+      "Bash(npm view *)",
+      "WebSearch"
     ]
   }
 }
