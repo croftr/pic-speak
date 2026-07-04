@@ -5,14 +5,14 @@ import { Heart, Shield, Smartphone, Smile, Mic, Grid, Lock, Globe, Users, ArrowR
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'About - My Voice Board | Communication Boards for Non-Verbal Children',
-    description: 'Learn how My Voice Board helps parents and teachers create personalized PECS-style communication boards for non-verbal autistic children. Free, private, and ad-free.',
+    title: 'About - My Voice Board | Custom Communication Boards',
+    description: 'Learn how My Voice Board helps you create personalized communication boards for non-verbal children and adults. Private, secure, and ad-free.',
     alternates: {
         canonical: '/about',
     },
     openGraph: {
         title: 'About My Voice Board',
-        description: 'Giving a voice to every child. Create personalized communication boards with custom photos and familiar voices.',
+        description: 'Giving a voice to everyone. Create personalized communication boards with custom photos and familiar voices.',
     },
 };
 
@@ -30,7 +30,7 @@ export default function AboutPage() {
                         My Voice Board
                     </h1>
                     <p className="text-xl sm:text-2xl text-violet-100 max-w-2xl font-medium">
-                        Giving a voice to every child.
+                        Giving a voice to everyone.
                     </p>
                 </div>
             </div>
@@ -48,7 +48,7 @@ export default function AboutPage() {
                                 Why We Built This
                             </h2>
                             <p className="text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
-                                My Voice Board is designed mainly for parents and teachers to create customized communication boards for non-verbal autistic children. We believe that every child deserves to be heard, and communication tools should be accessible, personal, and easy to use.
+                                My Voice Board is designed for families, caregivers, and teachers to create customized communication boards for non-verbal children and adults. We believe that everyone deserves to be heard, and communication tools should be accessible, personal, and easy to use.
                             </p>
                         </div>
                     </div>
@@ -154,7 +154,7 @@ export default function AboutPage() {
                                     The Short Version
                                 </h3>
                                 <p className="font-medium text-white/90">
-                                    I built My Voice Board to help children communicate, not to harvest data. I do not sell your data, I do not advertise to you, and the photos you upload for your boards remain yours.
+                                    I built My Voice Board to help people communicate, not to harvest data. I do not sell your data, I do not advertise to you, and the photos you upload for your boards remain yours.
                                 </p>
                             </div>
 
@@ -168,7 +168,7 @@ export default function AboutPage() {
                             <div>
                                 <h3 className="text-white font-bold text-lg mb-2">No Advertising</h3>
                                 <p>
-                                    This is a tool for communication, not a platform for ads. We will never serve advertisements to you or your children within the application.
+                                    This is a tool for communication, not a platform for ads. We will never serve advertisements to you or your loved ones within the application.
                                 </p>
                             </div>
                         </div>
