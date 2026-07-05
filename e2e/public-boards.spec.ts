@@ -74,7 +74,7 @@ test('creator can delete their own public board from public boards list', async 
   // Create a new board
   await page.getByRole('button', { name: /new board/i }).click()
   createdBoardName = `Public Mgmt Test Board ${Date.now()}`
-  await page.getByPlaceholder('e.g., Daily Routine').fill(createdBoardName)
+  await page.getByPlaceholder(/routine/i).fill(createdBoardName)
   await page.locator('form').getByRole('button', { name: /create board/i }).click()
 
   // Redirected to the new board in edit mode
