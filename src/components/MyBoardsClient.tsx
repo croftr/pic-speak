@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Pencil, X, Plus, Sparkles, Play, Layers, Image as ImageIcon } from 'lucide-react';
+import { Pencil, X, Plus, Sparkles, Layers, Image as ImageIcon } from 'lucide-react';
 import { Board } from '@/types';
 import { toast } from 'sonner';
 import { useLockMode } from '@/contexts/LockModeContext';
@@ -354,7 +353,23 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
                                 onMouseEnter={() => {
                                     router.prefetch(`/board/${board.id}`);
                                 }}
-                                className="group relative flex flex-col bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden"
+                                onClick={() => {
+                                    document.documentElement.requestFullscreen?.().catch(() => {});
+                                    lock(board.id);
+                                    router.push(`/board/${board.id}`);
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        document.documentElement.requestFullscreen?.().catch(() => {});
+                                        lock(board.id);
+                                        router.push(`/board/${board.id}`);
+                                    }
+                                }}
+                                tabIndex={0}
+                                role="button"
+                                aria-label={`Use ${board.name} board`}
+                                className="group relative flex flex-col bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             >
                                 <BoardCoverBanner src={board.coverImageUrl ?? board.fallbackCoverImageUrl} alt="" />
                                 <div className="flex flex-col flex-1 p-4 sm:p-5">
@@ -372,25 +387,17 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
                                             {board.description}
                                         </p>
                                     )}
-                                    <div className="flex gap-2 mt-auto pt-2">
-                                        <Link
-                                            href={`/board/${board.id}`}
-                                            onClick={() => {
-                                                document.documentElement.requestFullscreen?.().catch(() => {});
-                                                lock(board.id);
-                                            }}
-                                            className="flex-1 bg-primary text-primary-foreground px-4 py-3 rounded-xl font-bold shadow-md shadow-primary/20 hover:bg-primary/90 transition-all flex items-center justify-center gap-2 text-sm sm:text-base touch-manipulation min-h-[48px]"
-                                        >
-                                            <Play className="w-4 h-4 sm:w-5 sm:h-5" />
-                                            Use Board
-                                        </Link>
+                                    <div className="mt-auto pt-2">
                                         <button
-                                            onClick={() => router.push(`/board/${board.id}?edit=true`)}
-                                            className="px-4 py-3 rounded-xl font-bold border-2 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary transition-all flex items-center justify-center gap-2 text-sm sm:text-base touch-manipulation min-h-[48px]"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                router.push(`/board/${board.id}?edit=true`);
+                                            }}
+                                            className="w-full px-4 py-3 rounded-xl font-bold border-2 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary transition-all flex items-center justify-center gap-2 text-sm sm:text-base touch-manipulation min-h-[48px]"
                                             aria-label={`Edit ${board.name} board`}
                                         >
                                             <Pencil className="w-4 h-4 sm:w-5 sm:h-5" />
-                                            <span className="hidden xs:inline sm:hidden lg:inline">Edit</span>
+                                            <span>Edit Board</span>
                                         </button>
                                     </div>
                                 </div>

@@ -21,6 +21,23 @@ const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 // Upload timeout (25 seconds - less than Vercel's 30s function timeout)
 const UPLOAD_TIMEOUT_MS = 25000;
 
+// Explicit allowlist of accepted MIME types
+const ALLOWED_IMAGE_TYPES = new Set([
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+]);
+const ALLOWED_AUDIO_TYPES = new Set([
+    'audio/webm',
+    'audio/mp3',
+    'audio/mpeg',
+    'audio/mp4',
+    'audio/wav',
+    'audio/ogg',
+    'audio/x-wav',
+]);
+
 export async function POST(request: Request) {
     const startTime = Date.now();
     const requestId = crypto.randomUUID().slice(0, 8);
@@ -64,12 +81,23 @@ export async function POST(request: Request) {
             fileSizeKB: (file.size / 1024).toFixed(2)
         });
 
+        // Reject anything not on the explicit allowlist
+        const isImage = ALLOWED_IMAGE_TYPES.has(file.type);
+        const isAudio = ALLOWED_AUDIO_TYPES.has(file.type);
+        if (!isImage && !isAudio) {
+            userLog.warn('Rejected disallowed file type', { fileType: file.type });
+            return NextResponse.json(
+                { success: false, error: 'File type not allowed. Only images (JPEG, PNG, WebP, GIF) and audio files are accepted.' },
+                { status: 400 }
+            );
+        }
+
         let fileToUpload: File | Buffer = file;
         let contentType = file.type;
         let fileName = file.name;
 
         // Check image file size
-        if (file.type.startsWith('image/')) {
+        if (isImage) {
             if (file.size > MAX_IMAGE_SIZE) {
                 userLog.warn('Image file too large', {
                     sizeBytes: file.size,
@@ -115,16 +143,19 @@ export async function POST(request: Request) {
                     savingsPercent: savings
                 });
             } catch (compressionError) {
-                userLog.error('Image compression failed, using original', compressionError, {
+                userLog.error('Image compression failed, rejecting upload', compressionError, {
                     duration_ms: Date.now() - compressionStart
                 });
-                // If compression fails, upload the original
-                fileToUpload = file;
+                // A real image that sharp cannot decode is broken — reject it
+                return NextResponse.json(
+                    { success: false, error: 'Image could not be processed. Please upload a valid image file.' },
+                    { status: 400 }
+                );
             }
         }
 
         // Check audio file size
-        if (file.type.startsWith('audio/')) {
+        if (isAudio) {
             if (file.size > MAX_AUDIO_SIZE) {
                 userLog.warn('Audio file too large', {
                     sizeBytes: file.size,

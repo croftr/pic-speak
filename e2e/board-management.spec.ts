@@ -91,7 +91,7 @@ test('can manage board settings and delete board via UI', async ({ page }) => {
 
   // Reload to verify persistence
   await page.reload()
-  await page.waitForLoadState('networkidle')
+  await page.waitForLoadState('load')
 
   // Ensure we are scrolled to top after reload to see the header
   await page.evaluate(() => window.scrollTo(0, 0))

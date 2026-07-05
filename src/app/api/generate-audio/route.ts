@@ -68,14 +68,14 @@ export async function POST(request: Request) {
 
     const userLog = log.withContext({ userId });
 
-    const limited = await rateLimit(userId, 'generate-audio', MAX_REQUESTS, WINDOW_MS);
+    const limited = await rateLimit(userId, 'generate-audio', MAX_REQUESTS, WINDOW_MS, true);
     if (limited) {
         userLog.warn('Rate limit exceeded');
         return limited;
     }
 
     // Check daily per-user and global caps
-    const dailyLimited = await checkDailyLimit(userId, 'generate-audio', MAX_PER_USER_PER_DAY);
+    const dailyLimited = await checkDailyLimit(userId, 'generate-audio', MAX_PER_USER_PER_DAY, true);
     if (dailyLimited) {
         userLog.warn('Daily user limit exceeded');
         return dailyLimited;

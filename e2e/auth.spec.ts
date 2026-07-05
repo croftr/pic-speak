@@ -139,6 +139,8 @@ test('logged-in user can create a board, add a card with image and audio, then d
   // Handle Crop Modal
   await expect(page.getByText('Crop & Resize Image')).toBeVisible()
   await page.getByRole('button', { name: /apply/i }).click()
+  // Wait for crop modal to fully close before proceeding
+  await expect(page.getByText('Crop & Resize Image')).not.toBeVisible({ timeout: 5000 })
 
   // Go to next step
   await page.getByRole('button', { name: /next step/i }).click()
@@ -152,8 +154,8 @@ test('logged-in user can create a board, add a card with image and audio, then d
   // Submit update
   await page.getByRole('button', { name: /update card/i }).click()
 
-  // Verify update
-  await expect(page.getByRole('heading', { name: /edit card/i })).not.toBeVisible()
+  // Verify update — allow generous time for the two uploads + API round-trip to complete
+  await expect(page.getByRole('heading', { name: /edit card/i })).not.toBeVisible({ timeout: 20000 })
   await expect(page.getByText(updatedCardLabel)).toBeVisible({ timeout: 10000 })
   await expect(page.getByText(cardLabel)).not.toBeVisible()
 

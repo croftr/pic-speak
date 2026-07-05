@@ -4,6 +4,7 @@ import { addComment, getCommentsByBoard, getBoard, getBoardCommentCount } from '
 import { sendCommentNotification } from '@/lib/email';
 import { rateLimit } from '@/lib/rate-limit';
 import { validateStringLength } from '@/lib/validation';
+import { logger } from '@/lib/logger';
 
 // Get all comments for a board
 export async function GET(
@@ -16,7 +17,7 @@ export async function GET(
 
         return NextResponse.json(comments);
     } catch (error) {
-        console.error('Error fetching comments:', error);
+        logger.error('Error fetching comments', error);
         return NextResponse.json(
             { error: 'Failed to fetch comments' },
             { status: 500 }
@@ -81,7 +82,7 @@ export async function POST(
         if (board.ownerEmail && board.emailNotificationsEnabled && board.userId !== userId) {
             // Don't notify if user comments on their own board
             const commentCount = await getBoardCommentCount(boardId);
-            console.log('[Comment] Attempting to send email notification for board:', board.name);
+            logger.info('Attempting to send comment email notification', { boardName: board.name, boardId });
             sendCommentNotification(
                 board.ownerEmail,
                 board.name,
@@ -92,16 +93,15 @@ export async function POST(
             )
                 .then(success => {
                     if (success) {
-                        console.log('[Comment] Email sent successfully');
+                        logger.info('Comment email sent successfully', { boardId });
                     } else {
-                        console.log('[Comment] Email send returned false - check Resend configuration');
+                        logger.warn('Comment email send returned false - check Resend configuration', { boardId });
                     }
                 })
-                .catch(err => console.error('[Comment] Failed to send notification:', err));
+                .catch(err => logger.error('Failed to send comment notification', err, { boardId }));
         } else {
             // Log why notification was skipped
-            console.log('[Comment] Email notification skipped:', {
-                hasBoard: !!board,
+            logger.debug('Comment email notification skipped', {
                 hasOwnerEmail: !!board?.ownerEmail,
                 emailNotificationsEnabled: board?.emailNotificationsEnabled,
                 isSameUser: board?.userId === userId
@@ -110,7 +110,7 @@ export async function POST(
 
         return NextResponse.json(comment, { status: 201 });
     } catch (error) {
-        console.error('Error adding comment:', error);
+        logger.error('Error adding comment', error);
         return NextResponse.json(
             { error: 'Failed to add comment' },
             { status: 500 }

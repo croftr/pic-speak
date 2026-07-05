@@ -3,7 +3,7 @@ import { Pool } from 'pg';
 
 const pool = new Pool({
     connectionString: process.env.POSTGRES_URL,
-    ssl: { rejectUnauthorized: false },
+    ssl: true,
     max: 5,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 2000,
@@ -24,12 +24,16 @@ async function maybeCleanup() {
  * Distributed rate limiter backed by Postgres.
  *
  * Returns null if the request is allowed, or a 429 NextResponse if rate limited.
+ *
+ * @param failClosed - If true, return a 503 on DB error instead of allowing the request through.
+ *                     Use this for paid AI endpoints where fail-open wastes money.
  */
 export async function rateLimit(
     userId: string,
     endpoint: string,
     maxRequests: number,
     windowMs: number,
+    failClosed = false,
 ): Promise<NextResponse | null> {
     maybeCleanup();
 
@@ -64,8 +68,14 @@ export async function rateLimit(
 
         return null;
     } catch {
-        // If rate limiting fails (DB error), allow the request through
-        // rather than blocking all users
+        if (failClosed) {
+            // DB outage on a paid endpoint — refuse the request rather than spending money
+            return NextResponse.json(
+                { error: 'Service temporarily unavailable. Please try again shortly.' },
+                { status: 503 },
+            );
+        }
+        // For non-critical endpoints (upload, comments) allow through on DB error
         return null;
     }
 }
@@ -75,11 +85,14 @@ export async function rateLimit(
  * Returns null if within limit, or a 429 NextResponse if daily cap exceeded.
  *
  * Uses atomic INSERT ... ON CONFLICT to safely increment across concurrent requests.
+ *
+ * @param failClosed - If true, return a 503 on DB error instead of allowing through.
  */
 export async function checkDailyLimit(
     userId: string,
     endpoint: string,
     maxPerDay: number,
+    failClosed = false,
 ): Promise<NextResponse | null> {
     try {
         // Atomic upsert: insert or increment count
@@ -103,6 +116,12 @@ export async function checkDailyLimit(
 
         return null;
     } catch {
+        if (failClosed) {
+            return NextResponse.json(
+                { error: 'Service temporarily unavailable. Please try again shortly.' },
+                { status: 503 },
+            );
+        }
         // If daily limit check fails, allow the request through
         return null;
     }
