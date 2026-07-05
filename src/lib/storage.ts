@@ -86,6 +86,17 @@ const STARTER_BOARDS: Board[] = [
         creatorName: 'My Voice Board',
         creatorImageUrl: '/logo.svg',
         cardCount: 37
+    },
+    {
+        id: 'starter-school-classroom',
+        userId: 'system',
+        name: 'School & Classroom',
+        description: 'Communication cards for school, teachers, classmates, and classroom activities.',
+        createdAt: '2024-01-02T00:00:00.000Z',
+        isPublic: true,
+        creatorName: 'My Voice Board',
+        creatorImageUrl: '/logo.svg',
+        cardCount: 12
     }
 ];
 
@@ -98,6 +109,9 @@ const TEMPLATE_CARDS_REGISTRY: Record<string, Omit<Card, 'id' | 'boardId' | 'ord
     'tpl-bye': { label: 'Goodbye', imageUrl: '/prebuilt/bye.webp', audioUrl: '/prebuilt/bye.mp3', category: 'Core', templateKey: 'tpl-bye' },
     'tpl-thank-you': { label: 'Thank You', imageUrl: '/prebuilt/thank_you.webp', audioUrl: '/prebuilt/thank_you.mp3', category: 'Core', templateKey: 'tpl-thank-you' },
     'tpl-please': { label: 'Please', imageUrl: '/prebuilt/please.webp', audioUrl: '/prebuilt/please.mp3', category: 'Core', templateKey: 'tpl-please' },
+    // People
+    'tpl-teacher': { label: 'Teacher', imageUrl: '/prebuilt/teacher.webp', audioUrl: '/prebuilt/teacher.wav', category: 'People', templateKey: 'tpl-teacher' },
+    'tpl-friend': { label: 'Friend', imageUrl: '/prebuilt/friend.webp', audioUrl: '/prebuilt/friend.wav', category: 'People', templateKey: 'tpl-friend' },
     // Activities
     'tpl-computer': { label: 'Computer', imageUrl: '/prebuilt/computer.webp', audioUrl: '/prebuilt/computer.mp3', category: 'Activities', templateKey: 'tpl-computer' },
     'tpl-tablet': { label: 'Tablet', imageUrl: '/prebuilt/tablet.webp', audioUrl: '/prebuilt/tablet.mp3', category: 'Activities', templateKey: 'tpl-tablet' },
@@ -108,9 +122,16 @@ const TEMPLATE_CARDS_REGISTRY: Record<string, Omit<Card, 'id' | 'boardId' | 'ord
     'tpl-tv': { label: 'TV', imageUrl: '/prebuilt/tv.webp', audioUrl: '/prebuilt/tv.wav', category: 'Activities', templateKey: 'tpl-tv' },
     'tpl-wash-hands': { label: 'Wash Hands', imageUrl: '/prebuilt/wash_hands.webp', audioUrl: '/prebuilt/wash_hands.wav', category: 'Activities', templateKey: 'tpl-wash-hands' },
     'tpl-book': { label: 'Book', imageUrl: '/prebuilt/book.webp', audioUrl: '/prebuilt/book.wav', category: 'Activities', templateKey: 'tpl-book' },
+    'tpl-pencil': { label: 'Pencil', imageUrl: '/prebuilt/pencil.webp', audioUrl: '/prebuilt/pencil.wav', category: 'Activities', templateKey: 'tpl-pencil' },
+    'tpl-paper': { label: 'Paper', imageUrl: '/prebuilt/paper.webp', audioUrl: '/prebuilt/paper.wav', category: 'Activities', templateKey: 'tpl-paper' },
+    'tpl-write': { label: 'Write', imageUrl: '/prebuilt/write.webp', audioUrl: '/prebuilt/write.wav', category: 'Activities', templateKey: 'tpl-write' },
+    'tpl-draw': { label: 'Draw', imageUrl: '/prebuilt/draw.webp', audioUrl: '/prebuilt/draw.wav', category: 'Activities', templateKey: 'tpl-draw' },
     // Places
     'tpl-bed': { label: 'Bed', imageUrl: '/prebuilt/bed.webp', audioUrl: '/prebuilt/bed.mp3', category: 'Places', templateKey: 'tpl-bed' },
     'tpl-school': { label: 'School', imageUrl: '/prebuilt/school.webp', audioUrl: '/prebuilt/school.wav', category: 'Places', templateKey: 'tpl-school' },
+    'tpl-classroom': { label: 'Classroom', imageUrl: '/prebuilt/classroom.webp', audioUrl: '/prebuilt/classroom.wav', category: 'Places', templateKey: 'tpl-classroom' },
+    'tpl-playground': { label: 'Playground', imageUrl: '/prebuilt/playground.webp', audioUrl: '/prebuilt/playground.wav', category: 'Places', templateKey: 'tpl-playground' },
+    'tpl-bathroom': { label: 'Bathroom', imageUrl: '/prebuilt/bathroom.webp', audioUrl: '/prebuilt/bathroom.wav', category: 'Places', templateKey: 'tpl-bathroom' },
     // Food
     'tpl-juice': { label: 'Juice', imageUrl: '/prebuilt/juice.webp', audioUrl: '/prebuilt/juice.wav', category: 'Food', templateKey: 'tpl-juice' },
     'tpl-chocolate': { label: 'Chocolate', imageUrl: '/prebuilt/chocolate.webp', audioUrl: '/prebuilt/chocolate.wav', category: 'Food', templateKey: 'tpl-chocolate' },
@@ -188,6 +209,20 @@ const STARTER_CARDS: Record<string, Card[]> = {
         { id: 'sbp-27', boardId: 'starter-template', label: 'Dog', imageUrl: '/prebuilt/dog.webp', audioUrl: '/prebuilt/dog.wav', category: 'Animals', order: 34, templateKey: 'tpl-dog' },
         { id: 'sbp-28', boardId: 'starter-template', label: 'Cat', imageUrl: '/prebuilt/cat.webp', audioUrl: '/prebuilt/cat.wav', category: 'Animals', order: 35, templateKey: 'tpl-cat' },
         { id: 'sbp-29', boardId: 'starter-template', label: 'Fish', imageUrl: '/prebuilt/fish.webp', audioUrl: '/prebuilt/fish.wav', category: 'Animals', order: 36, templateKey: 'tpl-fish' },
+    ],
+    'starter-school-classroom': [
+        { id: 'sbp-school-1', boardId: 'starter-school-classroom', label: 'Help', imageUrl: '/prebuilt/help.webp', audioUrl: '/prebuilt/help.wav', category: 'Core', order: 0, templateKey: 'tpl-help' },
+        { id: 'sbp-school-2', boardId: 'starter-school-classroom', label: 'Teacher', imageUrl: '/prebuilt/teacher.webp', audioUrl: '/prebuilt/teacher.wav', category: 'People', order: 1, templateKey: 'tpl-teacher' },
+        { id: 'sbp-school-3', boardId: 'starter-school-classroom', label: 'Friend', imageUrl: '/prebuilt/friend.webp', audioUrl: '/prebuilt/friend.wav', category: 'People', order: 2, templateKey: 'tpl-friend' },
+        { id: 'sbp-school-4', boardId: 'starter-school-classroom', label: 'Classroom', imageUrl: '/prebuilt/classroom.webp', audioUrl: '/prebuilt/classroom.wav', category: 'Places', order: 3, templateKey: 'tpl-classroom' },
+        { id: 'sbp-school-5', boardId: 'starter-school-classroom', label: 'School', imageUrl: '/prebuilt/school.webp', audioUrl: '/prebuilt/school.wav', category: 'Places', order: 4, templateKey: 'tpl-school' },
+        { id: 'sbp-school-6', boardId: 'starter-school-classroom', label: 'Playground', imageUrl: '/prebuilt/playground.webp', audioUrl: '/prebuilt/playground.wav', category: 'Places', order: 5, templateKey: 'tpl-playground' },
+        { id: 'sbp-school-7', boardId: 'starter-school-classroom', label: 'Bathroom', imageUrl: '/prebuilt/bathroom.webp', audioUrl: '/prebuilt/bathroom.wav', category: 'Places', order: 6, templateKey: 'tpl-bathroom' },
+        { id: 'sbp-school-8', boardId: 'starter-school-classroom', label: 'Pencil', imageUrl: '/prebuilt/pencil.webp', audioUrl: '/prebuilt/pencil.wav', category: 'Activities', order: 7, templateKey: 'tpl-pencil' },
+        { id: 'sbp-school-9', boardId: 'starter-school-classroom', label: 'Paper', imageUrl: '/prebuilt/paper.webp', audioUrl: '/prebuilt/paper.wav', category: 'Activities', order: 8, templateKey: 'tpl-paper' },
+        { id: 'sbp-school-10', boardId: 'starter-school-classroom', label: 'Book', imageUrl: '/prebuilt/book.webp', audioUrl: '/prebuilt/book.wav', category: 'Activities', order: 9, templateKey: 'tpl-book' },
+        { id: 'sbp-school-11', boardId: 'starter-school-classroom', label: 'Write', imageUrl: '/prebuilt/write.webp', audioUrl: '/prebuilt/write.wav', category: 'Activities', order: 10, templateKey: 'tpl-write' },
+        { id: 'sbp-school-12', boardId: 'starter-school-classroom', label: 'Draw', imageUrl: '/prebuilt/draw.webp', audioUrl: '/prebuilt/draw.wav', category: 'Activities', order: 11, templateKey: 'tpl-draw' },
     ]
 };
 

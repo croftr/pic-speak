@@ -57,8 +57,8 @@ test('can add a card from a public board via the public card picker', async ({ p
   await page.getByRole('button', { name: /browse existing cards/i }).click()
 
   // ── Verify the Merge Board modal opened ─────────────────────────────
-  await expect(page.getByRole('heading', { name: /merge board/i })).toBeVisible({ timeout: 10000 })
-  await expect(page.getByText('Choose a board to merge cards from')).toBeVisible()
+  await expect(page.getByRole('heading', { name: /copy cards from another board/i })).toBeVisible({ timeout: 10000 })
+  await expect(page.getByText('Choose a board to copy cards from')).toBeVisible()
 
   // ── Switch to Public Boards tab ─────────────────────────────────────
   await page.getByRole('button', { name: /public boards/i }).click()
@@ -79,12 +79,12 @@ test('can add a card from a public board via the public card picker', async ({ p
   await expect(page.getByText('Hello', { exact: true }).first()).toBeVisible()
 
   // ── Merge selected cards into the board ─────────────────────────────
-  // All non-conflict cards are pre-selected, so just click Merge
-  await page.getByRole('button', { name: /merge \d+ cards?/i }).click()
+  // All non-conflict cards are pre-selected, so just click Add
+  await page.getByRole('button', { name: /add \d+ cards?/i }).click()
 
   // ── Verify success ──────────────────────────────────────────────────
-  // Toast should confirm the cards were merged
-  await expect(page.getByText(/merged successfully/)).toBeVisible({ timeout: 5000 })
+  // Toast should confirm the cards were added
+  await expect(page.getByText(/added successfully/)).toBeVisible({ timeout: 5000 })
 
   // The cards should now appear on the board
   await expect(page.getByRole('button', { name: /Yes/ })).toBeVisible({ timeout: 10000 })
@@ -96,7 +96,7 @@ test('can add a card from a public board via the public card picker', async ({ p
   await expect(page.getByRole('heading', { name: /what is it/i })).toBeVisible()
 
   await page.getByRole('button', { name: /browse existing cards/i }).click()
-  await expect(page.getByRole('heading', { name: /merge board/i })).toBeVisible({ timeout: 10000 })
+  await expect(page.getByRole('heading', { name: /copy cards from another board/i })).toBeVisible({ timeout: 10000 })
 
   // Switch to public boards and click the Starter Template board again
   await page.getByRole('button', { name: /public boards/i }).click()
@@ -112,7 +112,7 @@ test('can add a card from a public board via the public card picker', async ({ p
   await backButton.click()
 
   // Verify we're back at the board list
-  await expect(page.getByRole('heading', { name: /merge board/i })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /copy cards from another board/i })).toBeVisible()
   await expect(page.getByPlaceholder('Search boards...')).toBeVisible()
 
   // ── Delete the board via API for cleanup ────────────────────────────
