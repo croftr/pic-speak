@@ -117,31 +117,31 @@ function PublicBoardsContent() {
                             className="group relative flex flex-col bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
                         >
                             {/* Stretched link covers the whole card; interactive
-                                children below use relative z-10 to stay clickable.
+                                children below use z-20 to stay clickable.
                                 Avoids nesting <a> inside <a> (invalid HTML). */}
                             <Link
                                 href={`/board/${board.id}`}
                                 aria-label={board.name}
-                                className="absolute inset-0 z-0 rounded-3xl"
+                                className="absolute inset-0 z-10 rounded-3xl"
                             />
                             <div className="relative">
                                 <BoardCoverBanner src={board.coverImageUrl ?? board.fallbackCoverImageUrl} alt="" />
-                                {(isAdmin || (currentUserId && board.userId === currentUserId)) && !board.id.startsWith('starter-') && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            handleDeleteClick(board);
-                                        }}
-                                        disabled={deletingBoardId === board.id}
-                                        className="absolute top-3 right-3 z-10 px-2.5 py-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm text-red-600 dark:text-red-400 rounded-full text-xs font-bold flex items-center gap-1 hover:bg-red-50 dark:hover:bg-red-900/50 transition-colors cursor-pointer shadow-md touch-manipulation"
-                                        title={isAdmin && board.userId !== currentUserId ? "Admin: Delete board" : "Delete board"}
-                                    >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                        {deletingBoardId === board.id ? 'Deleting...' : 'Delete'}
-                                    </button>
-                                )}
                             </div>
+                            {(isAdmin || (currentUserId && board.userId === currentUserId)) && !board.id.startsWith('starter-') && (
+                                <button
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        handleDeleteClick(board);
+                                    }}
+                                    disabled={deletingBoardId === board.id}
+                                    className="absolute top-3 right-3 z-20 px-2.5 py-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm text-red-600 dark:text-red-400 rounded-full text-xs font-bold flex items-center gap-1 hover:bg-red-50 dark:hover:bg-red-900/50 transition-colors cursor-pointer shadow-md touch-manipulation"
+                                    title={isAdmin && board.userId !== currentUserId ? "Admin: Delete board" : "Delete board"}
+                                >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    {deletingBoardId === board.id ? 'Deleting...' : 'Delete'}
+                                </button>
+                            )}
                             <div className="flex flex-col flex-1 p-4 sm:p-5">
                                 <div className="flex items-start justify-between gap-2 mb-1">
                                     <h3 className="text-lg sm:text-xl font-display font-extrabold text-gray-900 dark:text-white min-w-0 truncate group-hover:text-primary transition-colors">
@@ -181,7 +181,7 @@ function PublicBoardsContent() {
                                             {board.userId && (
                                                 <Link
                                                     href={`/public-boards?creator=${board.userId}`}
-                                                    className="relative z-10 text-[11px] text-primary hover:underline whitespace-nowrap"
+                                                    className="relative z-20 text-[11px] text-primary hover:underline whitespace-nowrap"
                                                 >
                                                     More boards
                                                 </Link>
