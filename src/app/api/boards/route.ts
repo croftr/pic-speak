@@ -15,7 +15,7 @@ export async function GET() {
     const boards = await getBoards(userId);
     return NextResponse.json(boards, {
         headers: {
-            'Cache-Control': 'private, max-age=60, stale-while-revalidate=300'
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
         }
     });
 }

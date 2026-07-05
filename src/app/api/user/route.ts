@@ -13,7 +13,7 @@ export async function GET() {
 
     return NextResponse.json({ userId, isAdmin }, {
         headers: {
-            'Cache-Control': 'private, max-age=300, stale-while-revalidate=600'
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
         }
     });
 }

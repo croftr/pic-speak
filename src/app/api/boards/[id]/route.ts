@@ -27,7 +27,7 @@ export async function GET(
     // Cache public boards longer than private boards
     const cacheControl = board.isPublic
         ? 'public, max-age=300, stale-while-revalidate=600'
-        : 'private, max-age=60, stale-while-revalidate=300';
+        : 'no-store, no-cache, must-revalidate, proxy-revalidate';
 
     return NextResponse.json(board, {
         headers: {
