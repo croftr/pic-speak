@@ -70,18 +70,25 @@ export default function Home() {
 
       <div className="w-full max-w-4xl mx-auto flex flex-col items-center gap-8 sm:gap-12">
 
-        {/* Logo / Header Area */}
-        <div className="text-center space-y-4 animate-in slide-in-from-top-10 duration-700">
-          <div className="w-24 h-24 sm:w-32 sm:h-32 mx-auto bg-white dark:bg-slate-800 rounded-3xl shadow-lg flex items-center justify-center p-4 transform -rotate-3 hover:rotate-0 transition-transform duration-500">
-            <Image src="/logo.svg" alt="My Voice Board Logo" width={100} height={100} className="w-full h-full" priority />
-          </div>
-          <h1 className="text-4xl sm:text-5xl font-black text-slate-800 dark:text-white tracking-tight">
-            My Voice Board
-          </h1>
-          <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 font-medium max-w-md mx-auto">
+        {/* Logo / Header Area — full hero pitch for visitors, compact tagline for
+            signed-in users (the header already carries the branding for them) */}
+        {isSignedIn ? (
+          <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 font-medium max-w-md mx-auto text-center animate-in slide-in-from-top-10 duration-700">
             Build picture boards with your own photos and your own voice. Tap a card — it speaks.
           </p>
-        </div>
+        ) : (
+          <div className="text-center space-y-4 animate-in slide-in-from-top-10 duration-700">
+            <div className="w-24 h-24 sm:w-32 sm:h-32 mx-auto bg-white dark:bg-slate-800 rounded-3xl shadow-lg flex items-center justify-center p-4 transform -rotate-3 hover:rotate-0 transition-transform duration-500">
+              <Image src="/logo.svg" alt="My Voice Board Logo" width={100} height={100} className="w-full h-full" priority />
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-black text-slate-800 dark:text-white tracking-tight">
+              My Voice Board
+            </h1>
+            <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 font-medium max-w-md mx-auto">
+              Build picture boards with your own photos and your own voice. Tap a card — it speaks.
+            </p>
+          </div>
+        )}
 
         {/* Action Grid */}
         <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8 px-4">

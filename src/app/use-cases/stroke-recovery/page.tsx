@@ -15,9 +15,9 @@ export default function StrokeRecoveryPage() {
       <section className="relative px-6 pt-24 pb-16 md:pt-32 md:pb-24 max-w-6xl mx-auto flex flex-col items-center text-center">
         <div className="absolute inset-0 -z-10 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] dark:opacity-20 opacity-50"></div>
         
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium text-sm mb-8 animate-in slide-in-from-bottom-4 duration-700">
-          <MessageSquare size={16} />
-          <span>Designed for adults with Aphasia and Speech Apraxia</span>
+        <div className="inline-flex items-start gap-2 px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium text-sm mb-8 animate-in slide-in-from-bottom-4 duration-700">
+          <MessageSquare size={16} className="mt-0.5 shrink-0" />
+          <span className="text-left">Designed for adults with Aphasia and Speech Apraxia</span>
         </div>
         
         <h1 className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tight mb-8 animate-in slide-in-from-bottom-8 duration-700 delay-100">
