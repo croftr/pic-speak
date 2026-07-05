@@ -1,7 +1,31 @@
 import { setupClerkTestingToken, clerk } from '@clerk/testing/playwright'
 import { test, expect } from '@playwright/test'
 
-test('can browse public boards and open the Starter Template', async ({ page }) => {
+// Used to track the board created during the test for cleanup in case of failure
+let createdBoardName: string | undefined
+
+test.afterEach(async ({ page }) => {
+  if (createdBoardName) {
+    try {
+      // Add timestamp to bypass potential caching
+      const response = await page.request.get(`/api/boards?_=${Date.now()}`)
+      if (response.ok()) {
+        const boards = await response.json()
+        const board = boards.find((b: { name: string }) => b.name === createdBoardName)
+        if (board) {
+          console.log(`[Cleanup] Deleting board: ${createdBoardName} (${board.id})`)
+          await page.request.delete(`/api/boards/${board.id}`)
+        }
+      }
+    } catch (error) {
+      console.error('[Cleanup] Failed to clean up board:', error)
+    } finally {
+      createdBoardName = undefined
+    }
+  }
+})
+
+async function signIn(page: import('@playwright/test').Page) {
   // Sign in — the /board/* routes are protected by middleware
   await setupClerkTestingToken({ page })
   await page.goto('/')
@@ -9,6 +33,10 @@ test('can browse public boards and open the Starter Template', async ({ page }) 
     page,
     emailAddress: process.env.E2E_CLERK_USER_USERNAME!,
   })
+}
+
+test('can browse public boards and open the Starter Template', async ({ page }) => {
+  await signIn(page)
 
   // Navigate to the public boards page
   await page.goto('/public-boards')
@@ -35,3 +63,63 @@ test('can browse public boards and open the Starter Template', async ({ page }) 
   await expect(page.getByRole('button', { name: /^No / })).toBeVisible()
   await expect(page.getByRole('button', { name: /^Hello/ })).toBeVisible()
 })
+
+test('creator can delete their own public board from public boards list', async ({ page }) => {
+  test.setTimeout(60000)
+  await signIn(page)
+
+  await page.goto('/my-boards')
+  await expect(page.getByRole('heading', { name: /my boards/i })).toBeVisible({ timeout: 10000 })
+
+  // Create a new board
+  await page.getByRole('button', { name: /new board/i }).click()
+  createdBoardName = `Public Mgmt Test Board ${Date.now()}`
+  await page.getByPlaceholder('e.g., Daily Routine').fill(createdBoardName)
+  await page.locator('form').getByRole('button', { name: /create board/i }).click()
+
+  // Redirected to the new board in edit mode
+  await expect(page).toHaveURL(/\/board\/.*\?edit=true/, { timeout: 10000 })
+  await expect(page.getByText(createdBoardName)).toBeVisible()
+
+  // Expand settings panel
+  await page.evaluate(() => window.scrollTo(0, 0))
+  const settingsButton = page.getByRole('button', { name: /settings/i }).first()
+  await expect(settingsButton).toBeVisible()
+  await settingsButton.click()
+
+  // Make board public
+  await page.getByText('Public Board').click()
+  await page.getByRole('button', { name: 'Save' }).click()
+
+  // Wait for edit mode to finish
+  await expect(page).not.toHaveURL(/edit=true/, { timeout: 10000 })
+
+  // Go to public boards list
+  await page.goto('/public-boards')
+  await expect(page.getByRole('heading', { name: /public boards/i })).toBeVisible()
+
+  // Find our board card
+  const boardCard = page.locator('.group').filter({ hasText: createdBoardName })
+  await expect(boardCard).toBeVisible()
+
+  // Delete button should be visible for our own board
+  const deleteBtn = boardCard.getByRole('button', { name: /delete/i })
+  await expect(deleteBtn).toBeVisible()
+
+  // Delete button should NOT be visible on Starter Template
+  const starterCard = page.locator('.group').filter({ hasText: /starter template/i })
+  await expect(starterCard.getByRole('button', { name: /delete/i })).not.toBeVisible()
+
+  // Click delete and confirm in dialog
+  await deleteBtn.click()
+  const confirmDialog = page.locator('div.relative').filter({ hasText: /are you sure you want to delete/i })
+  await expect(confirmDialog).toBeVisible()
+  await confirmDialog.getByRole('button', { name: 'Delete', exact: true }).click()
+
+  // Verify the board card is gone
+  await expect(boardCard).not.toBeVisible({ timeout: 10000 })
+
+  // Reset tracking variable since it was successfully deleted
+  createdBoardName = undefined
+})
+

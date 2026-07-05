@@ -21,6 +21,7 @@ function PublicBoardsContent() {
     const [publicBoards, setPublicBoards] = useState<Board[]>([]);
     const [isLoadingBoards, setIsLoadingBoards] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const [deletingBoardId, setDeletingBoardId] = useState<string | null>(null);
 
     useEffect(() => {
@@ -36,7 +37,10 @@ function PublicBoardsContent() {
             });
         fetch('/api/user')
             .then(res => res.json())
-            .then(data => setIsAdmin(data.isAdmin))
+            .then(data => {
+                setIsAdmin(data.isAdmin);
+                setCurrentUserId(data.userId);
+            })
             .catch(() => {});
     }, []);
 
@@ -104,7 +108,7 @@ function PublicBoardsContent() {
                                 className="absolute inset-0 z-0 rounded-2xl"
                             />
                             <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
-                                {isAdmin && !board.id.startsWith('starter-') && (
+                                {(isAdmin || (currentUserId && board.userId === currentUserId)) && !board.id.startsWith('starter-') && (
                                     <button
                                         onClick={(e) => {
                                             e.preventDefault();
@@ -113,7 +117,7 @@ function PublicBoardsContent() {
                                         }}
                                         disabled={deletingBoardId === board.id}
                                         className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full text-xs font-bold flex items-center gap-1 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors cursor-pointer"
-                                        title="Admin: Delete board"
+                                        title={isAdmin && board.userId !== currentUserId ? "Admin: Delete board" : "Delete board"}
                                     >
                                         <Trash2 className="w-3 h-3" />
                                         {deletingBoardId === board.id ? 'Deleting...' : 'Delete'}
