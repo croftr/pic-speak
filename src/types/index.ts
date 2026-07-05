@@ -33,6 +33,8 @@ export interface Board {
   creatorImageUrl?: string;
   ownerEmail?: string;
   emailNotificationsEnabled?: boolean;
+  coverImageUrl?: string; // Explicit cover set by the owner
+  fallbackCoverImageUrl?: string; // Computed: first card's image (populated by board list queries only)
   likeCount?: number;
   commentCount?: number;
   cardCount?: number;

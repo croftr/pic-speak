@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Pencil, X, Plus, Sparkles, Play, Layers } from 'lucide-react';
+import { Pencil, X, Plus, Sparkles, Play, Layers, Image as ImageIcon } from 'lucide-react';
 import { Board } from '@/types';
 import { toast } from 'sonner';
 import { useLockMode } from '@/contexts/LockModeContext';
+import BoardCoverPicker from './BoardCoverPicker';
+import BoardCoverIcon from './BoardCoverIcon';
 
 interface MyBoardsClientProps {
     initialBoards: Board[];
@@ -27,6 +29,8 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [newBoardName, setNewBoardName] = useState('');
     const [newBoardDesc, setNewBoardDesc] = useState('');
+    const [newBoardCover, setNewBoardCover] = useState<string | null>(null);
+    const [showCoverPicker, setShowCoverPicker] = useState(false);
     const [selectedTemplateBoardId, setSelectedTemplateBoardId] = useState<string>('');
 
     // Combine system templates and public boards for template selection
@@ -55,7 +59,8 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
                     body: JSON.stringify({
                         templateBoardId: selectedTemplateBoardId,
                         newBoardName: newBoardName,
-                        newBoardDesc: newBoardDesc
+                        newBoardDesc: newBoardDesc,
+                        coverImageUrl: newBoardCover || undefined
                     })
                 });
 
@@ -74,7 +79,8 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         name: newBoardName,
-                        description: newBoardDesc
+                        description: newBoardDesc,
+                        coverImageUrl: newBoardCover || undefined
                     })
                 });
 
@@ -156,7 +162,7 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
                         <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl p-8 shadow-2xl animate-in fade-in zoom-in-95">
                             <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-2xl font-bold">Create New Board</h2>
-                                <button onClick={() => setShowCreateForm(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
+                                <button onClick={() => { setShowCreateForm(false); setNewBoardCover(null); }} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
                                     <X className="w-6 h-6" />
                                 </button>
                             </div>
@@ -180,6 +186,43 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
                                         className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800 focus:ring-2 focus:ring-primary/50 outline-none h-24 resize-none"
                                         placeholder="What is this board for?"
                                     />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Cover Image (Optional)</label>
+                                    {newBoardCover ? (
+                                        <div className="space-y-2">
+                                            <div className="relative w-full aspect-[4/3] max-h-40 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                <img src={newBoardCover} alt="Board cover" className="w-full h-full object-cover" />
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowCoverPicker(true)}
+                                                    className="px-4 py-2 text-sm font-bold rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-primary hover:text-primary transition-colors"
+                                                >
+                                                    Change
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setNewBoardCover(null)}
+                                                    className="px-4 py-2 text-sm font-bold rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                                >
+                                                    Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowCoverPicker(true)}
+                                            className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 text-gray-500 hover:border-primary hover:text-primary transition-colors font-medium"
+                                        >
+                                            <ImageIcon className="w-5 h-5" />
+                                            Add cover image
+                                        </button>
+                                    )}
+                                    <p className="mt-1 text-xs text-gray-400">Without a cover, the board&apos;s first card image is shown.</p>
                                 </div>
                                 {availableTemplates.length > 0 && (
                                     <div>
@@ -212,6 +255,7 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
                                         onClick={() => {
                                             setShowCreateForm(false);
                                             setSelectedTemplateBoardId('');
+                                            setNewBoardCover(null);
                                         }}
                                         className="px-6 py-3 font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
                                     >
@@ -298,9 +342,12 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
                                         <span className="text-[10px] font-bold text-white uppercase">Template</span>
                                     </div>
 
-                                    <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3 pr-16 sm:pr-20">
-                                        {template.name}
-                                    </h3>
+                                    <div className="flex items-center gap-3 mb-2 sm:mb-3 pr-16 sm:pr-20">
+                                        <BoardCoverIcon src={template.coverImageUrl ?? template.fallbackCoverImageUrl} />
+                                        <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white min-w-0">
+                                            {template.name}
+                                        </h3>
+                                    </div>
                                     <p className="text-gray-600 dark:text-gray-300 line-clamp-2 sm:line-clamp-3 text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6 min-h-[3em] sm:min-h-[4.5em]">
                                         {template.description || 'No description provided.'}
                                     </p>
@@ -354,9 +401,12 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
                                 }}
                                 className="group relative flex flex-col p-5 sm:p-6 md:p-8 bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                             >
-                                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3">
-                                    {board.name}
-                                </h3>
+                                <div className="flex items-center gap-3 mb-2 sm:mb-3">
+                                    <BoardCoverIcon src={board.coverImageUrl ?? board.fallbackCoverImageUrl} />
+                                    <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white min-w-0">
+                                        {board.name}
+                                    </h3>
+                                </div>
                                 <p className="text-gray-500 line-clamp-2 sm:line-clamp-3 text-xs sm:text-sm leading-relaxed mb-3 sm:mb-4 min-h-[3em] sm:min-h-[4.5em]">
                                     {board.description || 'No description provided.'}
                                 </p>
@@ -399,6 +449,16 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
                     )}
                 </div>
             </div>
+
+            {/* Cover picker for the create-board form (no cards yet, so upload/AI only) */}
+            <BoardCoverPicker
+                isOpen={showCoverPicker}
+                onClose={() => setShowCoverPicker(false)}
+                onSelected={(url) => {
+                    setNewBoardCover(url);
+                    setShowCoverPicker(false);
+                }}
+            />
         </main>
     );
 }

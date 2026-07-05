@@ -7,7 +7,8 @@ import { useSettings } from '@/contexts/SettingsContext';
 import {
     Upload, ArrowLeft, Loader2, Trash2,
     Share2, Check,
-    Grid3X3, Grid2X2, LayoutGrid, Layers, ChevronDown, ChevronUp, Settings, LockOpen
+    Grid3X3, Grid2X2, LayoutGrid, Layers, ChevronDown, ChevronUp, Settings, LockOpen,
+    Image as ImageIcon
 } from 'lucide-react';
 
 interface BoardToolbarProps {
@@ -27,6 +28,10 @@ interface BoardToolbarProps {
     onBatchUpload: () => void;
     onMergeBoard: () => void;
     onLock: () => void;
+    coverImageUrl: string | null;
+    fallbackCoverPreview?: string;
+    onPickCover: () => void;
+    onClearCover: () => void;
 }
 
 export default function BoardToolbar({
@@ -45,7 +50,11 @@ export default function BoardToolbar({
     isCopied,
     onBatchUpload,
     onMergeBoard,
-    onLock
+    onLock,
+    coverImageUrl,
+    fallbackCoverPreview,
+    onPickCover,
+    onClearCover
 }: BoardToolbarProps) {
     const { cardSize: userCardSize, setCardSize } = useSettings();
     const [isSettingsExpanded, setIsSettingsExpanded] = useState(false);
@@ -271,6 +280,54 @@ export default function BoardToolbar({
                                 </button>
                             )}
                         </label>
+
+                        {/* Cover Image */}
+                        <div>
+                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 px-0.5">
+                                Cover Image <span className="text-gray-400">(shown on board tiles)</span>
+                            </label>
+                            <div className="flex items-center gap-3 p-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                                <div className="relative w-20 aspect-[4/3] rounded-md overflow-hidden bg-gray-200 dark:bg-slate-700 flex-shrink-0">
+                                    {(coverImageUrl || fallbackCoverPreview) ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img
+                                            src={coverImageUrl || fallbackCoverPreview}
+                                            alt="Board cover"
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                            <ImageIcon className="w-5 h-5 text-gray-400" />
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <span className="block text-xs text-gray-500 dark:text-gray-400">
+                                        {coverImageUrl
+                                            ? 'Custom cover'
+                                            : fallbackCoverPreview
+                                                ? "Using first card's image"
+                                                : 'No cover yet'}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 flex-shrink-0">
+                                    <button
+                                        onClick={onPickCover}
+                                        className="px-3 py-1.5 text-xs font-semibold rounded-md border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-primary hover:text-primary transition-colors touch-manipulation"
+                                    >
+                                        {coverImageUrl ? 'Change' : 'Choose'}
+                                    </button>
+                                    {coverImageUrl && (
+                                        <button
+                                            onClick={onClearCover}
+                                            className="px-3 py-1.5 text-xs font-semibold rounded-md text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors touch-manipulation"
+                                        >
+                                            Remove
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

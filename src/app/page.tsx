@@ -78,7 +78,7 @@ export default function Home() {
         {isSignedIn ? (
           <div className="text-center space-y-2 animate-in slide-in-from-top-10 duration-700">
             <h1 className="text-3xl sm:text-4xl font-black text-slate-800 dark:text-white tracking-tight">
-              {user?.firstName ? `Hello ${user.firstName}` : 'Welcome back'} 👋
+              {user?.firstName ? `Hello ${user.firstName}` : 'Welcome back'}
             </h1>
             <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 font-medium max-w-md mx-auto">
               Pick a board and start talking.

@@ -25,6 +25,25 @@ export function validateColor(value: string): string | null {
     return null;
 }
 
+/**
+ * Validates a board cover image URL. Accepts absolute https URLs (uploaded
+ * blobs) or app-relative paths (prebuilt assets). Returns an error message
+ * or null if valid.
+ */
+export function validateCoverImageUrl(value: unknown): string | null {
+    if (typeof value !== 'string') {
+        return 'Cover image URL must be a string.';
+    }
+    const lengthError = validateStringLength(value, 2048, 'Cover image URL');
+    if (lengthError) {
+        return lengthError;
+    }
+    if (!value.startsWith('https://') && !value.startsWith('/')) {
+        return 'Cover image URL must be an https URL or an app-relative path.';
+    }
+    return null;
+}
+
 /** Allowed TTS voices (Neural2 only — no expensive Studio/Polyglot voices) */
 export const ALLOWED_TTS_VOICES = [
     'en-US-Neural2-A',

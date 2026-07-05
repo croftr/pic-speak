@@ -36,6 +36,9 @@ const ConfirmDialog = dynamic(() => import('@/components/ConfirmDialog'), {
 const MergeBoardModal = dynamic(() => import('@/components/MergeBoardModal'), {
     loading: () => null
 });
+const BoardCoverPicker = dynamic(() => import('@/components/BoardCoverPicker'), {
+    loading: () => null
+});
 
 interface BoardClientProps {
     boardId: string;
@@ -85,6 +88,8 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
     const [editName, setEditName] = useState(initialBoard.name);
     const [editDesc, setEditDesc] = useState(initialBoard.description || '');
     const [isPublic, setIsPublic] = useState(initialBoard.isPublic || false);
+    const [editCover, setEditCover] = useState<string | null>(initialBoard.coverImageUrl ?? null);
+    const [isCoverPickerOpen, setIsCoverPickerOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
     // Search/Filter state
@@ -153,7 +158,8 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
                 body: JSON.stringify({
                     name: editName,
                     description: editDesc,
-                    isPublic: isPublic
+                    isPublic: isPublic,
+                    coverImageUrl: editCover ?? '' // empty string clears the cover
                 })
             });
 
@@ -250,6 +256,10 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
                     onBatchUpload={handleBatchUpload}
                     onMergeBoard={() => setIsMergeBoardModalOpen(true)}
                     onLock={() => lock(boardId)}
+                    coverImageUrl={editCover}
+                    fallbackCoverPreview={cards[0]?.imageUrl}
+                    onPickCover={() => setIsCoverPickerOpen(true)}
+                    onClearCover={() => setEditCover(null)}
                 />
             )}
 
@@ -345,6 +355,16 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
                 onMergeComplete={onMergeCompleteWrapper}
                 boardId={boardId}
                 existingCards={cards}
+            />
+
+            <BoardCoverPicker
+                isOpen={isCoverPickerOpen}
+                onClose={() => setIsCoverPickerOpen(false)}
+                onSelected={(url) => {
+                    setEditCover(url);
+                    setIsCoverPickerOpen(false);
+                }}
+                boardCards={cards}
             />
 
             <ConfirmDialog

@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS boards (
     creator_image_url TEXT,
     owner_email TEXT,
     email_notifications_enabled BOOLEAN DEFAULT TRUE,
+    cover_image_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <!-- Sky Gradient -->
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#bae6fd" />
+      <stop offset="100%" stop-color="#e0f2fe" />
+    </linearGradient>
+    <!-- Hill Gradient -->
+    <linearGradient id="hillGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4ade80" />
+      <stop offset="100%" stop-color="#22c55e" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Sky -->
+  <rect width="100" height="100" fill="url(#skyGrad)" />
+  
+  <!-- Clouds -->
+  <path d="M15,20 C18,20 20,23 20,25 C20,27 22,29 25,29 C28,29 30,27 30,25 C30,21 34,21 35,23 C36,25 35,27 35,29 L15,29 Z" fill="#ffffff" opacity="0.8" />
+  <path d="M70,12 C72,12 73,14 74,15 C75,17 77,18 79,18 C81,18 82,17 83,15 C83,12 86,12 87,13 C88,14 88,15 88,16 L68,16 Z" fill="#ffffff" opacity="0.6" />
+
+  <!-- Hills -->
+  <path d="M-10,80 Q25,60 60,75 T110,80 L110,110 L-10,110 Z" fill="url(#hillGrad)" />
+  <path d="M-10,90 Q40,75 80,85 T110,95 L110,110 L-10,110 Z" fill="#16a34a" />
+  
+  <!-- Sun -->
+  <circle cx="85" cy="20" r="8" fill="#fef08a" />
+  <circle cx="85" cy="20" r="6" fill="#facc15" />
+
+  <!-- Slide -->
+  <!-- Ladder -->
+  <line x1="25" y1="78" x2="25" y2="40" stroke="#4b5563" stroke-width="2.5" stroke-linecap="round" />
+  <line x1="20" y1="78" x2="25" y2="40" stroke="#4b5563" stroke-width="1.5" />
+  <!-- Rungs -->
+  <line x1="23" y1="70" x2="25" y2="70" stroke="#4b5563" stroke-width="1.5" />
+  <line x1="24" y1="60" x2="25" y2="60" stroke="#4b5563" stroke-width="1.5" />
+  <line x1="24" y1="50" x2="25" y2="50" stroke="#4b5563" stroke-width="1.5" />
+  
+  <!-- Slide Chute (Curved path) -->
+  <!-- Support posts -->
+  <line x1="45" y1="75" x2="45" y2="55" stroke="#4b5563" stroke-width="2" />
+  
+  <!-- Slide platform & handrails -->
+  <rect x="23" y="38" width="6" height="2" rx="0.5" fill="#ef4444" />
+  <path d="M23,38 C23,32 29,32 29,38" fill="none" stroke="#ef4444" stroke-width="1.5" />
+  
+  <!-- Chute -->
+  <path d="M28,40 Q40,42 45,55 T65,75" fill="none" stroke="#ef4444" stroke-width="5" stroke-linecap="round" />
+  <path d="M28,40 Q40,42 45,55 T65,75" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" />
+
+  <!-- Swing Set -->
+  <!-- A-Frame support -->
+  <line x1="72" y1="78" x2="78" y2="45" stroke="#4b5563" stroke-width="2.5" stroke-linecap="round" />
+  <line x1="84" y1="78" x2="78" y2="45" stroke="#4b5563" stroke-width="2.5" stroke-linecap="round" />
+  <line x1="78" y1="45" x2="90" y2="45" stroke="#4b5563" stroke-width="2.5" stroke-linecap="round" />
+  
+  <!-- Swing Chains -->
+  <line x1="80" y1="46" x2="80" y2="68" stroke="#9ca3af" stroke-width="1" />
+  <line x1="86" y1="46" x2="86" y2="68" stroke="#9ca3af" stroke-width="1" />
+  
+  <!-- Swing Seat -->
+  <rect x="78" y="68" width="10" height="2" rx="0.5" fill="#f97316" />
+</svg>

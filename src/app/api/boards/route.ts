@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getBoards, addBoard, getBoardCount } from '@/lib/storage';
 import { Board } from '@/types';
 import { auth, clerkClient } from '@clerk/nextjs/server';
-import { validateStringLength } from '@/lib/validation';
+import { validateStringLength, validateCoverImageUrl } from '@/lib/validation';
 import { getMaxBoardsPerUser } from '@/lib/limits';
 
 export async function GET() {
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json();
-        const { name, description } = body;
+        const { name, description, coverImageUrl } = body;
 
         // Check board limit
         const maxBoards = await getMaxBoardsPerUser();
@@ -60,6 +60,13 @@ export async function POST(request: Request) {
             }
         }
 
+        if (coverImageUrl) {
+            const coverError = validateCoverImageUrl(coverImageUrl);
+            if (coverError) {
+                return NextResponse.json({ error: coverError }, { status: 400 });
+            }
+        }
+
         // Fetch user info from Clerk
         let creatorName: string | undefined;
         let creatorImageUrl: string | undefined;
@@ -80,7 +87,8 @@ export async function POST(request: Request) {
             description: description || '',
             createdAt: new Date().toISOString(),
             creatorName,
-            creatorImageUrl
+            creatorImageUrl,
+            coverImageUrl: coverImageUrl || undefined
         };
 
         await addBoard(newBoard);

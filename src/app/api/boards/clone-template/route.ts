@@ -3,6 +3,7 @@ import { auth, clerkClient } from '@clerk/nextjs/server';
 import { addBoard, getCards, batchAddCards, getBoard, getBoardCount } from '@/lib/storage';
 import { Board, Card } from '@/types';
 import { getMaxBoardsPerUser, getMaxCardsPerBoard } from '@/lib/limits';
+import { validateCoverImageUrl } from '@/lib/validation';
 
 export async function POST(request: Request) {
     const { userId } = await auth();
@@ -13,13 +14,20 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json();
-        const { templateBoardId, newBoardName, newBoardDesc } = body;
+        const { templateBoardId, newBoardName, newBoardDesc, coverImageUrl } = body;
 
         if (!templateBoardId || !newBoardName) {
             return NextResponse.json(
                 { error: 'Template board ID and new board name are required' },
                 { status: 400 }
             );
+        }
+
+        if (coverImageUrl) {
+            const coverError = validateCoverImageUrl(coverImageUrl);
+            if (coverError) {
+                return NextResponse.json({ error: coverError }, { status: 400 });
+            }
         }
 
         // Check board limit
@@ -73,7 +81,8 @@ export async function POST(request: Request) {
             createdAt: new Date().toISOString(),
             isPublic: false,
             creatorName,
-            creatorImageUrl
+            creatorImageUrl,
+            coverImageUrl: coverImageUrl || undefined
         };
 
         await addBoard(newBoard);

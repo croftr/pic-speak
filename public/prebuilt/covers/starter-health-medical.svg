@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="healthGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="100" height="100" fill="url(#healthGrad)" />
+  
+  <!-- White shield or circle base -->
+  <circle cx="50" cy="50" r="38" fill="#ffffff" opacity="0.2" />
+  <circle cx="50" cy="50" r="32" fill="#ffffff" />
+  
+  <!-- Red Cross -->
+  <rect x="44" y="28" width="12" height="44" rx="3" fill="#ef4444" />
+  <rect x="28" y="44" width="44" height="12" rx="3" fill="#ef4444" />
+  
+  <!-- Thermometer -->
+  <g transform="translate(18, 18) rotate(-45)">
+    <rect x="-2" y="-15" width="4" height="30" rx="2" fill="#9ca3af" />
+    <rect x="-1.5" y="-14" width="3" height="28" rx="1.5" fill="#ffffff" />
+    <circle cx="0" cy="15" r="4.5" fill="#ef4444" />
+    <rect x="-0.8" y="-10" width="1.6" height="22" rx="0.8" fill="#ef4444" />
+  </g>
+  
+  <!-- Band-aid -->
+  <g transform="translate(76, 76) rotate(45)">
+    <rect x="-15" y="-6" width="30" height="12" rx="3" fill="#fed7aa" />
+    <rect x="-6" y="-6" width="12" height="12" fill="#fde8d0" />
+    <circle cx="-3" cy="-2" r="0.5" fill="#d97706" />
+    <circle cx="0" cy="-2" r="0.5" fill="#d97706" />
+    <circle cx="3" cy="-2" r="0.5" fill="#d97706" />
+    <circle cx="-3" cy="2" r="0.5" fill="#d97706" />
+    <circle cx="0" cy="2" r="0.5" fill="#d97706" />
+    <circle cx="3" cy="2" r="0.5" fill="#d97706" />
+  </g>
+</svg>

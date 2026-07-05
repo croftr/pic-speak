@@ -10,6 +10,8 @@ interface ImageCropModalProps {
     imageSrc: string;
     onCropComplete: (croppedImageBlob: Blob) => void;
     onCancel: () => void;
+    initialAspect?: number;
+    showAspectToggle?: boolean;
 }
 
 type AspectRatioOption = {
@@ -24,11 +26,11 @@ const aspectRatios: AspectRatioOption[] = [
     { label: 'Landscape', value: 4 / 3, icon: RectangleHorizontal },
 ];
 
-export default function ImageCropModal({ imageSrc, onCropComplete, onCancel }: ImageCropModalProps) {
+export default function ImageCropModal({ imageSrc, onCropComplete, onCancel, initialAspect, showAspectToggle = true }: ImageCropModalProps) {
     const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
     const [rotation, setRotation] = useState(0);
-    const [aspectRatio, setAspectRatio] = useState<number>(3 / 4); // Default to portrait
+    const [aspectRatio, setAspectRatio] = useState<number>(initialAspect ?? 3 / 4); // Default to portrait
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
 
@@ -145,6 +147,7 @@ export default function ImageCropModal({ imageSrc, onCropComplete, onCancel }: I
             {/* Controls */}
             <div className="bg-gray-900 px-4 py-4 space-y-4">
                 {/* Aspect Ratio Selector */}
+                {showAspectToggle && (
                 <div className="space-y-2">
                     <label className="text-white text-sm font-medium">Aspect Ratio</label>
                     <div className="flex gap-2">
@@ -169,6 +172,7 @@ export default function ImageCropModal({ imageSrc, onCropComplete, onCancel }: I
                         })}
                     </div>
                 </div>
+                )}
 
                 {/* Zoom Control */}
                 <div className="flex items-center gap-3">

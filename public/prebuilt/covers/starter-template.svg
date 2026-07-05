@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Plain slate background -->
+  <rect width="100" height="100" fill="#f1f5f9" />
+  
+  <!-- 4 Colored blocks representing category blocks -->
+  <!-- Top Left: Blue (Core) -->
+  <rect x="14" y="14" width="32" height="32" rx="6" fill="#3b82f6" />
+  
+  <!-- Top Right: Yellow (People) -->
+  <rect x="54" y="14" width="32" height="32" rx="6" fill="#eab308" />
+  
+  <!-- Bottom Left: Green (Food) -->
+  <rect x="14" y="54" width="32" height="32" rx="6" fill="#22c55e" />
+  
+  <!-- Bottom Right: Purple (Activities) -->
+  <rect x="54" y="54" width="32" height="32" rx="6" fill="#a855f7" />
+</svg>

@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getBoard, updateBoard, deleteBoard, getBoardCardBlobUrls } from '@/lib/storage';
+import { getBoard, updateBoard, deleteBoard, getBoardCardBlobUrls, isImageUrlUsedByAnyCard } from '@/lib/storage';
 import { del } from '@vercel/blob';
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { checkIsAdmin } from '@/lib/admin';
-import { validateStringLength } from '@/lib/validation';
+import { validateStringLength, validateCoverImageUrl } from '@/lib/validation';
 import { logger } from '@/lib/logger';
 
 export async function GET(
@@ -61,7 +61,7 @@ export async function PUT(
 
     try {
         const body = await request.json();
-        const { name, description, isPublic, emailNotificationsEnabled } = body;
+        const { name, description, isPublic, emailNotificationsEnabled, coverImageUrl } = body;
 
         if (name) {
             const nameError = validateStringLength(name, 100, 'Board name');
@@ -74,6 +74,14 @@ export async function PUT(
             const descError = validateStringLength(description, 500, 'Description');
             if (descError) {
                 return NextResponse.json({ error: descError }, { status: 400 });
+            }
+        }
+
+        // coverImageUrl semantics: undefined = unchanged, ''/null = clear, string = set
+        if (coverImageUrl) {
+            const coverError = validateCoverImageUrl(coverImageUrl);
+            if (coverError) {
+                return NextResponse.json({ error: coverError }, { status: 400 });
             }
         }
 
@@ -101,10 +109,26 @@ export async function PUT(
             ownerEmail,
             emailNotificationsEnabled: emailNotificationsEnabled !== undefined
                 ? emailNotificationsEnabled
-                : existingBoard.emailNotificationsEnabled
+                : existingBoard.emailNotificationsEnabled,
+            coverImageUrl: coverImageUrl !== undefined
+                ? (coverImageUrl || undefined)
+                : existingBoard.coverImageUrl
         };
 
         await updateBoard(updatedBoard);
+
+        // Clean up a replaced/cleared cover blob in the background — but only
+        // if no card still references it (the cover can be picked directly
+        // from a card's image, and cards can be copied across boards)
+        const oldCover = existingBoard.coverImageUrl;
+        if (coverImageUrl !== undefined && oldCover && oldCover !== updatedBoard.coverImageUrl
+            && oldCover.includes('.blob.vercel-storage.com')) {
+            isImageUrlUsedByAnyCard(oldCover)
+                .then(inUse => (inUse ? Promise.resolve() : del(oldCover)))
+                .catch(err => {
+                    logger.error('Failed to clean up replaced board cover blob', err, { boardId: id });
+                });
+        }
 
         return NextResponse.json(updatedBoard);
     } catch (error) {
@@ -141,13 +165,18 @@ export async function DELETE(
     try {
         // Collect blob URLs before deleting (cards cascade-delete with the board)
         const blobUrls = await getBoardCardBlobUrls(id);
+        if (existingBoard.coverImageUrl?.includes('.blob.vercel-storage.com')) {
+            blobUrls.push(existingBoard.coverImageUrl);
+        }
+        // Dedupe: the cover may be one of the card images
+        const uniqueBlobUrls = [...new Set(blobUrls)];
 
         await deleteBoard(id);
 
         // Clean up orphaned blobs in the background (don't block the response)
-        if (blobUrls.length > 0) {
-            del(blobUrls).catch(err => {
-                logger.error('Failed to clean up board blobs', err, { boardId: id, urlCount: blobUrls.length });
+        if (uniqueBlobUrls.length > 0) {
+            del(uniqueBlobUrls).catch(err => {
+                logger.error('Failed to clean up board blobs', err, { boardId: id, urlCount: uniqueBlobUrls.length });
             });
         }
 

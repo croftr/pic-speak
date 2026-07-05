@@ -1,6 +1,7 @@
 import { Pool, PoolClient } from 'pg';
 import { Card, Board, BoardComment } from '@/types';
 import { logger } from './logger';
+import publicBoardCovers from '@/config/public-board-covers.json';
 
 // Database row types (snake_case from DB)
 type CardRow = {
@@ -30,6 +31,7 @@ type BoardRow = {
     creator_image_url?: string;
     owner_email?: string;
     email_notifications_enabled?: boolean;
+    cover_image_url?: string;
 };
 
 export interface BoardWithStats {
@@ -85,6 +87,9 @@ const STARTER_BOARDS: Board[] = [
         isPublic: true,
         creatorName: 'My Voice Board',
         creatorImageUrl: '/logo.svg',
+        // Designed cover assets to be added later (e.g. '/prebuilt/covers/starter-template.webp');
+        // until then board tiles fall back to the first starter card's image.
+        coverImageUrl: (publicBoardCovers as Record<string, string | null>)['starter-template'] || undefined,
         cardCount: 37
     },
     {
@@ -96,6 +101,9 @@ const STARTER_BOARDS: Board[] = [
         isPublic: true,
         creatorName: 'My Voice Board',
         creatorImageUrl: '/logo.svg',
+        // Designed cover assets to be added later (e.g. '/prebuilt/covers/starter-template.webp');
+        // until then board tiles fall back to the first starter card's image.
+        coverImageUrl: (publicBoardCovers as Record<string, string | null>)['starter-school-classroom'] || undefined,
         cardCount: 12
     },
     {
@@ -107,6 +115,37 @@ const STARTER_BOARDS: Board[] = [
         isPublic: true,
         creatorName: 'My Voice Board',
         creatorImageUrl: '/logo.svg',
+        // Designed cover assets to be added later (e.g. '/prebuilt/covers/starter-template.webp');
+        // until then board tiles fall back to the first starter card's image.
+        coverImageUrl: (publicBoardCovers as Record<string, string | null>)['starter-health-medical'] || undefined,
+        cardCount: 12
+    },
+    {
+        id: 'starter-dining-out',
+        userId: 'system',
+        name: 'Dining Out & Restaurants',
+        description: 'Communication cards for ordering food, describing tastes, and interacting at a restaurant.',
+        createdAt: '2024-01-04T00:00:00.000Z',
+        isPublic: true,
+        creatorName: 'My Voice Board',
+        creatorImageUrl: '/logo.svg',
+        // Designed cover assets to be added later (e.g. '/prebuilt/covers/starter-template.webp');
+        // until then board tiles fall back to the first starter card's image.
+        coverImageUrl: (publicBoardCovers as Record<string, string | null>)['starter-dining-out'] || undefined,
+        cardCount: 12
+    },
+    {
+        id: 'starter-park-playground',
+        userId: 'system',
+        name: 'Park & Playground',
+        description: 'Communication cards for playing games, sharing turns, and outdoor playground activities.',
+        createdAt: '2024-01-05T00:00:00.000Z',
+        isPublic: true,
+        creatorName: 'My Voice Board',
+        creatorImageUrl: '/logo.svg',
+        // Designed cover assets to be added later (e.g. '/prebuilt/covers/starter-template.webp');
+        // until then board tiles fall back to the first starter card's image.
+        coverImageUrl: (publicBoardCovers as Record<string, string | null>)['starter-park-playground'] || undefined,
         cardCount: 12
     }
 ];
@@ -141,6 +180,19 @@ const TEMPLATE_CARDS_REGISTRY: Record<string, Omit<Card, 'id' | 'boardId' | 'ord
     'tpl-draw': { label: 'Draw', imageUrl: '/prebuilt/draw.webp', audioUrl: '/prebuilt/draw.wav', category: 'Activities', templateKey: 'tpl-draw' },
     'tpl-medicine': { label: 'Medicine', imageUrl: '/prebuilt/medicine.webp', audioUrl: '/prebuilt/medicine.wav', category: 'Activities', templateKey: 'tpl-medicine' },
     'tpl-bandage': { label: 'Bandage', imageUrl: '/prebuilt/bandage.webp', audioUrl: '/prebuilt/bandage.wav', category: 'Activities', templateKey: 'tpl-bandage' },
+    'tpl-order': { label: 'I want to order', imageUrl: '/prebuilt/order.webp', audioUrl: '/prebuilt/order.wav', category: 'Activities', templateKey: 'tpl-order' },
+    'tpl-bill': { label: 'Check please', imageUrl: '/prebuilt/bill.webp', audioUrl: '/prebuilt/bill.wav', category: 'Activities', templateKey: 'tpl-bill' },
+    'tpl-menu': { label: 'Menu', imageUrl: '/prebuilt/menu.webp', audioUrl: '/prebuilt/menu.wav', category: 'Activities', templateKey: 'tpl-menu' },
+    'tpl-napkin': { label: 'Napkin', imageUrl: '/prebuilt/napkin.webp', audioUrl: '/prebuilt/napkin.wav', category: 'Activities', templateKey: 'tpl-napkin' },
+    'tpl-play': { label: 'Play', imageUrl: '/prebuilt/play.webp', audioUrl: '/prebuilt/play.wav', category: 'Activities', templateKey: 'tpl-play' },
+    'tpl-slide': { label: 'Slide', imageUrl: '/prebuilt/slide.webp', audioUrl: '/prebuilt/slide.wav', category: 'Activities', templateKey: 'tpl-slide' },
+    'tpl-swing': { label: 'Swing', imageUrl: '/prebuilt/swing.webp', audioUrl: '/prebuilt/swing.wav', category: 'Activities', templateKey: 'tpl-swing' },
+    'tpl-ball': { label: 'Ball', imageUrl: '/prebuilt/ball.webp', audioUrl: '/prebuilt/ball.wav', category: 'Activities', templateKey: 'tpl-ball' },
+    'tpl-bike': { label: 'Bike', imageUrl: '/prebuilt/bike.webp', audioUrl: '/prebuilt/bike.wav', category: 'Activities', templateKey: 'tpl-bike' },
+    'tpl-run': { label: 'Run', imageUrl: '/prebuilt/run.webp', audioUrl: '/prebuilt/run.wav', category: 'Activities', templateKey: 'tpl-run' },
+    'tpl-jump': { label: 'Jump', imageUrl: '/prebuilt/jump.webp', audioUrl: '/prebuilt/jump.wav', category: 'Activities', templateKey: 'tpl-jump' },
+    'tpl-my-turn': { label: 'My turn', imageUrl: '/prebuilt/my_turn.webp', audioUrl: '/prebuilt/my_turn.wav', category: 'Activities', templateKey: 'tpl-my-turn' },
+    'tpl-your-turn': { label: 'Your turn', imageUrl: '/prebuilt/your_turn.webp', audioUrl: '/prebuilt/your_turn.wav', category: 'Activities', templateKey: 'tpl-your-turn' },
     // Places
     'tpl-bed': { label: 'Bed', imageUrl: '/prebuilt/bed.webp', audioUrl: '/prebuilt/bed.mp3', category: 'Places', templateKey: 'tpl-bed' },
     'tpl-school': { label: 'School', imageUrl: '/prebuilt/school.webp', audioUrl: '/prebuilt/school.wav', category: 'Places', templateKey: 'tpl-school' },
@@ -157,6 +209,9 @@ const TEMPLATE_CARDS_REGISTRY: Record<string, Omit<Card, 'id' | 'boardId' | 'ord
     'tpl-milk': { label: 'Milk', imageUrl: '/prebuilt/milk.webp', audioUrl: '/prebuilt/milk.wav', category: 'Food', templateKey: 'tpl-milk' },
     'tpl-banana': { label: 'Banana', imageUrl: '/prebuilt/banana.webp', audioUrl: '/prebuilt/banana.wav', category: 'Food', templateKey: 'tpl-banana' },
     'tpl-bread': { label: 'Bread', imageUrl: '/prebuilt/bread.webp', audioUrl: '/prebuilt/bread.wav', category: 'Food', templateKey: 'tpl-bread' },
+    'tpl-pizza': { label: 'Pizza', imageUrl: '/prebuilt/pizza.webp', audioUrl: '/prebuilt/pizza.wav', category: 'Food', templateKey: 'tpl-pizza' },
+    'tpl-burger': { label: 'Burger', imageUrl: '/prebuilt/burger.webp', audioUrl: '/prebuilt/burger.wav', category: 'Food', templateKey: 'tpl-burger' },
+    'tpl-fries': { label: 'Fries', imageUrl: '/prebuilt/fries.webp', audioUrl: '/prebuilt/fries.wav', category: 'Food', templateKey: 'tpl-fries' },
     // Core - New
     'tpl-help': { label: 'Help', imageUrl: '/prebuilt/help.webp', audioUrl: '/prebuilt/help.wav', category: 'Core', templateKey: 'tpl-help' },
     'tpl-start': { label: 'Start', imageUrl: '/prebuilt/start.webp', audioUrl: '/prebuilt/start.wav', category: 'Core', templateKey: 'tpl-start' },
@@ -170,6 +225,8 @@ const TEMPLATE_CARDS_REGISTRY: Record<string, Omit<Card, 'id' | 'boardId' | 'ord
     'tpl-hurt': { label: 'Hurt', imageUrl: '/prebuilt/hurt.webp', audioUrl: '/prebuilt/hurt.wav', category: 'Feelings', templateKey: 'tpl-hurt' },
     'tpl-sick': { label: 'Sick', imageUrl: '/prebuilt/sick.webp', audioUrl: '/prebuilt/sick.wav', category: 'Feelings', templateKey: 'tpl-sick' },
     'tpl-thirsty': { label: 'Thirsty', imageUrl: '/prebuilt/thirsty.webp', audioUrl: '/prebuilt/thirsty.wav', category: 'Feelings', templateKey: 'tpl-thirsty' },
+    'tpl-yummy': { label: 'Yummy', imageUrl: '/prebuilt/yummy.webp', audioUrl: '/prebuilt/yummy.wav', category: 'Feelings', templateKey: 'tpl-yummy' },
+    'tpl-yuck': { label: 'Yuck', imageUrl: '/prebuilt/yuck.webp', audioUrl: '/prebuilt/yuck.wav', category: 'Feelings', templateKey: 'tpl-yuck' },
     // Animals
     'tpl-dog': { label: 'Dog', imageUrl: '/prebuilt/dog.webp', audioUrl: '/prebuilt/dog.wav', category: 'Animals', templateKey: 'tpl-dog' },
     'tpl-cat': { label: 'Cat', imageUrl: '/prebuilt/cat.webp', audioUrl: '/prebuilt/cat.wav', category: 'Animals', templateKey: 'tpl-cat' },
@@ -179,6 +236,15 @@ const TEMPLATE_CARDS_REGISTRY: Record<string, Omit<Card, 'id' | 'boardId' | 'ord
 // Export for use in other modules
 export function getTemplateCard(templateKey: string): Omit<Card, 'id' | 'boardId' | 'order'> | undefined {
     return TEMPLATE_CARDS_REGISTRY[templateKey];
+}
+
+// Resolve a board's first-card image for tile cover fallbacks. Template cards
+// store no image_url in the DB, so resolve their image via the registry.
+function resolveFirstCardImage(imageUrl?: string | null, templateKey?: string | null): string | undefined {
+    if (templateKey && TEMPLATE_CARDS_REGISTRY[templateKey]) {
+        return TEMPLATE_CARDS_REGISTRY[templateKey].imageUrl;
+    }
+    return imageUrl || undefined;
 }
 
 const STARTER_CARDS: Record<string, Card[]> = {
@@ -255,6 +321,34 @@ const STARTER_CARDS: Record<string, Card[]> = {
         { id: 'sbp-health-10', boardId: 'starter-health-medical', label: 'Bandage', imageUrl: '/prebuilt/bandage.webp', audioUrl: '/prebuilt/bandage.wav', category: 'Activities', order: 9, templateKey: 'tpl-bandage' },
         { id: 'sbp-health-11', boardId: 'starter-health-medical', label: 'Water', imageUrl: '/prebuilt/water.webp', audioUrl: '/prebuilt/water.wav', category: 'Food', order: 10, templateKey: 'tpl-water' },
         { id: 'sbp-health-12', boardId: 'starter-health-medical', label: 'Bed', imageUrl: '/prebuilt/bed.webp', audioUrl: '/prebuilt/bed.mp3', category: 'Places', order: 11, templateKey: 'tpl-bed' },
+    ],
+    'starter-dining-out': [
+        { id: 'sbp-dining-1', boardId: 'starter-dining-out', label: 'Help', imageUrl: '/prebuilt/help.webp', audioUrl: '/prebuilt/help.wav', category: 'Core', order: 0, templateKey: 'tpl-help' },
+        { id: 'sbp-dining-2', boardId: 'starter-dining-out', label: 'More', imageUrl: '/prebuilt/more.webp', audioUrl: '/prebuilt/more.wav', category: 'Core', order: 1, templateKey: 'tpl-more' },
+        { id: 'sbp-dining-3', boardId: 'starter-dining-out', label: 'I want to order', imageUrl: '/prebuilt/order.webp', audioUrl: '/prebuilt/order.wav', category: 'Activities', order: 2, templateKey: 'tpl-order' },
+        { id: 'sbp-dining-4', boardId: 'starter-dining-out', label: 'Check please', imageUrl: '/prebuilt/bill.webp', audioUrl: '/prebuilt/bill.wav', category: 'Activities', order: 3, templateKey: 'tpl-bill' },
+        { id: 'sbp-dining-5', boardId: 'starter-dining-out', label: 'Menu', imageUrl: '/prebuilt/menu.webp', audioUrl: '/prebuilt/menu.wav', category: 'Activities', order: 4, templateKey: 'tpl-menu' },
+        { id: 'sbp-dining-6', boardId: 'starter-dining-out', label: 'Napkin', imageUrl: '/prebuilt/napkin.webp', audioUrl: '/prebuilt/napkin.wav', category: 'Activities', order: 5, templateKey: 'tpl-napkin' },
+        { id: 'sbp-dining-7', boardId: 'starter-dining-out', label: 'Water', imageUrl: '/prebuilt/water.webp', audioUrl: '/prebuilt/water.wav', category: 'Food', order: 6, templateKey: 'tpl-water' },
+        { id: 'sbp-dining-8', boardId: 'starter-dining-out', label: 'Pizza', imageUrl: '/prebuilt/pizza.webp', audioUrl: '/prebuilt/pizza.wav', category: 'Food', order: 7, templateKey: 'tpl-pizza' },
+        { id: 'sbp-dining-9', boardId: 'starter-dining-out', label: 'Burger', imageUrl: '/prebuilt/burger.webp', audioUrl: '/prebuilt/burger.wav', category: 'Food', order: 8, templateKey: 'tpl-burger' },
+        { id: 'sbp-dining-10', boardId: 'starter-dining-out', label: 'Fries', imageUrl: '/prebuilt/fries.webp', audioUrl: '/prebuilt/fries.wav', category: 'Food', order: 9, templateKey: 'tpl-fries' },
+        { id: 'sbp-dining-11', boardId: 'starter-dining-out', label: 'Yummy', imageUrl: '/prebuilt/yummy.webp', audioUrl: '/prebuilt/yummy.wav', category: 'Feelings', order: 10, templateKey: 'tpl-yummy' },
+        { id: 'sbp-dining-12', boardId: 'starter-dining-out', label: 'Yuck', imageUrl: '/prebuilt/yuck.webp', audioUrl: '/prebuilt/yuck.wav', category: 'Feelings', order: 11, templateKey: 'tpl-yuck' },
+    ],
+    'starter-park-playground': [
+        { id: 'sbp-park-1', boardId: 'starter-park-playground', label: 'Help', imageUrl: '/prebuilt/help.webp', audioUrl: '/prebuilt/help.wav', category: 'Core', order: 0, templateKey: 'tpl-help' },
+        { id: 'sbp-park-2', boardId: 'starter-park-playground', label: 'Stop', imageUrl: '/prebuilt/stop.webp', audioUrl: '/prebuilt/stop.wav', category: 'Core', order: 1, templateKey: 'tpl-stop' },
+        { id: 'sbp-park-3', boardId: 'starter-park-playground', label: 'Play', imageUrl: '/prebuilt/play.webp', audioUrl: '/prebuilt/play.wav', category: 'Activities', order: 2, templateKey: 'tpl-play' },
+        { id: 'sbp-park-4', boardId: 'starter-park-playground', label: 'Slide', imageUrl: '/prebuilt/slide.webp', audioUrl: '/prebuilt/slide.wav', category: 'Activities', order: 3, templateKey: 'tpl-slide' },
+        { id: 'sbp-park-5', boardId: 'starter-park-playground', label: 'Swing', imageUrl: '/prebuilt/swing.webp', audioUrl: '/prebuilt/swing.wav', category: 'Activities', order: 4, templateKey: 'tpl-swing' },
+        { id: 'sbp-park-6', boardId: 'starter-park-playground', label: 'Ball', imageUrl: '/prebuilt/ball.webp', audioUrl: '/prebuilt/ball.wav', category: 'Activities', order: 5, templateKey: 'tpl-ball' },
+        { id: 'sbp-park-7', boardId: 'starter-park-playground', label: 'Bike', imageUrl: '/prebuilt/bike.webp', audioUrl: '/prebuilt/bike.wav', category: 'Activities', order: 6, templateKey: 'tpl-bike' },
+        { id: 'sbp-park-8', boardId: 'starter-park-playground', label: 'Run', imageUrl: '/prebuilt/run.webp', audioUrl: '/prebuilt/run.wav', category: 'Activities', order: 7, templateKey: 'tpl-run' },
+        { id: 'sbp-park-9', boardId: 'starter-park-playground', label: 'Jump', imageUrl: '/prebuilt/jump.webp', audioUrl: '/prebuilt/jump.wav', category: 'Activities', order: 8, templateKey: 'tpl-jump' },
+        { id: 'sbp-park-10', boardId: 'starter-park-playground', label: 'Playground', imageUrl: '/prebuilt/playground.webp', audioUrl: '/prebuilt/playground.wav', category: 'Places', order: 9, templateKey: 'tpl-playground' },
+        { id: 'sbp-park-11', boardId: 'starter-park-playground', label: 'My turn', imageUrl: '/prebuilt/my_turn.webp', audioUrl: '/prebuilt/my_turn.wav', category: 'Activities', order: 10, templateKey: 'tpl-my-turn' },
+        { id: 'sbp-park-12', boardId: 'starter-park-playground', label: 'Your turn', imageUrl: '/prebuilt/your_turn.webp', audioUrl: '/prebuilt/your_turn.wav', category: 'Activities', order: 11, templateKey: 'tpl-your-turn' },
     ]
 };
 
@@ -494,7 +588,8 @@ export async function getBoardForCardCreation(boardId: string): Promise<BoardWit
             creatorName: row.creator_name,
             creatorImageUrl: row.creator_image_url,
             ownerEmail: row.owner_email,
-            emailNotificationsEnabled: row.email_notifications_enabled ?? true
+            emailNotificationsEnabled: row.email_notifications_enabled ?? true,
+            coverImageUrl: row.cover_image_url || undefined
         };
 
         return {
@@ -739,6 +834,28 @@ export async function getBoardCardBlobUrls(boardId: string): Promise<string[]> {
     }
 }
 
+/**
+ * Check whether any card (in any board) still references an image URL.
+ * Used before deleting a replaced board cover blob, since a cover can be
+ * picked directly from a card's image. Returns true on error so callers
+ * never delete a blob that might still be in use.
+ */
+export async function isImageUrlUsedByAnyCard(url: string): Promise<boolean> {
+    const client = await getDbClient();
+    try {
+        const result = await client.query(
+            'SELECT 1 FROM cards WHERE image_url = $1 LIMIT 1',
+            [url]
+        );
+        return result.rows.length > 0;
+    } catch (error) {
+        logger.error('Error checking card image URL usage', error, { url });
+        return true;
+    } finally {
+        client.release();
+    }
+}
+
 export async function updateCardOrders(boardId: string, cardOrders: { id: string; order: number }[]): Promise<void> {
     if (cardOrders.length === 0) return;
 
@@ -789,12 +906,20 @@ export async function getBoardCount(userId: string): Promise<number> {
 export async function getBoards(userId: string): Promise<Board[]> {
     const client = await getDbClient();
     try {
-        const result = await client.query<BoardRow & { card_count: string }>(
-            `SELECT b.*, COUNT(c.id) as card_count
+        const result = await client.query<BoardRow & { card_count: string; first_card_image_url?: string; first_card_template_key?: string }>(
+            `SELECT b.*, COUNT(c.id) as card_count,
+                    fc.image_url as first_card_image_url,
+                    fc.template_key as first_card_template_key
              FROM boards b
              LEFT JOIN cards c ON c.board_id = b.id
+             LEFT JOIN LATERAL (
+                 SELECT image_url, template_key FROM cards
+                 WHERE board_id = b.id
+                 ORDER BY "order" ASC, created_at ASC
+                 LIMIT 1
+             ) fc ON true
              WHERE b.user_id = $1
-             GROUP BY b.id
+             GROUP BY b.id, fc.image_url, fc.template_key
              ORDER BY b.created_at DESC`,
             [userId]
         );
@@ -810,6 +935,8 @@ export async function getBoards(userId: string): Promise<Board[]> {
             creatorImageUrl: row.creator_image_url,
             ownerEmail: row.owner_email,
             emailNotificationsEnabled: row.email_notifications_enabled ?? true,
+            coverImageUrl: row.cover_image_url || undefined,
+            fallbackCoverImageUrl: resolveFirstCardImage(row.first_card_image_url, row.first_card_template_key),
             cardCount: parseInt(row.card_count || '0')
         }));
     } catch (error) {
@@ -825,8 +952,8 @@ export async function addBoard(board: Board): Promise<void> {
     try {
         logger.info('Adding board', { boardId: board.id, userId: board.userId });
         await client.query(
-            'INSERT INTO boards (id, user_id, name, description, created_at, is_public, creator_name, creator_image_url, owner_email, email_notifications_enabled) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
-            [board.id, board.userId, board.name, board.description || '', board.createdAt, board.isPublic || false, board.creatorName, board.creatorImageUrl, board.ownerEmail || null, board.emailNotificationsEnabled ?? true]
+            'INSERT INTO boards (id, user_id, name, description, created_at, is_public, creator_name, creator_image_url, owner_email, email_notifications_enabled, cover_image_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)',
+            [board.id, board.userId, board.name, board.description || '', board.createdAt, board.isPublic || false, board.creatorName, board.creatorImageUrl, board.ownerEmail || null, board.emailNotificationsEnabled ?? true, board.coverImageUrl || null]
         );
     } catch (error) {
         logger.error('Error adding board', error, { boardId: board.id });
@@ -893,7 +1020,8 @@ export async function getBoard(id: string, retryOnNotFound: boolean = false): Pr
             creatorName: row.creator_name,
             creatorImageUrl: row.creator_image_url,
             ownerEmail: row.owner_email,
-            emailNotificationsEnabled: row.email_notifications_enabled ?? true
+            emailNotificationsEnabled: row.email_notifications_enabled ?? true,
+            coverImageUrl: row.cover_image_url || undefined
         };
     } catch (error) {
         const totalTime = Date.now() - startTime;
@@ -909,8 +1037,8 @@ export async function updateBoard(updatedBoard: Board): Promise<void> {
     try {
         logger.debug('Updating board', { boardId: updatedBoard.id });
         await client.query(
-            'UPDATE boards SET name = $1, description = $2, is_public = $3, creator_name = $4, creator_image_url = $5, owner_email = $6, email_notifications_enabled = $7, updated_at = CURRENT_TIMESTAMP WHERE id = $8',
-            [updatedBoard.name, updatedBoard.description || '', updatedBoard.isPublic || false, updatedBoard.creatorName, updatedBoard.creatorImageUrl, updatedBoard.ownerEmail || null, updatedBoard.emailNotificationsEnabled ?? true, updatedBoard.id]
+            'UPDATE boards SET name = $1, description = $2, is_public = $3, creator_name = $4, creator_image_url = $5, owner_email = $6, email_notifications_enabled = $7, cover_image_url = $8, updated_at = CURRENT_TIMESTAMP WHERE id = $9',
+            [updatedBoard.name, updatedBoard.description || '', updatedBoard.isPublic || false, updatedBoard.creatorName, updatedBoard.creatorImageUrl, updatedBoard.ownerEmail || null, updatedBoard.emailNotificationsEnabled ?? true, updatedBoard.coverImageUrl || null, updatedBoard.id]
         );
     } catch (error) {
         logger.error('Error updating board', error, { boardId: updatedBoard.id });
@@ -937,12 +1065,20 @@ export async function deleteBoard(id: string): Promise<void> {
 export async function getPublicBoards(): Promise<Board[]> {
     const client = await getDbClient();
     try {
-        const result = await client.query<BoardRow & { card_count: string }>(
-            `SELECT b.*, COUNT(c.id) as card_count
+        const result = await client.query<BoardRow & { card_count: string; first_card_image_url?: string; first_card_template_key?: string }>(
+            `SELECT b.*, COUNT(c.id) as card_count,
+                    fc.image_url as first_card_image_url,
+                    fc.template_key as first_card_template_key
              FROM boards b
              LEFT JOIN cards c ON c.board_id = b.id
+             LEFT JOIN LATERAL (
+                 SELECT image_url, template_key FROM cards
+                 WHERE board_id = b.id
+                 ORDER BY "order" ASC, created_at ASC
+                 LIMIT 1
+             ) fc ON true
              WHERE b.is_public = true
-             GROUP BY b.id
+             GROUP BY b.id, fc.image_url, fc.template_key
              ORDER BY b.created_at DESC`
         );
 
@@ -957,10 +1093,17 @@ export async function getPublicBoards(): Promise<Board[]> {
             creatorImageUrl: row.creator_image_url,
             ownerEmail: row.owner_email,
             emailNotificationsEnabled: row.email_notifications_enabled ?? true,
+            coverImageUrl: row.cover_image_url || undefined,
+            fallbackCoverImageUrl: resolveFirstCardImage(row.first_card_image_url, row.first_card_template_key),
             cardCount: parseInt(row.card_count || '0')
         }));
 
-        return [...STARTER_BOARDS, ...dbBoards];
+        const starterBoards = STARTER_BOARDS.map(b => ({
+            ...b,
+            fallbackCoverImageUrl: STARTER_CARDS[b.id]?.[0]?.imageUrl
+        }));
+
+        return [...starterBoards, ...dbBoards];
     } catch (error) {
         logger.error('Error getting public boards', error);
         return [];
@@ -987,11 +1130,20 @@ export async function getPublicBoardsWithInteractions(userId?: string): Promise<
             `SELECT
                 b.id, b.user_id, b.name, b.description, b.created_at, b.is_public,
                 b.creator_name, b.creator_image_url, b.owner_email, b.email_notifications_enabled,
+                b.cover_image_url,
+                fc.image_url as first_card_image_url,
+                fc.template_key as first_card_template_key,
                 (SELECT COUNT(*) FROM board_likes bl WHERE bl.board_id = b.id) as like_count,
                 (SELECT COUNT(*) FROM board_comments bc WHERE bc.board_id = b.id) as comment_count,
                 (SELECT COUNT(*) FROM cards c WHERE c.board_id = b.id) as card_count,
                 ${userLikeSelect}
             FROM boards b
+            LEFT JOIN LATERAL (
+                SELECT image_url, template_key FROM cards
+                WHERE board_id = b.id
+                ORDER BY "order" ASC, created_at ASC
+                LIMIT 1
+            ) fc ON true
             ${userLikeJoin}
             WHERE b.is_public = true
             ORDER BY b.created_at DESC`,
@@ -1009,6 +1161,8 @@ export async function getPublicBoardsWithInteractions(userId?: string): Promise<
             creatorImageUrl: row.creator_image_url,
             ownerEmail: row.owner_email,
             emailNotificationsEnabled: row.email_notifications_enabled ?? true,
+            coverImageUrl: row.cover_image_url || undefined,
+            fallbackCoverImageUrl: resolveFirstCardImage(row.first_card_image_url, row.first_card_template_key),
             likeCount: parseInt(row.like_count),
             commentCount: parseInt(row.comment_count),
             cardCount: parseInt(row.card_count || '0'),
@@ -1054,6 +1208,7 @@ export async function getPublicBoardsWithInteractions(userId?: string): Promise<
 
         const enrichedStarterBoards = STARTER_BOARDS.map(b => ({
             ...b,
+            fallbackCoverImageUrl: STARTER_CARDS[b.id]?.[0]?.imageUrl,
             likeCount: starterInteractions.get(b.id)?.likeCount ?? 0,
             commentCount: starterInteractions.get(b.id)?.commentCount ?? 0,
             isLikedByUser: starterInteractions.get(b.id)?.isLikedByUser ?? false

@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 const ConfirmDialog = dynamic(() => import('@/components/ConfirmDialog'), {
     loading: () => null
 });
+import BoardCoverIcon from '@/components/BoardCoverIcon';
 
 function PublicBoardsContent() {
     const searchParams = useSearchParams();
@@ -123,9 +124,12 @@ function PublicBoardsContent() {
                                     Public
                                 </div>
                             </div>
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 pr-16 group-hover:text-primary transition-colors">
-                                {board.name}
-                            </h3>
+                            <div className="flex items-center gap-3 mb-2 pr-16">
+                                <BoardCoverIcon src={board.coverImageUrl ?? board.fallbackCoverImageUrl} />
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white min-w-0 group-hover:text-primary transition-colors">
+                                    {board.name}
+                                </h3>
+                            </div>
                             <p className="text-gray-500 text-sm line-clamp-2 mb-4">
                                 {board.description || 'No description provided.'}
                             </p>
