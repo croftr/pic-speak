@@ -165,7 +165,7 @@ export default function BoardToolbar({
                     </div>
                 ) : (
                     // VIEW MODE - Ultra clean for focus on cards
-                    <div className="flex items-center justify-between gap-2 px-1.5 py-1 rounded-lg bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm">
+                    <div className="flex items-center justify-between gap-2 px-1.5 py-1.5 rounded-2xl bg-white/85 dark:bg-slate-900/85 backdrop-blur-md shadow-sm border border-gray-100/80 dark:border-gray-800/80">
                         <div className="flex items-center gap-1.5 min-w-0 flex-1">
                             <Link
                                 href="/my-boards"
@@ -174,7 +174,7 @@ export default function BoardToolbar({
                             >
                                 <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                             </Link>
-                            <h1 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white truncate">
+                            <h1 className="text-sm sm:text-base font-display font-bold text-gray-900 dark:text-white truncate">
                                 {board?.name || 'Loading...'}
                             </h1>
                         </div>

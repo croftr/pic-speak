@@ -186,13 +186,13 @@ export default function CommunicationCard({ card, isEditing, onDelete, onEdit, o
                 onMouseEnter={onFocus}
                 data-card-id={card.id}
                 className={clsx(
-                    "relative flex flex-col items-center justify-between w-full aspect-[3/4] p-3 sm:p-3 md:p-4",
-                    "bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl hover:shadow-2xl",
+                    "relative flex flex-col items-center justify-between w-full aspect-[3/4] p-2.5 sm:p-3 md:p-4",
+                    "bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl shadow-md hover:shadow-xl",
                     "transition-all duration-300 transform touch-manipulation",
-                    "active:scale-95 hover:scale-105",
-                    !isEditing && "hover:-translate-y-1 sm:hover:-translate-y-2",
+                    "active:scale-[0.96]",
+                    !isEditing && "hover:-translate-y-1",
                     "border-2 sm:border-4",
-                    isPlaying ? "border-accent ring-2 sm:ring-4 ring-accent/30 scale-105" : isFocused ? "border-primary ring-2 sm:ring-4 ring-primary/30" : "border-transparent hover:border-primary/50",
+                    isPlaying ? "border-accent ring-4 ring-accent/30 scale-[1.03] shadow-xl" : isFocused ? "border-primary ring-2 sm:ring-4 ring-primary/30" : "border-transparent hover:border-primary/40",
                     isEditing && "opacity-90",
                     isDragging && "z-50",
                     "min-h-[120px]"
@@ -201,7 +201,7 @@ export default function CommunicationCard({ card, isEditing, onDelete, onEdit, o
                     borderColor: isPlaying ? undefined : isFocused ? undefined : card.color
                 }}
             >
-                <div className="relative flex-1 w-full overflow-hidden rounded-xl sm:rounded-2xl bg-gray-100 dark:bg-gray-700 pointer-events-none">
+                <div className="relative flex-1 w-full overflow-hidden rounded-xl sm:rounded-2xl bg-gray-50 dark:bg-gray-700 pointer-events-none">
                     {/* Helper layout for centering image */}
                     <div className="absolute inset-0 flex items-center justify-center">
                         {/* Use Next.js Image for uploaded images (http/https), fallback to img for blob URLs */}
@@ -224,17 +224,17 @@ export default function CommunicationCard({ card, isEditing, onDelete, onEdit, o
                         )}
                     </div>
 
-                    {/* Overlay showing audio icon on hover if audio exists */}
-                    {card.audioUrl && (
-                        <div className="absolute inset-0 bg-black/0 group-hover/card:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover/card:opacity-100">
-                            <Volume2 className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-white drop-shadow-lg" />
+                    {/* Speaking indicator — shown while audio plays so touch users
+                        get clear feedback (hover doesn't exist on tablets) */}
+                    {isPlaying && (
+                        <div className="absolute bottom-1.5 right-1.5 flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-accent text-white shadow-lg animate-in zoom-in duration-200">
+                            <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
                         </div>
                     )}
-
                 </div>
 
-                <div className="mt-2 sm:mt-3 md:mt-4 w-full text-center pointer-events-none">
-                    <h3 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 truncate px-1">
+                <div className="mt-2 sm:mt-3 w-full text-center pointer-events-none">
+                    <h3 className="text-sm sm:text-base md:text-lg lg:text-xl font-display font-extrabold text-gray-800 dark:text-white truncate px-1">
                         {card.label}
                     </h3>
                 </div>

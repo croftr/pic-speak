@@ -73,7 +73,7 @@ export default function GlobalHeader() {
                                 className="object-contain"
                             />
                         </div>
-                        <span className="text-lg sm:text-xl font-black tracking-tighter text-gray-900 dark:text-white">
+                        <span className="text-lg sm:text-xl font-display font-black tracking-tight text-gray-900 dark:text-white">
                             My Voice Board
                         </span>
                     </Link>
@@ -83,7 +83,7 @@ export default function GlobalHeader() {
                         {isSignedIn && (
                             <Link
                                 href="/my-boards"
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${isActive('/my-boards')
+                                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-colors ${isActive('/my-boards')
                                     ? 'bg-primary/10 text-primary'
                                     : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800'
                                     }`}
@@ -94,7 +94,7 @@ export default function GlobalHeader() {
                         )}
                         <Link
                             href="/public-boards"
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${isActive('/public-boards')
+                            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-colors ${isActive('/public-boards')
                                 ? 'bg-primary/10 text-primary'
                                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800'
                                 }`}
@@ -104,7 +104,7 @@ export default function GlobalHeader() {
                         </Link>
                         <Link
                             href="/about"
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${isActive('/about')
+                            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-colors ${isActive('/about')
                                 ? 'bg-primary/10 text-primary'
                                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800'
                                 }`}
@@ -137,8 +137,8 @@ export default function GlobalHeader() {
                         </SignedIn>
                         <SignedOut>
                             <SignInButton mode="modal">
-                                <button className="px-3 sm:px-4 py-2 font-semibold text-sm text-gray-900 dark:text-white hover:opacity-80 transition-opacity">
-                                    Login
+                                <button className="px-4 sm:px-5 py-2 font-bold text-sm bg-primary text-primary-foreground rounded-full shadow-md shadow-primary/20 hover:bg-primary/90 transition-all touch-manipulation">
+                                    Log in
                                 </button>
                             </SignInButton>
                         </SignedOut>

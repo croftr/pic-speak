@@ -223,9 +223,9 @@ export default function CardGrid({
                     <div className="p-4 sm:p-6 bg-gradient-to-br from-primary/10 to-accent/10 rounded-full mb-4 sm:mb-6">
                         <Image className="w-10 h-10 sm:w-12 sm:h-12 text-primary" />
                     </div>
-                    <h3 className="text-xl sm:text-2xl font-bold text-gray-700 dark:text-gray-200 mb-2">No Cards Yet</h3>
+                    <h3 className="text-xl sm:text-2xl font-display font-extrabold text-gray-700 dark:text-gray-200 mb-2">This board is empty</h3>
                     <p className="text-gray-500 text-sm sm:text-base max-w-sm mb-6">
-                        Start building your communication board by adding picture cards
+                        Add picture cards with a photo and a voice recording — each card speaks when tapped.
                     </p>
                     {isEditing ? (
                         <button
