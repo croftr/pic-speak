@@ -45,7 +45,7 @@ export interface BoardWithStats {
 // Pool reuses connections instead of creating new ones for each query
 const pool = new Pool({
     connectionString: process.env.POSTGRES_URL,
-    ssl: true,
+    ssl: { rejectUnauthorized: false }, // Neon requires SSL but uses a private CA
     max: 20, // Maximum number of clients in the pool
     idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
     connectionTimeoutMillis: 2000, // Return an error after 2 seconds if unable to get a connection

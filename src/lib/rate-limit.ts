@@ -3,7 +3,7 @@ import { Pool } from 'pg';
 
 const pool = new Pool({
     connectionString: process.env.POSTGRES_URL,
-    ssl: true,
+    ssl: { rejectUnauthorized: false }, // Neon requires SSL but uses a private CA
     max: 5,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 2000,
