@@ -67,7 +67,7 @@ test('logged-in user can create a board, add a card with image and audio, then d
   // Use a local const for convenience, though they are the same string
   const boardName = createdBoardName
 
-  await page.getByPlaceholder('e.g., Daily Routine').fill(boardName)
+  await page.getByPlaceholder(/routine/i).fill(boardName)
   await page.locator('form').getByRole('button', { name: /create board/i }).click()
 
   // Redirected to the new board in edit mode

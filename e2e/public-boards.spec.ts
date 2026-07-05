@@ -42,7 +42,7 @@ test('can browse public boards and open the Starter Template', async ({ page }) 
   await page.goto('/public-boards')
 
   // Verify the page loaded
-  await expect(page.getByRole('heading', { name: /public boards/i })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /explore boards/i })).toBeVisible()
 
   // The Starter Template board should always be listed
   const starterCard = page.getByRole('link', { name: /starter template/i })
@@ -74,7 +74,7 @@ test('creator can delete their own public board from public boards list', async 
   // Create a new board
   await page.getByRole('button', { name: /new board/i }).click()
   createdBoardName = `Public Mgmt Test Board ${Date.now()}`
-  await page.getByPlaceholder('e.g., Daily Routine').fill(createdBoardName)
+  await page.getByPlaceholder(/routine/i).fill(createdBoardName)
   await page.locator('form').getByRole('button', { name: /create board/i }).click()
 
   // Redirected to the new board in edit mode
@@ -96,7 +96,7 @@ test('creator can delete their own public board from public boards list', async 
 
   // Go to public boards list
   await page.goto('/public-boards')
-  await expect(page.getByRole('heading', { name: /public boards/i })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /explore boards/i })).toBeVisible()
 
   // Find our board card
   const boardCard = page.locator('.group').filter({ hasText: createdBoardName })

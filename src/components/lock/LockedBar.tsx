@@ -12,8 +12,8 @@ export default function LockedBar({ boardName }: LockedBarProps) {
     const { cardSize: userCardSize, setCardSize } = useSettings();
 
     return (
-        <header className="max-w-7xl mx-auto mb-4 md:mb-6 flex items-center justify-between gap-2 px-1.5 py-1 rounded-lg bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm">
-            <h1 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white truncate min-w-0 flex-1 px-1">
+        <header className="max-w-7xl mx-auto mb-4 md:mb-6 flex items-center justify-between gap-2 px-1.5 py-1.5 rounded-2xl bg-white/85 dark:bg-slate-900/85 backdrop-blur-md shadow-sm border border-gray-100/80 dark:border-gray-800/80">
+            <h1 className="text-sm sm:text-base font-display font-bold text-gray-900 dark:text-white truncate min-w-0 flex-1 px-1">
                 {boardName || 'Loading...'}
             </h1>
             <div className="flex items-center gap-1 flex-shrink-0">

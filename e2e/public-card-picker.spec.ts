@@ -43,7 +43,7 @@ test('can add a card from a public board via the public card picker', async ({ p
   // ── Create a new board ──────────────────────────────────────────────
   await page.getByRole('button', { name: /new board/i }).click()
   createdBoardName = `Public Picker Test Board ${Date.now()}`
-  await page.getByPlaceholder('e.g., Daily Routine').fill(createdBoardName)
+  await page.getByPlaceholder(/routine/i).fill(createdBoardName)
   await page.locator('form').getByRole('button', { name: /create board/i }).click()
 
   await expect(page).toHaveURL(/\/board\/.*\?edit=true/, { timeout: 10000 })
