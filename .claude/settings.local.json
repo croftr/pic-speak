@@ -51,7 +51,8 @@
       "PowerShell($conn = Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue; if \\($conn\\) { $conn | ForEach-Object { $p = Get-Process -Id $_.OwningProcess; \"$\\($p.Id\\) $\\($p.ProcessName\\) $\\($p.Path\\)\" } } else { \"nothing on 3000\" })",
       "PowerShell(\\(Get-CimInstance Win32_Process -Filter \"ProcessId=11084\"\\).CommandLine)",
       "PowerShell($r = Invoke-WebRequest -Uri \"http://localhost:3000/\" -UseBasicParsing; \"STATUS: $\\($r.StatusCode\\)\"; $html = $r.Content; \"has H1 hero: $\\($html -match 'My Voice Board</h1>'\\)\"; \"has tagline: $\\($html -match 'Tap a card'\\)\"; \"has logo img: $\\($html -match 'logo\\\\.svg'\\)\")",
-      "Bash(npx playwright *)"
+      "Bash(npx playwright *)",
+      "PowerShell($r = Invoke-WebRequest -Uri \"http://localhost:3000/\" -UseBasicParsing; \"STATUS: $\\($r.StatusCode\\)\"; $html = $r.Content; \"signed-out hero H1: $\\($html -match 'My Voice Board</h1>'\\)\"; \"tagline: $\\($html -match 'Tap a card'\\)\")"
     ]
   }
 }

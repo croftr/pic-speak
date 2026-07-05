@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { SignedOut, SignInButton } from '@clerk/nextjs';
+import { SignedOut, SignInButton, useUser } from '@clerk/nextjs';
 import { Globe, Grid, LogIn, Play } from 'lucide-react';
 import { useOfflineAuth } from '@/hooks/useOfflineAuth';
 import { clsx } from 'clsx';
@@ -64,6 +64,9 @@ export default function Home() {
   // Offline-aware: keeps "My Boards" reachable with no connection, when
   // Clerk can't confirm the session but the user's boards are cached.
   const { isSignedIn } = useOfflineAuth();
+  // May be null while Clerk loads or offline — greeting falls back to a
+  // nameless "Welcome back" in that case.
+  const { user } = useUser();
 
   return (
     <main className="min-h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-violet-100 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-950 dark:to-slate-950 flex flex-col items-center justify-center p-4">
@@ -73,9 +76,14 @@ export default function Home() {
         {/* Logo / Header Area — full hero pitch for visitors, compact tagline for
             signed-in users (the header already carries the branding for them) */}
         {isSignedIn ? (
-          <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 font-medium max-w-md mx-auto text-center animate-in slide-in-from-top-10 duration-700">
-            Build picture boards with your own photos and your own voice. Tap a card — it speaks.
-          </p>
+          <div className="text-center space-y-2 animate-in slide-in-from-top-10 duration-700">
+            <h1 className="text-3xl sm:text-4xl font-black text-slate-800 dark:text-white tracking-tight">
+              {user?.firstName ? `Hello ${user.firstName}` : 'Welcome back'} 👋
+            </h1>
+            <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 font-medium max-w-md mx-auto">
+              Pick a board and start talking.
+            </p>
+          </div>
         ) : (
           <div className="text-center space-y-4 animate-in slide-in-from-top-10 duration-700">
             <div className="w-24 h-24 sm:w-32 sm:h-32 mx-auto bg-white dark:bg-slate-800 rounded-3xl shadow-lg flex items-center justify-center p-4 transform -rotate-3 hover:rotate-0 transition-transform duration-500">

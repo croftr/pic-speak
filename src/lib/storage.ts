@@ -97,6 +97,17 @@ const STARTER_BOARDS: Board[] = [
         creatorName: 'My Voice Board',
         creatorImageUrl: '/logo.svg',
         cardCount: 12
+    },
+    {
+        id: 'starter-health-medical',
+        userId: 'system',
+        name: 'Health & Medical',
+        description: 'Communication cards for describing pain, sickness, physical needs, and requesting help.',
+        createdAt: '2024-01-03T00:00:00.000Z',
+        isPublic: true,
+        creatorName: 'My Voice Board',
+        creatorImageUrl: '/logo.svg',
+        cardCount: 12
     }
 ];
 
@@ -112,6 +123,8 @@ const TEMPLATE_CARDS_REGISTRY: Record<string, Omit<Card, 'id' | 'boardId' | 'ord
     // People
     'tpl-teacher': { label: 'Teacher', imageUrl: '/prebuilt/teacher.webp', audioUrl: '/prebuilt/teacher.wav', category: 'People', templateKey: 'tpl-teacher' },
     'tpl-friend': { label: 'Friend', imageUrl: '/prebuilt/friend.webp', audioUrl: '/prebuilt/friend.wav', category: 'People', templateKey: 'tpl-friend' },
+    'tpl-doctor': { label: 'Doctor', imageUrl: '/prebuilt/doctor.webp', audioUrl: '/prebuilt/doctor.wav', category: 'People', templateKey: 'tpl-doctor' },
+    'tpl-nurse': { label: 'Nurse', imageUrl: '/prebuilt/nurse.webp', audioUrl: '/prebuilt/nurse.wav', category: 'People', templateKey: 'tpl-nurse' },
     // Activities
     'tpl-computer': { label: 'Computer', imageUrl: '/prebuilt/computer.webp', audioUrl: '/prebuilt/computer.mp3', category: 'Activities', templateKey: 'tpl-computer' },
     'tpl-tablet': { label: 'Tablet', imageUrl: '/prebuilt/tablet.webp', audioUrl: '/prebuilt/tablet.mp3', category: 'Activities', templateKey: 'tpl-tablet' },
@@ -126,6 +139,8 @@ const TEMPLATE_CARDS_REGISTRY: Record<string, Omit<Card, 'id' | 'boardId' | 'ord
     'tpl-paper': { label: 'Paper', imageUrl: '/prebuilt/paper.webp', audioUrl: '/prebuilt/paper.wav', category: 'Activities', templateKey: 'tpl-paper' },
     'tpl-write': { label: 'Write', imageUrl: '/prebuilt/write.webp', audioUrl: '/prebuilt/write.wav', category: 'Activities', templateKey: 'tpl-write' },
     'tpl-draw': { label: 'Draw', imageUrl: '/prebuilt/draw.webp', audioUrl: '/prebuilt/draw.wav', category: 'Activities', templateKey: 'tpl-draw' },
+    'tpl-medicine': { label: 'Medicine', imageUrl: '/prebuilt/medicine.webp', audioUrl: '/prebuilt/medicine.wav', category: 'Activities', templateKey: 'tpl-medicine' },
+    'tpl-bandage': { label: 'Bandage', imageUrl: '/prebuilt/bandage.webp', audioUrl: '/prebuilt/bandage.wav', category: 'Activities', templateKey: 'tpl-bandage' },
     // Places
     'tpl-bed': { label: 'Bed', imageUrl: '/prebuilt/bed.webp', audioUrl: '/prebuilt/bed.mp3', category: 'Places', templateKey: 'tpl-bed' },
     'tpl-school': { label: 'School', imageUrl: '/prebuilt/school.webp', audioUrl: '/prebuilt/school.wav', category: 'Places', templateKey: 'tpl-school' },
@@ -152,6 +167,9 @@ const TEMPLATE_CARDS_REGISTRY: Record<string, Omit<Card, 'id' | 'boardId' | 'ord
     'tpl-tired': { label: 'Tired', imageUrl: '/prebuilt/tired.webp', audioUrl: '/prebuilt/tired.wav', category: 'Feelings', templateKey: 'tpl-tired' },
     'tpl-happy': { label: 'Happy', imageUrl: '/prebuilt/happy.webp', audioUrl: '/prebuilt/happy.wav', category: 'Feelings', templateKey: 'tpl-happy' },
     'tpl-sad': { label: 'Sad', imageUrl: '/prebuilt/sad.webp', audioUrl: '/prebuilt/sad.wav', category: 'Feelings', templateKey: 'tpl-sad' },
+    'tpl-hurt': { label: 'Hurt', imageUrl: '/prebuilt/hurt.webp', audioUrl: '/prebuilt/hurt.wav', category: 'Feelings', templateKey: 'tpl-hurt' },
+    'tpl-sick': { label: 'Sick', imageUrl: '/prebuilt/sick.webp', audioUrl: '/prebuilt/sick.wav', category: 'Feelings', templateKey: 'tpl-sick' },
+    'tpl-thirsty': { label: 'Thirsty', imageUrl: '/prebuilt/thirsty.webp', audioUrl: '/prebuilt/thirsty.wav', category: 'Feelings', templateKey: 'tpl-thirsty' },
     // Animals
     'tpl-dog': { label: 'Dog', imageUrl: '/prebuilt/dog.webp', audioUrl: '/prebuilt/dog.wav', category: 'Animals', templateKey: 'tpl-dog' },
     'tpl-cat': { label: 'Cat', imageUrl: '/prebuilt/cat.webp', audioUrl: '/prebuilt/cat.wav', category: 'Animals', templateKey: 'tpl-cat' },
@@ -223,6 +241,20 @@ const STARTER_CARDS: Record<string, Card[]> = {
         { id: 'sbp-school-10', boardId: 'starter-school-classroom', label: 'Book', imageUrl: '/prebuilt/book.webp', audioUrl: '/prebuilt/book.wav', category: 'Activities', order: 9, templateKey: 'tpl-book' },
         { id: 'sbp-school-11', boardId: 'starter-school-classroom', label: 'Write', imageUrl: '/prebuilt/write.webp', audioUrl: '/prebuilt/write.wav', category: 'Activities', order: 10, templateKey: 'tpl-write' },
         { id: 'sbp-school-12', boardId: 'starter-school-classroom', label: 'Draw', imageUrl: '/prebuilt/draw.webp', audioUrl: '/prebuilt/draw.wav', category: 'Activities', order: 11, templateKey: 'tpl-draw' },
+    ],
+    'starter-health-medical': [
+        { id: 'sbp-health-1', boardId: 'starter-health-medical', label: 'Help', imageUrl: '/prebuilt/help.webp', audioUrl: '/prebuilt/help.wav', category: 'Core', order: 0, templateKey: 'tpl-help' },
+        { id: 'sbp-health-2', boardId: 'starter-health-medical', label: 'Hurt', imageUrl: '/prebuilt/hurt.webp', audioUrl: '/prebuilt/hurt.wav', category: 'Feelings', order: 1, templateKey: 'tpl-hurt' },
+        { id: 'sbp-health-3', boardId: 'starter-health-medical', label: 'Sick', imageUrl: '/prebuilt/sick.webp', audioUrl: '/prebuilt/sick.wav', category: 'Feelings', order: 2, templateKey: 'tpl-sick' },
+        { id: 'sbp-health-4', boardId: 'starter-health-medical', label: 'Thirsty', imageUrl: '/prebuilt/thirsty.webp', audioUrl: '/prebuilt/thirsty.wav', category: 'Feelings', order: 3, templateKey: 'tpl-thirsty' },
+        { id: 'sbp-health-5', boardId: 'starter-health-medical', label: 'Hungry', imageUrl: '/prebuilt/hungry.webp', audioUrl: '/prebuilt/hungry.wav', category: 'Feelings', order: 4, templateKey: 'tpl-hungry' },
+        { id: 'sbp-health-6', boardId: 'starter-health-medical', label: 'Tired', imageUrl: '/prebuilt/tired.webp', audioUrl: '/prebuilt/tired.wav', category: 'Feelings', order: 5, templateKey: 'tpl-tired' },
+        { id: 'sbp-health-7', boardId: 'starter-health-medical', label: 'Doctor', imageUrl: '/prebuilt/doctor.webp', audioUrl: '/prebuilt/doctor.wav', category: 'People', order: 6, templateKey: 'tpl-doctor' },
+        { id: 'sbp-health-8', boardId: 'starter-health-medical', label: 'Nurse', imageUrl: '/prebuilt/nurse.webp', audioUrl: '/prebuilt/nurse.wav', category: 'People', order: 7, templateKey: 'tpl-nurse' },
+        { id: 'sbp-health-9', boardId: 'starter-health-medical', label: 'Medicine', imageUrl: '/prebuilt/medicine.webp', audioUrl: '/prebuilt/medicine.wav', category: 'Activities', order: 8, templateKey: 'tpl-medicine' },
+        { id: 'sbp-health-10', boardId: 'starter-health-medical', label: 'Bandage', imageUrl: '/prebuilt/bandage.webp', audioUrl: '/prebuilt/bandage.wav', category: 'Activities', order: 9, templateKey: 'tpl-bandage' },
+        { id: 'sbp-health-11', boardId: 'starter-health-medical', label: 'Water', imageUrl: '/prebuilt/water.webp', audioUrl: '/prebuilt/water.wav', category: 'Food', order: 10, templateKey: 'tpl-water' },
+        { id: 'sbp-health-12', boardId: 'starter-health-medical', label: 'Bed', imageUrl: '/prebuilt/bed.webp', audioUrl: '/prebuilt/bed.mp3', category: 'Places', order: 11, templateKey: 'tpl-bed' },
     ]
 };
 
