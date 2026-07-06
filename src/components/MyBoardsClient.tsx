@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Pencil, X, Plus, Sparkles, Layers, Image as ImageIcon } from 'lucide-react';
+import { Pencil, X, Plus, Sparkles, Layers, Image as ImageIcon, Copy, Loader2 } from 'lucide-react';
 import { Board } from '@/types';
 import { toast } from 'sonner';
 import { useLockMode } from '@/contexts/LockModeContext';
@@ -40,11 +40,50 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
         !templateBoards.some(tb => tb.id === pb.id)
     )];
 
+    // Duplicate board state
+    const [duplicatingBoardId, setDuplicatingBoardId] = useState<string | null>(null);
+
     // Template clone state
     const [isCloningTemplate, setIsCloningTemplate] = useState(false);
     const [showTemplateCloneForm, setShowTemplateCloneForm] = useState(false);
     const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
     const [cloneBoardName, setCloneBoardName] = useState('');
+
+    // Read the server's error message from a failed response, falling back to a default
+    const getApiError = async (res: Response, fallback: string): Promise<string> => {
+        const data = await res.json().catch(() => null);
+        return data?.error || fallback;
+    };
+
+    const handleDuplicateBoard = async (board: Board) => {
+        if (duplicatingBoardId) return;
+        setDuplicatingBoardId(board.id);
+        try {
+            const res = await fetch('/api/boards/clone-template', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    templateBoardId: board.id,
+                    newBoardName: `${board.name} copy`,
+                    newBoardDesc: board.description || '',
+                    coverImageUrl: board.coverImageUrl || undefined
+                })
+            });
+
+            if (res.ok) {
+                const { board: newBoard, cardCount } = await res.json();
+                setBoards(prev => [...prev, { ...newBoard, cardCount }]);
+                toast.success(`Created "${newBoard.name}"`);
+            } else {
+                toast.error(await getApiError(res, 'Failed to duplicate board'));
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to duplicate board');
+        } finally {
+            setDuplicatingBoardId(null);
+        }
+    };
 
     const handleCreateBoard = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -71,7 +110,7 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
                     router.push(`/board/${board.id}?edit=true`);
                     return;
                 } else {
-                    toast.error('Failed to create board from template');
+                    toast.error(await getApiError(res, 'Failed to create board from template'));
                 }
             } else {
                 // Create an empty board
@@ -91,7 +130,7 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
                     router.push(`/board/${newBoard.id}?edit=true`);
                     return;
                 } else {
-                    toast.error('Failed to create board');
+                    toast.error(await getApiError(res, 'Failed to create board'));
                 }
             }
         } catch (error) {
@@ -126,7 +165,7 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
                 toast.success(`Template board created with ${cardCount} cards!`);
                 router.push(`/board/${board.id}`);
             } else {
-                toast.error('Failed to create board from template');
+                toast.error(await getApiError(res, 'Failed to create board from template'));
             }
         } catch (error) {
             console.error(error);
@@ -387,17 +426,34 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
                                             {board.description}
                                         </p>
                                     )}
-                                    <div className="mt-auto pt-2">
+                                    <div className="mt-auto pt-2 flex gap-2">
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 router.push(`/board/${board.id}?edit=true`);
                                             }}
-                                            className="w-full px-4 py-3 rounded-xl font-bold border-2 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary transition-all flex items-center justify-center gap-2 text-sm sm:text-base touch-manipulation min-h-[48px]"
+                                            className="flex-1 px-4 py-3 rounded-xl font-bold border-2 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary transition-all flex items-center justify-center gap-2 text-sm sm:text-base touch-manipulation min-h-[48px]"
                                             aria-label={`Edit ${board.name} board`}
                                         >
                                             <Pencil className="w-4 h-4 sm:w-5 sm:h-5" />
                                             <span>Edit Board</span>
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDuplicateBoard(board);
+                                            }}
+                                            onKeyDown={(e) => e.stopPropagation()}
+                                            disabled={duplicatingBoardId !== null}
+                                            title="Duplicate board"
+                                            className="flex-none px-4 py-3 rounded-xl font-bold border-2 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary disabled:opacity-50 transition-all flex items-center justify-center touch-manipulation min-h-[48px]"
+                                            aria-label={`Duplicate ${board.name} board`}
+                                        >
+                                            {duplicatingBoardId === board.id ? (
+                                                <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                                            ) : (
+                                                <Copy className="w-4 h-4 sm:w-5 sm:h-5" />
+                                            )}
                                         </button>
                                     </div>
                                 </div>

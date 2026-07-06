@@ -59,7 +59,7 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
 
     // Custom hook for card operations
     const {
-        optimisticCards: cards, // Use optimistic state for instant UI updates
+        cards,
         handleCardAdded,
         handleCardUpdated,
         handleDeleteCard,

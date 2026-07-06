@@ -49,6 +49,15 @@ export async function POST(request: Request) {
             );
         }
 
+        // Only system templates, public boards, and the user's own boards can be cloned
+        const isOwnBoard = templateBoard.userId === userId;
+        if (!isOwnBoard && !templateBoard.isPublic && templateBoard.userId !== 'system') {
+            return NextResponse.json(
+                { error: 'Template board not found' },
+                { status: 404 }
+            );
+        }
+
         // Get all cards from template and check limit
         const maxCards = await getMaxCardsPerBoard();
         const templateCards = await getCards(templateBoardId);
@@ -94,8 +103,12 @@ export async function POST(request: Request) {
             id: crypto.randomUUID(),
             boardId: newBoardId,
             // Template cards keep their templateKey, regular cards get sourceBoardId
-            // sourceBoardId marks cards as inherited from a public board (cannot edit, can delete)
-            sourceBoardId: templateCard.templateKey ? undefined : templateBoardId,
+            // sourceBoardId marks cards as inherited from a public board (cannot edit, can delete).
+            // Duplicating your own board keeps each card's existing flags so your own
+            // cards stay fully editable in the copy.
+            sourceBoardId: isOwnBoard
+                ? templateCard.sourceBoardId
+                : (templateCard.templateKey ? undefined : templateBoardId),
         }));
 
         if (cardsToInsert.length > 0) {

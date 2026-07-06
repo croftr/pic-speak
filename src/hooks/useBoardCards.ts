@@ -1,22 +1,17 @@
 'use client';
 
-import { useState, useOptimistic, startTransition } from 'react';
+import { useState, useRef } from 'react';
 import { Card } from '@/types';
 import { toast } from 'sonner';
 import { arrayMove } from '@dnd-kit/sortable';
 import { DragEndEvent } from '@dnd-kit/core';
 
+// How long the "Undo" toast stays available before the delete is sent to the server
+const UNDO_WINDOW_MS = 5000;
+
 export function useBoardCards(initialCards: Card[], boardId: string) {
     const [cards, setCards] = useState<Card[]>(initialCards);
-    const [optimisticCards, addOptimisticCard] = useOptimistic(
-        cards,
-        (state, action: { action: 'delete'; cardId: string }) => {
-            if (action.action === 'delete') {
-                return state.filter(c => c.id !== action.cardId);
-            }
-            return state;
-        }
-    );
+    const pendingDeletesRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
     const handleCardAdded = (newCard: Card) => {
         setCards(prev => [newCard, ...prev]);
@@ -26,23 +21,45 @@ export function useBoardCards(initialCards: Card[], boardId: string) {
         setCards(prev => prev.map(c => c.id === updatedCard.id ? updatedCard : c));
     };
 
-    const handleDeleteCard = async (cardId: string) => {
-        startTransition(() => {
-            addOptimisticCard({ action: 'delete', cardId });
-        });
+    const handleDeleteCard = (cardId: string) => {
+        const index = cards.findIndex(c => c.id === cardId);
+        if (index === -1) return;
+        const card = cards[index];
 
-        try {
-            const res = await fetch(`/api/cards/${cardId}`, { method: 'DELETE' });
-            if (res.ok) {
-                setCards(prev => prev.filter(c => c.id !== cardId));
-                toast.success('Card deleted successfully');
-            } else {
-                toast.error('Failed to delete card');
+        // Remove from the UI immediately; the server delete is deferred so it can be undone
+        setCards(prev => prev.filter(c => c.id !== cardId));
+
+        // Fire the real delete slightly after the toast closes so a last-moment
+        // Undo click can't race the request
+        const timer = setTimeout(async () => {
+            pendingDeletesRef.current.delete(cardId);
+            try {
+                await fetch(`/api/cards/${cardId}`, { method: 'DELETE' });
+            } catch (error) {
+                // The undo window has passed, so there's nothing useful to show the
+                // user; the card stays server-side and reappears on next load
+                console.error('Failed to delete card', error);
             }
-        } catch (error) {
-            console.error("Failed to delete card", error);
-            toast.error('Failed to delete card');
-        }
+        }, UNDO_WINDOW_MS + 500);
+        pendingDeletesRef.current.set(cardId, timer);
+
+        toast('Card deleted', {
+            duration: UNDO_WINDOW_MS,
+            action: {
+                label: 'Undo',
+                onClick: () => {
+                    const pending = pendingDeletesRef.current.get(cardId);
+                    if (!pending) return;
+                    clearTimeout(pending);
+                    pendingDeletesRef.current.delete(cardId);
+                    setCards(prev => {
+                        const next = [...prev];
+                        next.splice(Math.min(index, next.length), 0, card);
+                        return next;
+                    });
+                }
+            }
+        });
     };
 
     const handleDragEnd = async (event: DragEndEvent) => {
@@ -102,7 +119,6 @@ export function useBoardCards(initialCards: Card[], boardId: string) {
 
     return {
         cards,
-        optimisticCards,
         setCards,
         handleCardAdded,
         handleCardUpdated,

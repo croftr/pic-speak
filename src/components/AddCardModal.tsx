@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { X, Image as ImageIcon, Check, Loader2, Mic, Upload, Music, Sparkles, Play, Pause, Camera, ChevronRight, ChevronLeft, Layers } from 'lucide-react';
+import { X, Check, Loader2, Mic, Upload, Music, Sparkles, Play, Pause, Camera, ChevronRight, ChevronLeft, Layers } from 'lucide-react';
 import AudioRecorder from './AudioRecorder';
 const ImageCropModal = dynamic(() => import('./ImageCropModal'), {
     loading: () => null
@@ -15,6 +15,22 @@ import { uploadFile } from '@/lib/upload-client';
 
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
+
+interface BatchItem {
+    file: File;
+    label: string;
+    preview: string;
+}
+
+// "my-photo_01.jpg" -> "My Photo 01"
+function labelFromFileName(fileName: string): string {
+    return fileName
+        .replace(/\.[^/.]+$/, '')
+        .replace(/[-_]+/g, ' ')
+        .trim()
+        .replace(/\b\w/g, c => c.toUpperCase())
+        .slice(0, 100);
+}
 
 interface AddCardModalProps {
     isOpen: boolean;
@@ -54,8 +70,32 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     const streamRef = useRef<MediaStream | null>(null);
 
     // Batch upload state
-    const [batchImages, setBatchImages] = useState<File[]>([]);
+    const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
+    const [generateBatchAudio, setGenerateBatchAudio] = useState(true);
     const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
+    const [audioProgress, setAudioProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
+
+    // Labels that collide with existing cards or repeat within the batch
+    const batchDuplicateFlags = batchItems.map((item, idx) => {
+        const normalized = item.label.trim().toLowerCase();
+        if (!normalized) return false;
+        if (existingLabelsSet.has(normalized)) return true;
+        return batchItems.some((other, otherIdx) =>
+            otherIdx !== idx && other.label.trim().toLowerCase() === normalized
+        );
+    });
+    const hasBatchDuplicates = batchDuplicateFlags.some(Boolean);
+
+    const updateBatchLabel = (index: number, value: string) => {
+        setBatchItems(prev => prev.map((item, i) => i === index ? { ...item, label: value } : item));
+    };
+
+    const removeBatchItem = (index: number) => {
+        setBatchItems(prev => {
+            URL.revokeObjectURL(prev[index].preview);
+            return prev.filter((_, i) => i !== index);
+        });
+    };
 
     // Crop state
     const [showCropModal, setShowCropModal] = useState(false);
@@ -176,7 +216,12 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
         setGeneratedAudioUrl(null);
         setWantsNewAudio(false);
         setCategory('');
-        setBatchImages([]);
+        setBatchItems(prev => {
+            prev.forEach(item => URL.revokeObjectURL(item.preview));
+            return [];
+        });
+        setGenerateBatchAudio(true);
+        setAudioProgress({ current: 0, total: 0 });
         setStep(1);
         justTransitionedRef.current = false;
         setIsTransitioning(false);
@@ -273,7 +318,14 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
             }
 
             if (validFiles.length > 0) {
-                setBatchImages(validFiles);
+                setBatchItems(prev => {
+                    prev.forEach(item => URL.revokeObjectURL(item.preview));
+                    return validFiles.map(file => ({
+                        file,
+                        label: labelFromFileName(file.name),
+                        preview: URL.createObjectURL(file)
+                    }));
+                });
             }
         } else {
             // Single upload mode
@@ -377,7 +429,12 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                 body: JSON.stringify({ prompt: generationPrompt })
             });
 
-            if (!res.ok) throw new Error('Generation failed');
+            if (!res.ok) {
+                // Surface the server's message (e.g. rate limit info) when it has one
+                const errorData = await res.json().catch(() => ({}));
+                toast.error(errorData.error || 'Failed to generate image. Please try again.');
+                return;
+            }
 
             const data = await res.json();
             const imageUrl = data.image; // data:image/png;base64,...
@@ -453,10 +510,15 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
             });
         } catch (error) {
             console.error('TTS Error:', error);
-            const message = error instanceof Error ? error.message : 'Failed to generate audio';
-            toast.error(message === 'TTS service not configured'
-                ? 'Text-to-speech is not available. Please record audio instead.'
-                : 'Failed to generate audio. Please try recording instead.');
+            const message = error instanceof Error ? error.message : '';
+            if (message === 'TTS service not configured') {
+                toast.error('Text-to-speech is not available. Please record audio instead.');
+            } else if (message && message !== 'Generation failed') {
+                // Server-provided message, e.g. rate limit details
+                toast.error(message);
+            } else {
+                toast.error('Failed to generate audio. Please try recording instead.');
+            }
         } finally {
             setIsGeneratingAudio(false);
         }
@@ -477,34 +539,38 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
 
         // Batch mode validation
         if (batchMode) {
-            if (batchImages.length === 0) {
+            if (batchItems.length === 0) {
                 toast.error('Please select at least one image');
+                return;
+            }
+            if (hasBatchDuplicates) {
+                toast.error('Please fix duplicate card names first');
                 return;
             }
 
             setIsSubmitting(true);
-            setUploadProgress({ current: 0, total: batchImages.length });
+            setUploadProgress({ current: 0, total: batchItems.length });
 
             try {
                 const CONCURRENT_UPLOADS = 2; // Reduced from 8 for better reliability on free tier
 
                 // Create chunks of uploads
-                const chunks = [];
-                for (let i = 0; i < batchImages.length; i += CONCURRENT_UPLOADS) {
-                    chunks.push(batchImages.slice(i, i + CONCURRENT_UPLOADS));
+                const chunks: BatchItem[][] = [];
+                for (let i = 0; i < batchItems.length; i += CONCURRENT_UPLOADS) {
+                    chunks.push(batchItems.slice(i, i + CONCURRENT_UPLOADS));
                 }
 
-                let successCount = 0;
                 let failCount = 0;
                 let processedCount = 0;
+                const createdCards: Card[] = [];
 
                 // Process each chunk sequentially, but uploads within chunk are parallel
                 for (const chunk of chunks) {
                     const results = await Promise.allSettled(
-                        chunk.map(async (imageFile) => {
+                        chunk.map(async (item) => {
                             try {
-                                const imageUrl = await uploadFile(imageFile, imageFile.name);
-                                return { imageUrl, fileName: imageFile.name };
+                                const imageUrl = await uploadFile(item.file, item.file.name);
+                                return { imageUrl, label: item.label.trim() };
                             } catch (error) {
                                 console.error('Upload failed:', error);
                                 return null;
@@ -514,12 +580,12 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
 
                     // Update progress
                     processedCount += chunk.length;
-                    setUploadProgress({ current: processedCount, total: batchImages.length });
+                    setUploadProgress({ current: processedCount, total: batchItems.length });
 
                     // Create cards for successful uploads
                     const cardsToCreate = results
                         .filter(r => r.status === 'fulfilled' && r.value !== null)
-                        .map(r => (r as PromiseFulfilledResult<{ imageUrl: string; fileName: string } | null>).value!)
+                        .map(r => (r as PromiseFulfilledResult<{ imageUrl: string; label: string } | null>).value!)
                         .filter(v => v !== null);
 
                     // Batch insert the cards
@@ -530,19 +596,17 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                             body: JSON.stringify({
                                 boardId,
                                 cards: cardsToCreate.map(c => ({
-                                    label: '', // Empty label - user will edit later
+                                    label: c.label,
                                     imageUrl: c.imageUrl,
-                                    audioUrl: '', // Empty audio - user will edit later
+                                    audioUrl: '', // Filled in below if voice generation is on
                                     color: '#6366f1'
-                                    // No category for batch uploads - user will edit later
                                 }))
                             })
                         });
 
                         if (res.ok) {
-                            const newCards = await res.json();
-                            newCards.forEach((card: Card) => onCardAdded(card));
-                            successCount += cardsToCreate.length;
+                            const newCards: Card[] = await res.json();
+                            createdCards.push(...newCards);
                         } else {
                             failCount += cardsToCreate.length;
                         }
@@ -551,8 +615,59 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                     failCount += results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && r.value === null)).length;
                 }
 
-                if (successCount > 0) {
-                    toast.success(`${successCount} card${successCount > 1 ? 's' : ''} created! Edit them to add labels and audio.`);
+                // Optionally give every named card a spoken voice via TTS.
+                // Sequential on purpose: the TTS endpoint is rate limited per minute,
+                // so a 429 means "stop now" rather than hammer the remaining cards.
+                const labelledCards = createdCards.filter(c => c.label.trim());
+                let voicedCount = 0;
+                let hitRateLimit = false;
+
+                if (generateBatchAudio && labelledCards.length > 0) {
+                    setAudioProgress({ current: 0, total: labelledCards.length });
+
+                    for (const card of labelledCards) {
+                        try {
+                            const ttsRes = await fetch('/api/generate-audio', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ text: card.label.trim(), languageCode: 'en-US' })
+                            });
+
+                            if (ttsRes.status === 429) {
+                                hitRateLimit = true;
+                                break;
+                            }
+                            if (!ttsRes.ok) continue; // Skip this card, try the rest
+
+                            const { url } = await ttsRes.json();
+                            const updateRes = await fetch(`/api/cards/${card.id}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ audioUrl: url })
+                            });
+
+                            if (updateRes.ok) {
+                                card.audioUrl = url;
+                                voicedCount++;
+                            }
+                        } catch (error) {
+                            console.error('Voice generation failed for card:', card.label, error);
+                        } finally {
+                            setAudioProgress(prev => ({ ...prev, current: Math.min(prev.current + 1, prev.total) }));
+                        }
+                    }
+                }
+
+                // Add cards to the board UI once, with their final audio URLs
+                createdCards.forEach(card => onCardAdded(card));
+
+                if (createdCards.length > 0) {
+                    toast.success(`${createdCards.length} card${createdCards.length > 1 ? 's' : ''} created!`);
+                }
+                if (generateBatchAudio && labelledCards.length > 0 && voicedCount < labelledCards.length) {
+                    toast.warning(hitRateLimit
+                        ? `Voice added to ${voicedCount} of ${labelledCards.length} cards — generation limit reached. You can add audio to the rest later.`
+                        : `Couldn't add a voice to ${labelledCards.length - voicedCount} card${labelledCards.length - voicedCount > 1 ? 's' : ''} — you can add audio when editing them.`);
                 }
                 if (failCount > 0) {
                     toast.error(`${failCount} upload${failCount > 1 ? 's' : ''} failed`);
@@ -682,7 +797,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     };
 
     const canProceed = () => {
-        if (batchMode) return batchImages.length > 0;
+        if (batchMode) return batchItems.length > 0 && !hasBatchDuplicates;
 
         if (step === 1) return !!label && !isLabelDuplicate;
         if (step === 2) return !!imageFile || (editCard && !!imagePreview);
@@ -757,7 +872,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                     <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
                                         <h3 className="font-bold text-blue-900 dark:text-blue-200 mb-2">Batch Mode</h3>
                                         <p className="text-sm text-blue-700 dark:text-blue-300">
-                                            Select multiple images to create cards quickly.
+                                            Select multiple images, name each card, and we can add a spoken voice too.
                                         </p>
                                     </div>
 
@@ -768,33 +883,16 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                         </label>
                                         <div
                                             onClick={() => fileInputRef.current?.click()}
-                                            className="relative w-full min-h-48 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors overflow-hidden bg-gray-50 dark:bg-slate-800"
+                                            className="relative w-full rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors overflow-hidden bg-gray-50 dark:bg-slate-800"
                                         >
-                                            {batchImages.length > 0 ? (
-                                                <div className="w-full p-4">
-                                                    <div className="text-center mb-4">
-                                                        <ImageIcon className="w-10 h-10 text-primary mx-auto mb-2" />
-                                                        <p className="text-sm font-medium text-primary">{batchImages.length} images selected</p>
-                                                        <p className="text-xs text-gray-500 mt-1">Tap to change</p>
-                                                    </div>
-                                                    <div className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto">
-                                                        {batchImages.map((file, idx) => (
-                                                            <div key={idx} className="aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-                                                                <img
-                                                                    src={URL.createObjectURL(file)}
-                                                                    alt={`Preview ${idx + 1}`}
-                                                                    className="w-full h-full object-cover"
-                                                                />
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="text-center p-4">
-                                                    <Upload className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-                                                    <p className="text-sm text-gray-500">Tap to select images</p>
-                                                </div>
-                                            )}
+                                            <div className="text-center p-4">
+                                                <Upload className="w-10 h-10 text-gray-400 mx-auto mb-2" />
+                                                <p className="text-sm text-gray-500">
+                                                    {batchItems.length > 0
+                                                        ? `${batchItems.length} images selected — tap to choose different ones`
+                                                        : 'Tap to select images'}
+                                                </p>
+                                            </div>
                                             <input
                                                 ref={fileInputRef}
                                                 type="file"
@@ -806,17 +904,85 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                         </div>
                                     </div>
 
+                                    {/* Per-image labels */}
+                                    {batchItems.length > 0 && (
+                                        <div className="space-y-3">
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                Name each card
+                                            </label>
+                                            <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                                                {batchItems.map((item, idx) => (
+                                                    <div key={item.preview} className="flex items-center gap-3 p-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800">
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img
+                                                            src={item.preview}
+                                                            alt=""
+                                                            className="w-14 h-14 rounded-lg object-cover flex-none border border-gray-100 dark:border-gray-700"
+                                                        />
+                                                        <div className="flex-1 min-w-0">
+                                                            <input
+                                                                type="text"
+                                                                value={item.label}
+                                                                onChange={(e) => updateBatchLabel(idx, e.target.value)}
+                                                                placeholder="Card name..."
+                                                                maxLength={100}
+                                                                className={clsx(
+                                                                    "w-full px-3 py-2 rounded-lg border bg-gray-50 dark:bg-slate-900 focus:outline-none focus:ring-2 transition-all text-sm font-medium",
+                                                                    batchDuplicateFlags[idx]
+                                                                        ? "border-red-300 dark:border-red-700 focus:ring-red-500/30"
+                                                                        : "border-gray-200 dark:border-gray-700 focus:ring-primary/30"
+                                                                )}
+                                                            />
+                                                            {batchDuplicateFlags[idx] && (
+                                                                <p className="text-xs text-red-500 mt-1">This name is already used</p>
+                                                            )}
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeBatchItem(idx)}
+                                                            className="p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex-none"
+                                                            aria-label={`Remove ${item.label || 'image'}`}
+                                                        >
+                                                            <X className="w-5 h-5" />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {/* Voice generation opt-in */}
+                                            <label className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={generateBatchAudio}
+                                                    onChange={(e) => setGenerateBatchAudio(e.target.checked)}
+                                                    className="w-5 h-5 rounded accent-emerald-600 flex-none"
+                                                />
+                                                <span className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+                                                    Generate a spoken voice for each card from its name
+                                                </span>
+                                            </label>
+                                        </div>
+                                    )}
+
                                     {/* Progress Tracking */}
                                     {uploadProgress.total > 0 && (
                                         <div className="space-y-2 bg-gradient-to-r from-primary/10 to-secondary/10 dark:from-primary/20 dark:to-secondary/20 rounded-xl p-4 border border-primary/20">
                                             <div className="flex justify-between text-sm mb-1">
-                                                <span className="font-medium text-gray-700 dark:text-gray-200">Uploading...</span>
-                                                <span className="font-bold text-primary">{uploadProgress.current} / {uploadProgress.total}</span>
+                                                <span className="font-medium text-gray-700 dark:text-gray-200">
+                                                    {audioProgress.total > 0 ? 'Adding voices...' : 'Uploading...'}
+                                                </span>
+                                                <span className="font-bold text-primary">
+                                                    {audioProgress.total > 0
+                                                        ? `${audioProgress.current} / ${audioProgress.total}`
+                                                        : `${uploadProgress.current} / ${uploadProgress.total}`}
+                                                </span>
                                             </div>
                                             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden shadow-inner">
                                                 <div
                                                     className="bg-gradient-to-r from-primary to-secondary h-3 rounded-full transition-all duration-300 ease-out shadow-lg"
-                                                    style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+                                                    style={{ width: `${(audioProgress.total > 0
+                                                        ? audioProgress.current / audioProgress.total
+                                                        : uploadProgress.current / uploadProgress.total) * 100}%` }}
                                                 />
                                             </div>
                                         </div>
@@ -1277,9 +1443,11 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                         {isSubmitting ? <Loader2 className="animate-spin w-5 h-5" /> : <Check className="w-5 h-5" />}
                                         {isSubmitting
                                             ? (batchMode
-                                                ? `Uploading ${uploadProgress.current}/${uploadProgress.total}...`
+                                                ? (audioProgress.total > 0
+                                                    ? `Adding voices ${audioProgress.current}/${audioProgress.total}...`
+                                                    : `Uploading ${uploadProgress.current}/${uploadProgress.total}...`)
                                                 : 'Uploading...')
-                                            : (batchMode ? `Create ${batchImages.length} Cards` : editCard ? 'Update Card' : 'Finish & Save')}
+                                            : (batchMode ? `Create ${batchItems.length} Card${batchItems.length === 1 ? '' : 's'}` : editCard ? 'Update Card' : 'Finish & Save')}
                                     </button>
                                 )}
                             </div>
