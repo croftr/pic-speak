@@ -2,7 +2,7 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 const isProtectedRoute = createRouteMatcher(["/my-boards(.*)", "/admin(.*)"]);
-const isPublicRoute = createRouteMatcher(["/", "/about", "/public-boards(.*)", "/board(.*)", "/sitemap.xml", "/robots.txt"]);
+const isPublicRoute = createRouteMatcher(["/", "/about", "/use-cases(.*)", "/public-boards(.*)", "/board(.*)", "/sitemap.xml", "/robots.txt"]);
 
 export default clerkMiddleware(async (auth, req) => {
     if (isPublicRoute(req)) {
