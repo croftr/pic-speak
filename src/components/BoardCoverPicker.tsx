@@ -105,7 +105,7 @@ export default function BoardCoverPicker({ isOpen, onClose, onSelected, boardCar
 
     return (
         <>
-            <div className="fixed inset-0 z-[55] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
                 <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto bg-white dark:bg-slate-900 rounded-3xl shadow-2xl">
                     {/* Header */}
                     <div className="sticky top-0 bg-white dark:bg-slate-900 px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between rounded-t-3xl">
@@ -218,7 +218,7 @@ export default function BoardCoverPicker({ isOpen, onClose, onSelected, boardCar
                 </div>
             </div>
 
-            {/* Crop modal renders at z-[60], above this picker */}
+            {/* Crop modal renders at z-[80], above this picker */}
             {imageToCrop && (
                 <ImageCropModal
                     imageSrc={imageToCrop}

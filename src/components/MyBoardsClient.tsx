@@ -252,7 +252,7 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
 
                 {/* Import progress overlay */}
                 {importStatus !== null && (
-                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+                    <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
                         <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl p-8 shadow-2xl text-center space-y-4">
                             <Loader2 className="w-10 h-10 text-primary animate-spin mx-auto" />
                             <h2 className="text-xl font-display font-extrabold">Importing board</h2>
@@ -264,7 +264,7 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
 
                 {/* Create Board Modal/Overlay */}
                 {showCreateForm && (
-                    <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center sm:p-4 backdrop-blur-sm">
+                    <div className="fixed inset-0 bg-black/50 z-[60] flex items-end sm:items-center justify-center sm:p-4 backdrop-blur-sm">
                         <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 sm:p-8 shadow-2xl animate-in fade-in slide-in-from-bottom-8 sm:zoom-in-95 sm:slide-in-from-bottom-0 max-h-[90vh] overflow-y-auto">
                             <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-2xl font-display font-extrabold">Create a Board</h2>
@@ -382,7 +382,7 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
 
                 {/* Template Clone Modal */}
                 {showTemplateCloneForm && (
-                    <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center sm:p-4 backdrop-blur-sm">
+                    <div className="fixed inset-0 bg-black/50 z-[60] flex items-end sm:items-center justify-center sm:p-4 backdrop-blur-sm">
                         <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 sm:p-8 shadow-2xl animate-in fade-in slide-in-from-bottom-8 sm:zoom-in-95 sm:slide-in-from-bottom-0">
                             <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-2xl font-display font-extrabold flex items-center gap-2">

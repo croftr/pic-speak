@@ -117,7 +117,7 @@ export default function ImageCropModal({ imageSrc, onCropComplete, onCancel, ini
     };
 
     return (
-        <div className="fixed inset-0 z-[60] flex flex-col bg-black">
+        <div className="fixed inset-0 z-[80] flex flex-col bg-black">
             {/* Header */}
             <div className="bg-gray-900 px-4 py-3 flex items-center justify-between">
                 <h3 className="text-white font-bold text-lg">Crop & Resize Image</h3>
