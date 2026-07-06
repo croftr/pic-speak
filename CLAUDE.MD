@@ -145,12 +145,12 @@ Commands: `npm run icons` regenerates PNG icons from `public/logo.svg`; `npm run
 
 ## Locked "Use Mode" (Child/Kiosk Mode)
 
-Clicking a board card opens the board in a locked fullscreen mode (Use Board) so a non-verbal child can't accidentally navigate away, hit the back button, or disturb a carefully built board:
+Boards open unlocked; a carer explicitly locks a board into fullscreen "use mode" so a non-verbal child can't accidentally navigate away, hit the back button, or disturb a carefully built board:
 
 - `src/contexts/LockModeContext.tsx` - tracks `lockedBoardId` (non-null = locked), persists to `sessionStorage` (`mvb:locked-board`) so a reload doesn't unlock, toggles a `lock-mode` class on `document.body`
-- `src/hooks/useLockEffects.ts` - side effects while locked: screen wake lock (re-acquired on visibility change), best-effort fullscreen, and a `popstate`/history-sentinel trap that snaps browser/hardware back to the board
-- `src/components/lock/` - `LockedBar.tsx` (minimal top bar: board name, card-size toggle, unlock button), `UnlockButton.tsx` (single press opens the carer quiz), `UnlockQuizDialog.tsx` (simple addition question with decoy answers, positioned below the top of the screen with a high z-index so it sits above the card grid; 3 wrong attempts closes the dialog and stays locked)
-- Entry points: clicking a board card in `MyBoardsClient.tsx` and a manual lock button in `BoardToolbar.tsx`'s view-mode bar — both call `lock()` inside the click gesture so `requestFullscreen()` is allowed
+- `src/hooks/useLockEffects.ts` - side effects while locked: screen wake lock (re-acquired on visibility change), best-effort fullscreen, and a `popstate`/history-sentinel trap that snaps browser/hardware back to the board. When the trap blocks a back navigation it dispatches a `mvb:lock-blocked` window event (`LOCK_BLOCKED_EVENT`)
+- `src/components/lock/` - `LockedBar.tsx` (minimal top bar: board name, card-size toggle, unlock button), `UnlockButton.tsx` (must be pressed and held ~1s — with a progress ring — before the carer quiz opens; a quick tap only shows a transient "Hold to unlock" hint pill, and `mvb:lock-blocked` events re-pulse the button and show a "Board is locked" hint), `UnlockQuizDialog.tsx` (simple addition question with decoy answers, positioned below the top of the screen with a high z-index so it sits above the card grid; 3 wrong attempts closes the dialog and stays locked)
+- Entry point: the lock button in `BoardToolbar.tsx`'s view-mode bar — it calls `lock()` inside the click gesture so `requestFullscreen()` is allowed. Clicking a board card in `MyBoardsClient.tsx` just opens the board unlocked
 - While locked: `GlobalHeader` renders nothing, `BoardClient` swaps `BoardToolbar` for `LockedBar` and hides `LikeButton`/`CommentsSection`. Card taps, audio, category filter chips, and the card-size toggle still work
 - No URL param is used for lock state (unlike `?edit=true`) so the service worker's per-pathname offline cache isn't affected
 - `npm run test:lock-mode` runs a Playwright end-to-end test against the public `starter-template` board (requires `npm run build` first)

@@ -65,8 +65,17 @@ async function main() {
         }
         console.log('   OK — chrome hidden, unlock button present');
 
-        console.log('4. Clicking unlock button ...');
+        console.log('4. Quick-tapping unlock button (should NOT open quiz) ...');
         await unlockButton.click();
+        await page.waitForTimeout(300);
+        if ((await page.locator('[data-testid="quiz-question"]').count()) !== 0) {
+            throw new Error('quiz opened on a quick tap — hold requirement not enforced');
+        }
+        await page.waitForSelector('[data-testid="lock-hint"]', { timeout: 2_000 });
+        console.log('   OK — quick tap ignored, "hold to unlock" hint shown');
+
+        console.log('5. Holding unlock button for 1s ...');
+        await unlockButton.click({ delay: 1200 });
         await page.waitForSelector('[data-testid="quiz-question"]', { timeout: 5_000 });
         const readQuestion = async () => {
             const text = await page.textContent('[data-testid="quiz-question"]');
@@ -114,6 +123,9 @@ async function main() {
         console.log('8. Re-locking and testing back-button trap ...');
         await lockButton.click();
         await unlockButton.waitFor({ state: 'visible', timeout: 5_000 });
+        // Let the quick-tap hint from earlier expire so the hint we assert on
+        // below is definitely the blocked-navigation one.
+        await page.waitForTimeout(2_500);
         await page.goBack();
         await page.waitForTimeout(500);
         if (!page.url().includes('/board/starter-template')) {
@@ -123,7 +135,11 @@ async function main() {
         if (stillLockedAfterBack === 0) {
             throw new Error('lock UI gone after back navigation');
         }
-        console.log('   OK — back navigation trapped on board, still locked');
+        const blockedHint = await page.locator('[data-testid="lock-hint"]').textContent();
+        if (!blockedHint || !blockedHint.toLowerCase().includes('locked')) {
+            throw new Error(`expected "board is locked" hint after trapped back navigation, got: "${blockedHint}"`);
+        }
+        console.log('   OK — back navigation trapped on board, still locked, hint shown');
 
         console.log('9. Reloading while locked ...');
         await page.reload({ waitUntil: 'load' });

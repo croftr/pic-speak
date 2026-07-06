@@ -3,6 +3,10 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
+// Fired when the lock blocks something the user tried to do (e.g. back
+// navigation). UnlockButton listens and shows a brief "board is locked" hint.
+export const LOCK_BLOCKED_EVENT = 'mvb:lock-blocked';
+
 // Side effects for locked "use mode": screen wake lock, best-effort fullscreen,
 // and a history sentinel that snaps browser/hardware back to the board.
 export function useLockEffects(isLocked: boolean, boardId: string) {
@@ -47,6 +51,7 @@ export function useLockEffects(isLocked: boolean, boardId: string) {
             if (location.pathname !== boardPath) {
                 router.replace(boardPath);
             }
+            window.dispatchEvent(new CustomEvent(LOCK_BLOCKED_EVENT));
         };
         window.addEventListener('popstate', handlePopState);
 

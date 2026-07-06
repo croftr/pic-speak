@@ -29,7 +29,7 @@ function generateQuestion() {
     return { a, b, answer, options };
 }
 
-// Remounted via `key` each time the dialog opens (see HoldToUnlockButton), so
+// Remounted via `key` each time the dialog opens (see UnlockButton), so
 // state can be initialized fresh here rather than reset from an effect.
 export default function UnlockQuizDialog({ isOpen, onClose, onUnlock }: UnlockQuizDialogProps) {
     const [question, setQuestion] = useState(generateQuestion);

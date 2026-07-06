@@ -6,7 +6,6 @@ import { Pencil, X, Plus, Sparkles, Layers, Image as ImageIcon, Copy, Loader2, U
 import { Board } from '@/types';
 import { toast } from 'sonner';
 import { parseBoardExport, importBoard } from '@/lib/board-export';
-import { useLockMode } from '@/contexts/LockModeContext';
 import BoardCoverPicker from './BoardCoverPicker';
 import BoardCoverBanner from './BoardCoverBanner';
 
@@ -24,7 +23,6 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
     const [publicBoards] = useState<Board[]>(() => (initialPublicBoards ?? []).filter(Boolean));
 
     const router = useRouter();
-    const { lock } = useLockMode();
 
     // Create Mode State
     const [isCreating, setIsCreating] = useState(false);
@@ -457,21 +455,17 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
                                     router.prefetch(`/board/${board.id}`);
                                 }}
                                 onClick={() => {
-                                    document.documentElement.requestFullscreen?.().catch(() => {});
-                                    lock(board.id);
                                     router.push(`/board/${board.id}`);
                                 }}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' || e.key === ' ') {
                                         e.preventDefault();
-                                        document.documentElement.requestFullscreen?.().catch(() => {});
-                                        lock(board.id);
                                         router.push(`/board/${board.id}`);
                                     }
                                 }}
                                 tabIndex={0}
                                 role="button"
-                                aria-label={`Use ${board.name} board`}
+                                aria-label={`Open ${board.name} board`}
                                 className="group relative flex flex-col bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             >
                                 <BoardCoverBanner src={board.coverImageUrl ?? board.fallbackCoverImageUrl} alt="" />
