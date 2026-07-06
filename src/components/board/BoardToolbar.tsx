@@ -8,7 +8,7 @@ import {
     Upload, ArrowLeft, Loader2, Trash2,
     Share2, Check,
     Grid3X3, Grid2X2, LayoutGrid, Layers, ChevronDown, ChevronUp, Settings, LockOpen,
-    Image as ImageIcon
+    Image as ImageIcon, Printer
 } from 'lucide-react';
 
 interface BoardToolbarProps {
@@ -193,6 +193,15 @@ export default function BoardToolbar({
                                     )}
                                 </button>
                             )}
+                            {/* Print the board as physical cards */}
+                            <Link
+                                href={`/board/${board?.id}/print`}
+                                className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors touch-manipulation"
+                                aria-label="Print board"
+                                title="Print board"
+                            >
+                                <Printer className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                            </Link>
                             {/* Card size toggle - cycles through sizes */}
                             <button
                                 onClick={() => {
