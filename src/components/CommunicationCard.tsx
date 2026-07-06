@@ -12,16 +12,16 @@ import Image from 'next/image';
 
 interface CommunicationCardProps {
     card: Card;
-    onClick?: () => void;
     isEditing?: boolean;
     onDelete?: (cardId: string) => void;
     onEdit?: (card: Card) => void;
     onMoveCopy?: (card: Card) => void;
     isFocused?: boolean;
     onFocus?: () => void;
+    onActivate?: (card: Card) => void;
 }
 
-export default function CommunicationCard({ card, isEditing, onDelete, onEdit, onMoveCopy, isFocused = false, onFocus }: CommunicationCardProps) {
+export default function CommunicationCard({ card, isEditing, onDelete, onEdit, onMoveCopy, isFocused = false, onFocus, onActivate }: CommunicationCardProps) {
     const [isPlaying, setIsPlaying] = useState(false);
     const [volume] = useState(1.0); // 0.0 to 1.0
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -58,6 +58,8 @@ export default function CommunicationCard({ card, isEditing, onDelete, onEdit, o
     };
 
     const handlePlay = () => {
+        onActivate?.(card);
+
         if (!card.audioUrl) return;
 
         if (audioRef.current) {

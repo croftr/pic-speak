@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Card, Board } from '@/types';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -13,10 +13,12 @@ import { useAudioPreload } from '@/hooks/useAudioPreload';
 import { buildBoardExport, downloadBoardExport } from '@/lib/board-export';
 import { useLockEffects } from '@/hooks/useLockEffects';
 import { useLockMode } from '@/contexts/LockModeContext';
+import { useSentenceBuilder } from '@/hooks/useSentenceBuilder';
 import BoardToolbar from '@/components/board/BoardToolbar';
 import LockedBar from '@/components/lock/LockedBar';
 import CardGrid from '@/components/board/CardGrid';
 import BoardFilter from '@/components/board/BoardFilter';
+import SentenceStrip from '@/components/sentence/SentenceStrip';
 
 // Dynamically import heavy components
 const AddCardModal = dynamic(() => import('@/components/AddCardModal'), {
@@ -72,6 +74,34 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
     // Warm all card audio so taps speak instantly and work offline
     useAudioPreload(cards);
 
+    // Sentence builder mode — persisted per board like lock mode so a
+    // pull-to-refresh in a kiosk session doesn't drop it.
+    const sentenceModeKey = `mvb:sentence-mode:${boardId}`;
+    const [sentenceMode, setSentenceMode] = useState(false);
+    const sentenceBuilder = useSentenceBuilder();
+
+    useEffect(() => {
+        const stored = sessionStorage.getItem(sentenceModeKey);
+        if (stored === 'true') {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrating mode from sessionStorage after mount (SSR-safe pattern)
+            setSentenceMode(true);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const toggleSentenceMode = () => {
+        setSentenceMode(prev => {
+            const next = !prev;
+            if (next) {
+                sessionStorage.setItem(sentenceModeKey, 'true');
+            } else {
+                sessionStorage.removeItem(sentenceModeKey);
+                sentenceBuilder.clear();
+            }
+            return next;
+        });
+    };
+
     const [board, setBoard] = useState<Board>(initialBoard);
     const [isOwner] = useState(initialIsOwner);
     const [isAdmin] = useState(initialIsAdmin);
@@ -107,6 +137,23 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
     const isStarterBoard = boardId.startsWith('starter-');
     const isEditing = !isLocked && requestedEdit && (isOwner || isAdmin) && !isStarterBoard;
     const cardSize = isEditing ? 'large' : userCardSize;
+    const sentenceActive = sentenceMode && !isEditing;
+
+    // Entering edit mode clears the strip — avoids stale card copies after edits/deletes.
+    useEffect(() => {
+        if (isEditing) {
+            sentenceBuilder.clear();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isEditing]);
+
+    const handleCardActivate = (card: Card) => {
+        if (!sentenceActive) return;
+        const added = sentenceBuilder.addCard(card);
+        if (!added) {
+            toast.error('Sentence is full — press play or clear');
+        }
+    };
 
     // Filter logic
     const normalizeCategory = (cat: string) => cat.trim().toLowerCase().replace(/^\w/, c => c.toUpperCase());
@@ -257,9 +304,13 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
     const existingCategories = [...new Set(cards.map(c => c.category).filter((c): c is string => !!c).map(normalizeCategory))];
 
     return (
-        <main className={`min-h-screen p-2 sm:p-4 md:p-8 relative ${isEditing ? 'pb-28 sm:pb-32' : 'pb-8'}`}>
+        <main className={`min-h-screen p-2 sm:p-4 md:p-8 relative ${isEditing ? 'pb-28 sm:pb-32' : sentenceActive ? 'pb-36 sm:pb-40' : 'pb-8'}`}>
             {isLocked ? (
-                <LockedBar boardName={board.name} />
+                <LockedBar
+                    boardName={board.name}
+                    sentenceMode={sentenceMode}
+                    onToggleSentenceMode={toggleSentenceMode}
+                />
             ) : (
                 <BoardToolbar
                     board={board}
@@ -284,6 +335,8 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
                     fallbackCoverPreview={cards[0]?.imageUrl}
                     onPickCover={() => setIsCoverPickerOpen(true)}
                     onClearCover={() => setEditCover(null)}
+                    sentenceMode={sentenceMode}
+                    onToggleSentenceMode={toggleSentenceMode}
                 />
             )}
 
@@ -311,7 +364,23 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
                     ? () => router.push(`/board/${boardId}?edit=true`)
                     : undefined
                 }
+                onActivate={sentenceActive ? handleCardActivate : undefined}
+                suppressSwipeSpeak={sentenceActive}
             />
+
+            {sentenceActive && (
+                <SentenceStrip
+                    items={sentenceBuilder.items}
+                    isPlaying={sentenceBuilder.playback.isPlaying}
+                    currentKey={sentenceBuilder.playback.currentKey}
+                    isFull={sentenceBuilder.isFull}
+                    onPlay={() => sentenceBuilder.playback.play(sentenceBuilder.items)}
+                    onStop={sentenceBuilder.playback.stop}
+                    onRemoveItem={sentenceBuilder.removeItem}
+                    onRemoveLast={sentenceBuilder.removeLast}
+                    onClear={sentenceBuilder.clear}
+                />
+            )}
 
             {/* Like and Comments Section - Show for public boards, hidden while locked */}
             {!isLocked && board?.isPublic && (

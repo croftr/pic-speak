@@ -1,14 +1,16 @@
 'use client';
 
-import { Grid3X3, Grid2X2, LayoutGrid } from 'lucide-react';
+import { Grid3X3, Grid2X2, LayoutGrid, MessageSquarePlus } from 'lucide-react';
 import { useSettings } from '@/contexts/SettingsContext';
 import UnlockButton from './UnlockButton';
 
 interface LockedBarProps {
     boardName: string;
+    sentenceMode: boolean;
+    onToggleSentenceMode: () => void;
 }
 
-export default function LockedBar({ boardName }: LockedBarProps) {
+export default function LockedBar({ boardName, sentenceMode, onToggleSentenceMode }: LockedBarProps) {
     const { cardSize: userCardSize, setCardSize } = useSettings();
 
     return (
@@ -30,6 +32,19 @@ export default function LockedBar({ boardName }: LockedBarProps) {
                     {userCardSize === 'small' && <Grid3X3 className="w-5 h-5 text-gray-500 dark:text-gray-400" />}
                     {userCardSize === 'medium' && <Grid2X2 className="w-5 h-5 text-gray-500 dark:text-gray-400" />}
                     {userCardSize === 'large' && <LayoutGrid className="w-5 h-5 text-gray-500 dark:text-gray-400" />}
+                </button>
+                <button
+                    onClick={onToggleSentenceMode}
+                    aria-pressed={sentenceMode}
+                    className={`p-2 rounded-lg transition-colors touch-manipulation ${
+                        sentenceMode
+                            ? 'bg-primary/10 text-primary'
+                            : 'hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 dark:text-gray-400'
+                    }`}
+                    aria-label="Toggle sentence builder"
+                    title="Build sentences from multiple cards"
+                >
+                    <MessageSquarePlus className="w-5 h-5" />
                 </button>
                 <UnlockButton />
             </div>

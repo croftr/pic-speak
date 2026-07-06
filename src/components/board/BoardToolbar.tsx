@@ -8,7 +8,7 @@ import {
     Upload, ArrowLeft, Loader2, Trash2,
     Share2, Check,
     Grid3X3, Grid2X2, LayoutGrid, Layers, ChevronDown, ChevronUp, Settings, LockOpen,
-    Image as ImageIcon, Printer, Download
+    Image as ImageIcon, Printer, Download, MessageSquarePlus
 } from 'lucide-react';
 
 interface BoardToolbarProps {
@@ -34,6 +34,8 @@ interface BoardToolbarProps {
     fallbackCoverPreview?: string;
     onPickCover: () => void;
     onClearCover: () => void;
+    sentenceMode: boolean;
+    onToggleSentenceMode: () => void;
 }
 
 export default function BoardToolbar({
@@ -58,7 +60,9 @@ export default function BoardToolbar({
     coverImageUrl,
     fallbackCoverPreview,
     onPickCover,
-    onClearCover
+    onClearCover,
+    sentenceMode,
+    onToggleSentenceMode
 }: BoardToolbarProps) {
     const { cardSize: userCardSize, setCardSize } = useSettings();
     const [isSettingsExpanded, setIsSettingsExpanded] = useState(false);
@@ -219,6 +223,20 @@ export default function BoardToolbar({
                             >
                                 <Printer className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                             </Link>
+                            {/* Sentence builder mode toggle */}
+                            <button
+                                onClick={onToggleSentenceMode}
+                                aria-pressed={sentenceMode}
+                                className={`p-2 rounded-lg transition-colors touch-manipulation ${
+                                    sentenceMode
+                                        ? 'bg-primary/10 text-primary'
+                                        : 'hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 dark:text-gray-400'
+                                }`}
+                                aria-label="Toggle sentence builder"
+                                title="Build sentences from multiple cards"
+                            >
+                                <MessageSquarePlus className="w-5 h-5" />
+                            </button>
                             {/* Card size toggle - cycles through sizes */}
                             <button
                                 onClick={() => {

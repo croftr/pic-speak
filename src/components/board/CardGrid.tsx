@@ -33,6 +33,8 @@ interface CardGridProps {
     searchTerm: string;
     onAddCard: () => void;
     onStartEditing?: () => void;
+    onActivate?: (card: Card) => void;
+    suppressSwipeSpeak?: boolean;
 }
 
 const getColumnCount = (width: number, cardSize: string) => {
@@ -69,7 +71,9 @@ export default function CardGrid({
     onMoveCopy,
     searchTerm,
     onAddCard,
-    onStartEditing
+    onStartEditing,
+    onActivate,
+    suppressSwipeSpeak
 }: CardGridProps) {
     const [focusedCardIndex, setFocusedCardIndex] = useState<number>(-1);
     const [columns, setColumns] = useState<number>(() => {
@@ -137,7 +141,7 @@ export default function CardGrid({
             } else if (focusedCardIndex < cards.length - 1) {
                 const newIndex = focusedCardIndex + 1;
                 setFocusedCardIndex(newIndex);
-                playCardAudio(cards[newIndex]);
+                if (!suppressSwipeSpeak) playCardAudio(cards[newIndex]);
             }
         },
         onSwipeRight: () => {
@@ -146,7 +150,7 @@ export default function CardGrid({
             if (focusedCardIndex > 0) {
                 const newIndex = focusedCardIndex - 1;
                 setFocusedCardIndex(newIndex);
-                playCardAudio(cards[newIndex]);
+                if (!suppressSwipeSpeak) playCardAudio(cards[newIndex]);
             } else if (focusedCardIndex === -1 && cards.length > 0) {
                 setFocusedCardIndex(0);
             }
@@ -281,6 +285,7 @@ export default function CardGrid({
                                     onMoveCopy={onMoveCopy}
                                     isFocused={focusedCardIndex === index}
                                     onFocus={() => setFocusedCardIndex(index)}
+                                    onActivate={onActivate}
                                 />
                             ))}
                         </div>
