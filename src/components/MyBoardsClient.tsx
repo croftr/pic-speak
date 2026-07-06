@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Pencil, X, Plus, Sparkles, Layers, Image as ImageIcon, Copy, Loader2 } from 'lucide-react';
+import { Pencil, X, Plus, Sparkles, Layers, Image as ImageIcon, Copy, Loader2, Upload } from 'lucide-react';
 import { Board } from '@/types';
 import { toast } from 'sonner';
+import { parseBoardExport, importBoard } from '@/lib/board-export';
 import { useLockMode } from '@/contexts/LockModeContext';
 import BoardCoverPicker from './BoardCoverPicker';
 import BoardCoverBanner from './BoardCoverBanner';
@@ -42,6 +43,10 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
 
     // Duplicate board state
     const [duplicatingBoardId, setDuplicatingBoardId] = useState<string | null>(null);
+
+    // Import state
+    const [importStatus, setImportStatus] = useState<string | null>(null);
+    const importInputRef = useRef<HTMLInputElement>(null);
 
     // Template clone state
     const [isCloningTemplate, setIsCloningTemplate] = useState(false);
@@ -82,6 +87,32 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
             toast.error('Failed to duplicate board');
         } finally {
             setDuplicatingBoardId(null);
+        }
+    };
+
+    const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        // Allow picking the same file again next time
+        e.target.value = '';
+        if (!file || importStatus) return;
+
+        try {
+            const exportFile = parseBoardExport(await file.text());
+            setImportStatus('Starting import...');
+
+            const result = await importBoard(exportFile, setImportStatus);
+
+            if (result.failedCards > 0) {
+                toast.warning(`Board imported with ${result.cardCount} cards — ${result.failedCards} card${result.failedCards > 1 ? 's' : ''} couldn't be restored.`);
+            } else {
+                toast.success(`Board imported with ${result.cardCount} card${result.cardCount === 1 ? '' : 's'}!`);
+            }
+            router.push(`/board/${result.boardId}`);
+        } catch (error) {
+            console.error('Import failed:', error);
+            toast.error(error instanceof Error ? error.message : 'Failed to import board');
+        } finally {
+            setImportStatus(null);
         }
     };
 
@@ -189,6 +220,27 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
                     </div>
                     <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
                         <button
+                            onClick={() => importInputRef.current?.click()}
+                            disabled={importStatus !== null}
+                            className="flex-none px-4 py-3 rounded-full font-bold border-2 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary disabled:opacity-50 transition-all flex items-center justify-center gap-2 text-sm sm:text-base touch-manipulation min-h-[48px]"
+                            aria-label="Import board from backup file"
+                            title="Import board from backup file"
+                        >
+                            {importStatus !== null ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                                <Upload className="w-5 h-5" />
+                            )}
+                            <span className="hidden sm:inline">Import</span>
+                        </button>
+                        <input
+                            ref={importInputRef}
+                            type="file"
+                            accept=".json,application/json"
+                            className="hidden"
+                            onChange={handleImportFile}
+                        />
+                        <button
                             onClick={() => setShowCreateForm(true)}
                             className="flex-1 sm:flex-none bg-primary text-primary-foreground px-5 sm:px-6 py-3 rounded-full font-bold shadow-lg shadow-primary/25 hover:bg-primary/90 hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 text-sm sm:text-base touch-manipulation min-h-[48px]"
                         >
@@ -197,6 +249,18 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
                         </button>
                     </div>
                 </header>
+
+                {/* Import progress overlay */}
+                {importStatus !== null && (
+                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+                        <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl p-8 shadow-2xl text-center space-y-4">
+                            <Loader2 className="w-10 h-10 text-primary animate-spin mx-auto" />
+                            <h2 className="text-xl font-display font-extrabold">Importing board</h2>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{importStatus}</p>
+                            <p className="text-xs text-gray-400">Large boards can take a few minutes — please keep this page open.</p>
+                        </div>
+                    </div>
+                )}
 
                 {/* Create Board Modal/Overlay */}
                 {showCreateForm && (

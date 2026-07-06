@@ -8,7 +8,7 @@ import {
     Upload, ArrowLeft, Loader2, Trash2,
     Share2, Check,
     Grid3X3, Grid2X2, LayoutGrid, Layers, ChevronDown, ChevronUp, Settings, LockOpen,
-    Image as ImageIcon, Printer
+    Image as ImageIcon, Printer, Download
 } from 'lucide-react';
 
 interface BoardToolbarProps {
@@ -27,6 +27,8 @@ interface BoardToolbarProps {
     isCopied: boolean;
     onBatchUpload: () => void;
     onMergeBoard: () => void;
+    onExport: () => void;
+    isExporting: boolean;
     onLock: () => void;
     coverImageUrl: string | null;
     fallbackCoverPreview?: string;
@@ -50,6 +52,8 @@ export default function BoardToolbar({
     isCopied,
     onBatchUpload,
     onMergeBoard,
+    onExport,
+    isExporting,
     onLock,
     coverImageUrl,
     fallbackCoverPreview,
@@ -152,6 +156,19 @@ export default function BoardToolbar({
                                 <Layers className="w-4 h-4" />
                                 <span className="hidden sm:inline">Copy cards from another board</span>
                                 <span className="sm:hidden">Copy</span>
+                            </button>
+                            <button
+                                onClick={onExport}
+                                disabled={isExporting}
+                                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg transition-colors touch-manipulation disabled:opacity-50"
+                            >
+                                {isExporting ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                    <Download className="w-4 h-4" />
+                                )}
+                                <span className="hidden sm:inline">Export backup</span>
+                                <span className="sm:hidden">Export</span>
                             </button>
                             <button
                                 onClick={onDelete}

@@ -10,6 +10,7 @@ import { Plus } from 'lucide-react';
 
 import { useBoardCards } from '@/hooks/useBoardCards';
 import { useAudioPreload } from '@/hooks/useAudioPreload';
+import { buildBoardExport, downloadBoardExport } from '@/lib/board-export';
 import { useLockEffects } from '@/hooks/useLockEffects';
 import { useLockMode } from '@/contexts/LockModeContext';
 import BoardToolbar from '@/components/board/BoardToolbar';
@@ -98,6 +99,9 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
 
     // Share button state
     const [isCopied, setIsCopied] = useState(false);
+
+    // Export state
+    const [isExporting, setIsExporting] = useState(false);
 
     // Computed
     const isStarterBoard = boardId.startsWith('starter-');
@@ -199,6 +203,24 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
         }
     };
 
+    const handleExport = async () => {
+        if (isExporting) return;
+        setIsExporting(true);
+        toast.loading('Preparing backup file...', { id: 'board-export' });
+        try {
+            const exportFile = await buildBoardExport(board, cards, (done, total) => {
+                toast.loading(`Packing card ${done} of ${total}...`, { id: 'board-export' });
+            });
+            downloadBoardExport(exportFile);
+            toast.success('Board exported — keep the file somewhere safe!', { id: 'board-export' });
+        } catch (error) {
+            console.error('Export failed:', error);
+            toast.error('Failed to export board. Please try again.', { id: 'board-export' });
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
     const handleShare = async () => {
         if (!board) return;
 
@@ -255,6 +277,8 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
                     isCopied={isCopied}
                     onBatchUpload={handleBatchUpload}
                     onMergeBoard={() => setIsMergeBoardModalOpen(true)}
+                    onExport={handleExport}
+                    isExporting={isExporting}
                     onLock={() => lock(boardId)}
                     coverImageUrl={editCover}
                     fallbackCoverPreview={cards[0]?.imageUrl}
