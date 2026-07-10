@@ -180,6 +180,60 @@ export default function Home() {
           </SignedOut>
         </div>
 
+        {/* What / who / how — server-rendered copy for visitors (and crawlers);
+            signed-in users get a launcher, not a pitch */}
+        {!isSignedIn && (
+          <section className="w-full max-w-2xl mx-auto mt-6 sm:mt-10 space-y-8 text-left animate-in fade-in duration-1000 delay-500">
+            <div className="space-y-3">
+              <h2 className="text-xl sm:text-2xl font-display font-extrabold text-slate-800 dark:text-white">
+                What is My Voice Board?
+              </h2>
+              <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                My Voice Board is a free AAC (augmentative and alternative communication) app for
+                building picture communication boards. Instead of generic symbol libraries, cards are
+                made from your own photos — the actual cup, the real bedroom, the family dog — and
+                speak in a voice your child already knows, because you record it yourself. Tap a
+                card and it talks.
+              </p>
+            </div>
+            <div className="space-y-3">
+              <h2 className="text-xl sm:text-2xl font-display font-extrabold text-slate-800 dark:text-white">
+                Who is it for?
+              </h2>
+              <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                It&apos;s built for non-verbal and minimally verbal children — including{' '}
+                <Link href="/use-cases/autism-communication" className="text-violet-600 dark:text-violet-400 font-semibold hover:underline">
+                  autistic children who use PECS-style picture exchange
+                </Link>
+                {' '}— and for adults rebuilding speech{' '}
+                <Link href="/use-cases/stroke-recovery" className="text-violet-600 dark:text-violet-400 font-semibold hover:underline">
+                  after a stroke or with aphasia
+                </Link>
+                . Parents, teachers, speech and language therapists, and carers can build a board in
+                minutes on any phone or tablet — no training, no dedicated device, and{' '}
+                <Link href="/about" className="text-violet-600 dark:text-violet-400 font-semibold hover:underline">
+                  no subscriptions or fees
+                </Link>
+                .
+              </p>
+            </div>
+            <div className="space-y-3">
+              <h2 className="text-xl sm:text-2xl font-display font-extrabold text-slate-800 dark:text-white">
+                Made for real, everyday use
+              </h2>
+              <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                Install it like an app and boards keep working offline — in the car, at school, or
+                anywhere without signal. A lockable use mode keeps little hands on the board instead
+                of wandering off into other apps. And you don&apos;t have to start from scratch:{' '}
+                <Link href="/public-boards" className="text-violet-600 dark:text-violet-400 font-semibold hover:underline">
+                  explore ready-made boards
+                </Link>
+                {' '}shared by other families and copy one as your starting point.
+              </p>
+            </div>
+          </section>
+        )}
+
         {/* Footer/Info */}
         <div className="mt-4 sm:mt-8 flex flex-col items-center gap-2 text-center text-slate-400 text-sm animate-in fade-in duration-1000 delay-500">
           <Link href="/about" className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors underline underline-offset-4 decoration-slate-300 dark:decoration-slate-700">
