@@ -51,7 +51,7 @@ export default function ConfirmDialog({
             />
 
             {/* Dialog */}
-            <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in-95 slide-in-from-bottom-4 duration-200">
+            <div role="alertdialog" aria-modal="true" data-testid="confirm-dialog" className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in-95 slide-in-from-bottom-4 duration-200">
                 {/* Close button */}
                 <button
                     onClick={onClose}

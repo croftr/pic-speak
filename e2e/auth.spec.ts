@@ -1,45 +1,19 @@
-import { setupClerkTestingToken, clerk } from '@clerk/testing/playwright'
 import { test, expect } from '@playwright/test'
 import path from 'path'
+import { useSignedInSession, deleteBoardByName } from './helpers'
 
 // Used to track the board created during the test for cleanup in case of failure
 let createdBoardName: string | undefined
 
 test.afterEach(async ({ page }) => {
   if (createdBoardName) {
-    try {
-      // Add timestamp to bypass potential caching
-      const response = await page.request.get(`/api/boards?_=${Date.now()}`)
-      if (response.ok()) {
-        const boards = await response.json()
-        const board = boards.find((b: { name: string }) => b.name === createdBoardName)
-        if (board) {
-          console.log(`[Cleanup] Deleting board: ${createdBoardName} (${board.id})`)
-          await page.request.delete(`/api/boards/${board.id}`)
-        }
-      }
-    } catch (error) {
-      console.error('[Cleanup] Failed to clean up board:', error)
-    } finally {
-      createdBoardName = undefined
-    }
+    await deleteBoardByName(page, createdBoardName)
+    createdBoardName = undefined
   }
 })
 
-// The test account has 2FA enabled, so we use the email-based sign-in which
-// creates a backend sign-in token and bypasses the second factor step.
-async function signIn(page: import('@playwright/test').Page) {
-  await setupClerkTestingToken({ page })
-  await page.goto('/')
-  await clerk.signIn({
-    page,
-    emailAddress: process.env.E2E_CLERK_USER_USERNAME!,
-  })
-}
-
-test('can sign in and reach My Boards', async ({ page }) => {
-  await signIn(page)
-
+test('signed-in session reaches My Boards', async ({ page }) => {
+  await useSignedInSession(page)
   await page.goto('/my-boards')
 
   // Verify we landed on the boards page (not redirected to Clerk sign-in)
@@ -52,7 +26,7 @@ test('can sign in and reach My Boards', async ({ page }) => {
 
 test('logged-in user can create a board, add a card with image and audio, then delete both', async ({ page }) => {
   test.setTimeout(60000)
-  await signIn(page)
+  await useSignedInSession(page)
 
   await page.goto('/my-boards')
   // Check for path only to support both localhost and 127.0.0.1
@@ -108,13 +82,12 @@ test('logged-in user can create a board, add a card with image and audio, then d
   // ── Edit the card ───────────────────────────────────────────────────
   const updatedCardLabel = `Updated Card Label ${Date.now()}`
 
-  // Open the card's options menu
-  const cardElement = page.locator(`[data-card-id]`).filter({ hasText: cardLabel })
+  // The card wrapper carries a stable testid; the options menu lives inside it
+  const cardContainer = page.getByTestId('communication-card').filter({ hasText: cardLabel })
 
   // Capture initial image src for verification
-  const initialImageSrc = await cardElement.locator('img').getAttribute('src')
+  const initialImageSrc = await cardContainer.locator('img').getAttribute('src')
 
-  const cardContainer = cardElement.locator('..')
   await cardContainer.getByRole('button', { name: /card options/i }).click()
 
   // Click "Edit Card"
@@ -160,20 +133,19 @@ test('logged-in user can create a board, add a card with image and audio, then d
   await expect(page.getByText(cardLabel)).not.toBeVisible()
 
   // Verify image has changed
-  const updatedCardElement = page.locator(`[data-card-id]`).filter({ hasText: updatedCardLabel })
-  const updatedImageSrc = await updatedCardElement.locator('img').getAttribute('src')
+  const updatedCardContainer = page.getByTestId('communication-card').filter({ hasText: updatedCardLabel })
+  const updatedImageSrc = await updatedCardContainer.locator('img').getAttribute('src')
   expect(updatedImageSrc).not.toBe(initialImageSrc)
 
   // ── Delete the card via the UI ──────────────────────────────────────
-  // Use the updated label to find the card
-  const updatedCardContainer = updatedCardElement.locator('..')
   await updatedCardContainer.getByRole('button', { name: /card options/i }).click()
 
   // Click "Delete" in the dropdown menu
   await page.getByRole('button', { name: /delete card/i }).click()
 
-  // Confirm deletion in the dialog (use exact match to avoid hitting "Delete Board")
-  await page.getByRole('button', { name: 'Delete', exact: true }).click()
+  // Confirm deletion in the dialog — scope to the dialog so we can't hit
+  // an unrelated "Delete" button elsewhere on the page
+  await page.getByTestId('confirm-dialog').getByRole('button', { name: 'Delete', exact: true }).click()
 
   // Verify the card is gone
   await expect(page.getByText(updatedCardLabel)).not.toBeVisible({ timeout: 5000 })

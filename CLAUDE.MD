@@ -93,6 +93,15 @@ npm run start    # Start production server
 npm run lint     # Run ESLint
 ```
 
+## Testing
+
+`npm run test:all` runs everything CI runs: the Playwright suite, then a production build, then the three script tests. Two layers of end-to-end tests, both run in CI (`.github/workflows/e2e.yml`) on every push/PR to main:
+
+- **Playwright suite** (`e2e/*.spec.ts`, `npm run test:e2e`): signed-in user journeys (board/card CRUD, settings, search/filter, public boards, card picker) plus request-level API tests (`api-security.spec.ts` for authorization, `card-reorder.spec.ts` for reorder persistence). `e2e/global.setup.ts` signs in once via Clerk and saves storage state to `e2e/.auth/user.json` — individual tests never sign in themselves; they call `useSignedInSession(page)` from `e2e/helpers.ts`. Global setup also cleans up orphaned test boards, strictly scoped to the test user's `user_id`. Locally the suite loads secrets from `.env.local` (needs `E2E_CLERK_USER_USERNAME`) and reuses a running dev server; in CI it runs against the production build.
+- **Script tests** (`scripts/test-offline.ts`, `test-lock-mode.ts`, `test-sentence.ts`): start their own production server (requires `npm run build` first) against the public starter-template board, no auth needed. They cover the offline service worker (including iOS 206 byte-range audio), locked kiosk mode, and the sentence builder. Shared server startup/teardown lives in `scripts/lib/prod-server.ts` (cross-platform process-tree kill — the offline test depends on the kill genuinely freeing the port).
+
+Conventions: assert on `data-testid`/`data-*` state hooks (e.g. `data-playing` on cards, `confirm-dialog`, `public-board-card`, `board-toolbar-name`) or ARIA roles — never on Tailwind classes or DOM structure. Prefer seeding/asserting via the API over UI simulation where the UI isn't the thing under test (e.g. reorder uses the API, not synthetic drags). Test boards use unique `<Prefix> ${Date.now()}` names; a new prefix must be added to `TEST_BOARD_PREFIXES` in `e2e/global.setup.ts`. Don't e2e-test AI image generation (external API) or mic recording.
+
 ## Database & Migrations
 
 The project uses Vercel Postgres with a versioned SQL migration system. Migration files live in `migrations/` as numbered SQL files (e.g. `001_initial_schema.sql`). Applied versions are tracked in a `schema_migrations` table so each migration runs exactly once.
@@ -135,7 +144,7 @@ The app is an installable PWA with offline support:
 - `src/app/manifest.ts` - web app manifest (standalone display, icons in `public/icons/`)
 - `public/sw.js` - hand-written service worker. Cache strategies: cache-first for immutable Vercel Blob media and `/_next/static`, network-first with cache fallback for navigations/RSC/API GETs, `public/offline.html` fallback for never-visited pages. Byte-range requests are answered with real 206 slices from the cached full file — iOS refuses a 200 reply to a ranged audio request, so this is what makes cached audio play on iPhone/iPad. Bump `CACHE_VERSION` in `sw.js` when a deploy must flush stale cached pages (media cache is versioned separately and survives bumps — its URLs are immutable).
 - `src/components/ServiceWorkerRegistration.tsx` - registers the worker (production only)
-- `src/components/DocumentCacheWarmer.tsx` - refetches key pages (`/`, `/my-boards`, `/public-boards`, `/board/*`) as full HTML after client-side navigations, because Next.js soft navigations only fetch RSC payloads and would otherwise leave nothing launchable offline
+- `src/components/DocumentCacheWarmer.tsx` - asks the service worker (via a `warm-document` postMessage) to fetch and cache key pages (`/`, `/my-boards`, `/public-boards`, `/board/*`) as full HTML after client-side navigations, because Next.js soft navigations only fetch RSC payloads and would otherwise leave nothing launchable offline. The worker does the fetch itself: a page-side fetch's response streams to two consumers (page + cache.put clone) and the browser can cancel the shared stream, silently aborting the cache write
 - `src/hooks/useAudioPreload.ts` - prefetches all card audio when a board opens so taps speak instantly and work offline
 - `src/hooks/useOfflineAuth.ts` - Clerk can't confirm sessions offline, so this remembers "device had a signed-in user" in localStorage and keeps My Boards navigation visible offline (used by the landing page, GlobalHeader, BottomNav). Cached pages are server-rendered per-user and display without live auth.
 - PWA `start_url` is `/my-boards` (cached board list) so an offline app launch lands somewhere useful

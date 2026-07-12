@@ -221,6 +221,7 @@ export default function MergeBoardModal({ isOpen, onClose, onMergeComplete, boar
                         {phase === 'review' && (
                             <button
                                 onClick={handleBackToBoards}
+                                aria-label="Back to board list"
                                 className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
                             >
                                 <ChevronLeft className="w-5 h-5" />

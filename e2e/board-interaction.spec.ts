@@ -1,38 +1,15 @@
-import { setupClerkTestingToken, clerk } from '@clerk/testing/playwright'
 import { test, expect } from '@playwright/test'
+import { useSignedInSession, deleteBoardByName } from './helpers'
 
 // Used to track the board created during the test for cleanup in case of failure
 let createdBoardName: string | undefined
 
 test.afterEach(async ({ page }) => {
   if (createdBoardName) {
-    try {
-      // Add timestamp to bypass potential caching
-      const response = await page.request.get(`/api/boards?_=${Date.now()}`)
-      if (response.ok()) {
-        const boards = await response.json()
-        const board = boards.find((b: { name: string }) => b.name === createdBoardName)
-        if (board) {
-          console.log(`[Cleanup] Deleting board: ${createdBoardName} (${board.id})`)
-          await page.request.delete(`/api/boards/${board.id}`)
-        }
-      }
-    } catch (error) {
-      console.error('[Cleanup] Failed to clean up board:', error)
-    } finally {
-      createdBoardName = undefined
-    }
+    await deleteBoardByName(page, createdBoardName)
+    createdBoardName = undefined
   }
 })
-
-async function signIn(page: import('@playwright/test').Page) {
-  await setupClerkTestingToken({ page })
-  await page.goto('/')
-  await clerk.signIn({
-    page,
-    emailAddress: process.env.E2E_CLERK_USER_USERNAME!,
-  })
-}
 
 test('can search, filter, and interact with cards', async ({ page }) => {
   test.setTimeout(90000)
@@ -43,7 +20,7 @@ test('can search, filter, and interact with cards', async ({ page }) => {
       volume = 1;
       currentTime = 0;
       onended = () => {};
-      constructor(src: string) {}
+      constructor() {}
       play() {
         // Simulate playback duration of 500ms
         setTimeout(() => {
@@ -55,7 +32,7 @@ test('can search, filter, and interact with cards', async ({ page }) => {
     } as unknown as typeof Audio;
   });
 
-  await signIn(page)
+  await useSignedInSession(page)
 
   await page.goto('/my-boards')
   await expect(page.getByRole('heading', { name: /my boards/i })).toBeVisible({ timeout: 10000 })
@@ -123,11 +100,7 @@ test('can search, filter, and interact with cards', async ({ page }) => {
   await expect(page.getByText(`Banana ${timestamp}`)).not.toBeVisible()
 
   // Clear search
-  await page.getByRole('button', { name: /clear search/i }).click() // Wait, check if clear button exists in BoardFilter
-  // Actually, BoardFilter has:
-  // {searchTerm && (<button onClick={() => setSearchTerm('')} ...><X .../></button>)}
-  // The aria-label is "Clear search".
-
+  await page.getByRole('button', { name: /clear search/i }).click()
   await expect(page.getByText(`Banana ${timestamp}`)).toBeVisible()
 
   // ── Test Category Filtering ──────────────────────────────────────────
@@ -156,20 +129,10 @@ test('can search, filter, and interact with cards', async ({ page }) => {
 
   // Click "Apple" card
   const appleCardButton = page.getByRole('button', { name: `Apple ${timestamp}` })
-
-  // We expect the button to gain the 'border-accent' class or 'ring-accent/30' when playing
-  // Trigger click
   await appleCardButton.click()
 
-  // Since we mocked Audio to play for 500ms, we check immediately for the playing state
-  // Using toHaveClass or checking CSS attribute
-  // The component logic: isPlaying ? "border-accent ring-2 sm:ring-4 ring-accent/30 scale-105" : ...
-  // Let's check for 'border-accent'
-  await expect(appleCardButton).toHaveClass(/border-accent/, { timeout: 2000 })
-
-  // Wait for playback to end (500ms + buffer)
-  await page.waitForTimeout(600)
-
-  // Verify it returned to normal (no border-accent)
-  await expect(appleCardButton).not.toHaveClass(/border-accent/)
+  // The card exposes its playback state via data-playing (styling-independent).
+  // Our mocked Audio "plays" for 500ms, so the state flips on then back off.
+  await expect(appleCardButton).toHaveAttribute('data-playing', 'true', { timeout: 2000 })
+  await expect(appleCardButton).toHaveAttribute('data-playing', 'false', { timeout: 3000 })
 })

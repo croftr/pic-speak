@@ -9,45 +9,37 @@
  * Usage: npx tsx scripts/test-offline.ts
  */
 import { chromium } from '@playwright/test';
-import { spawn, execSync } from 'child_process';
+import { startProdServer } from './lib/prod-server';
 
 const PORT = 4599;
 const BASE_URL = `http://localhost:${PORT}`;
 
-async function waitForServer(url: string, timeoutMs = 30_000) {
-    const deadline = Date.now() + timeoutMs;
-    while (Date.now() < deadline) {
-        try {
-            const res = await fetch(url);
-            if (res.ok) return;
-        } catch {
-            // not up yet
-        }
-        await new Promise((r) => setTimeout(r, 500));
-    }
-    throw new Error(`server did not start at ${url}`);
-}
-
 async function main() {
     console.log('1. Starting production server ...');
-    const server = spawn('npx', ['next', 'start', '-p', String(PORT)], {
-        shell: true,
-        stdio: 'ignore',
-        detached: false,
-    });
-    const killServer = () => {
-        try {
-            execSync(`taskkill /PID ${server.pid} /T /F`, { stdio: 'ignore' });
-        } catch {
-            // already dead
-        }
-    };
+    const { kill: killServer } = await startProdServer(PORT);
 
     try {
-        await waitForServer(BASE_URL);
 
         const browser = await chromium.launch();
         const page = await (await browser.newContext()).newPage();
+
+        // Poll from Node until a URL is present in the SW cache. NOTE: this
+        // must not use page.waitForFunction with a promise-returning arrow —
+        // the returned Promise object is truthy, so such a wait passes
+        // immediately without ever checking the cache (which used to let the
+        // server be killed while the warm fetch was still in flight).
+        const waitForCached = async (url: string, ignoreVary = false) => {
+            const deadline = Date.now() + 15_000;
+            while (Date.now() < deadline) {
+                const hit = await page.evaluate(
+                    async ({ url, ignoreVary }) => !!(await caches.match(url, { ignoreVary })),
+                    { url, ignoreVary }
+                );
+                if (hit) return;
+                await new Promise((r) => setTimeout(r, 250));
+            }
+            throw new Error(`timed out waiting for ${url} to appear in the cache`);
+        };
 
         console.log('2. Loading landing page and waiting for service worker ...');
         await page.goto(BASE_URL, { waitUntil: 'load' });
@@ -70,23 +62,18 @@ async function main() {
         console.log('4. Client-side navigating to /public-boards ...');
         await page.click('a[href="/public-boards"]');
         await page.waitForSelector('h1');
-        await page.waitForFunction(
-            () => caches.match('/public-boards').then((r) => !!r),
-            undefined,
-            { timeout: 10_000 }
-        );
+        await waitForCached('/public-boards');
         console.log('   OK — page HTML warmed into cache');
 
         console.log('5. Warming an audio file into the cache ...');
         await page.evaluate(async () => {
             const res = await fetch('/prebuilt/banana.wav');
             if (!res.ok) throw new Error(`audio warm fetch failed: ${res.status}`);
+            // Drain the body so the SW's background cache.put of the cloned
+            // stream is not cancelled when this response is dropped unread.
+            await res.arrayBuffer();
         });
-        await page.waitForFunction(
-            () => caches.match('/prebuilt/banana.wav', { ignoreVary: true }).then((r) => !!r),
-            undefined,
-            { timeout: 10_000 }
-        );
+        await waitForCached('/prebuilt/banana.wav', true);
         console.log('   OK — audio cached');
 
         console.log('6. Killing server to go truly offline ...');
@@ -96,8 +83,8 @@ async function main() {
         console.log('7. Cold-loading the client-side-visited page while offline ...');
         await page.goto(`${BASE_URL}/public-boards`, { waitUntil: 'load' });
         const warmedHeading = await page.textContent('h1');
-        if (!warmedHeading?.includes('Public Boards')) {
-            throw new Error(`expected cached Public Boards page, got h1: "${warmedHeading}"`);
+        if (!warmedHeading?.includes('Explore Boards')) {
+            throw new Error(`expected cached Explore Boards page, got h1: "${warmedHeading}"`);
         }
         console.log(`   OK — served from cache (h1: "${warmedHeading}")`);
 
@@ -112,7 +99,7 @@ async function main() {
         console.log('9. Client-side navigating while offline (RSC fetch must fall back) ...');
         await page.click('a[href="/public-boards"]');
         await page.waitForFunction(
-            () => document.querySelector('h1')?.textContent?.includes('Public Boards'),
+            () => document.querySelector('h1')?.textContent?.includes('Explore Boards'),
             undefined,
             { timeout: 15_000 }
         );

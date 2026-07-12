@@ -1,42 +1,19 @@
-import { setupClerkTestingToken, clerk } from '@clerk/testing/playwright'
 import { test, expect } from '@playwright/test'
+import { useSignedInSession, deleteBoardByName } from './helpers'
 
 // Used to track the board created during the test for cleanup in case of failure
 let createdBoardName: string | undefined
 
 test.afterEach(async ({ page }) => {
   if (createdBoardName) {
-    try {
-      // Add timestamp to bypass potential caching
-      const response = await page.request.get(`/api/boards?_=${Date.now()}`)
-      if (response.ok()) {
-        const boards = await response.json()
-        const board = boards.find((b: { name: string }) => b.name === createdBoardName)
-        if (board) {
-          console.log(`[Cleanup] Deleting board: ${createdBoardName} (${board.id})`)
-          await page.request.delete(`/api/boards/${board.id}`)
-        }
-      }
-    } catch (error) {
-      console.error('[Cleanup] Failed to clean up board:', error)
-    } finally {
-      createdBoardName = undefined
-    }
+    await deleteBoardByName(page, createdBoardName)
+    createdBoardName = undefined
   }
 })
 
-async function signIn(page: import('@playwright/test').Page) {
-  await setupClerkTestingToken({ page })
-  await page.goto('/')
-  await clerk.signIn({
-    page,
-    emailAddress: process.env.E2E_CLERK_USER_USERNAME!,
-  })
-}
-
 test('can manage board settings and delete board via UI', async ({ page }) => {
   test.setTimeout(60000)
-  await signIn(page)
+  await useSignedInSession(page)
 
   await page.goto('/my-boards')
   await expect(page.getByRole('heading', { name: /my boards/i })).toBeVisible({ timeout: 10000 })
@@ -54,9 +31,7 @@ test('can manage board settings and delete board via UI', async ({ page }) => {
   // Ensure we are scrolled to top to see the header
   await page.evaluate(() => window.scrollTo(0, 0))
 
-  // Expand settings panel
-  // Use a more generic regex to match "Settings" (mobile) or "Board Settings" (desktop)
-  // Ensure it's not the "Batch Upload" or "Merge Board" button if they have similar text (unlikely)
+  // Expand settings panel — matches "Settings" (mobile) or "Board Settings" (desktop)
   const settingsButton = page.getByRole('button', { name: /settings/i }).first()
   await expect(settingsButton).toBeVisible()
   await settingsButton.click()
@@ -81,8 +56,8 @@ test('can manage board settings and delete board via UI', async ({ page }) => {
   // Save changes
   await page.getByRole('button', { name: 'Save' }).click()
 
-  // Verify the name in the header changed
-  await expect(page.getByRole('link', { name: 'Done Editing' }).locator('..').getByText(newBoardName)).toBeVisible()
+  // Verify the name in the toolbar changed
+  await expect(page.getByTestId('board-toolbar-name')).toHaveText(newBoardName)
 
   // Wait for save-triggered navigation to view mode (router.push removes ?edit=true)
   await expect(page).not.toHaveURL(/edit=true/, { timeout: 10000 })
@@ -108,14 +83,15 @@ test('can manage board settings and delete board via UI', async ({ page }) => {
   await page.getByRole('button', { name: /settings/i }).first().click()
   await expect(page.getByPlaceholder('Enter board name...')).toHaveValue(newBoardName)
   await expect(page.getByPlaceholder('Add a description...')).toHaveValue(newDesc)
-  await expect(page.getByLabel('Public Board')).toBeChecked() // Or getByRole('checkbox')
+  await expect(page.getByLabel('Public Board')).toBeChecked()
 
   // ── Delete Board via UI ──────────────────────────────────────────────
   await page.getByRole('button', { name: /delete board/i }).click()
 
-  // Confirm deletion
-  await expect(page.getByText(/are you sure you want to delete/i)).toBeVisible()
-  await page.getByRole('button', { name: 'Delete', exact: true }).click()
+  // Confirm deletion — scoped to the dialog
+  const confirmDialog = page.getByTestId('confirm-dialog')
+  await expect(confirmDialog.getByText(/are you sure you want to delete/i)).toBeVisible()
+  await confirmDialog.getByRole('button', { name: 'Delete', exact: true }).click()
 
   // Verify redirection to My Boards
   await expect(page).toHaveURL(/.*\/my-boards/)

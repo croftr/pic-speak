@@ -105,7 +105,7 @@ export default function BoardToolbar({
                                 >
                                     <ArrowLeft className="w-5 h-5" />
                                 </Link>
-                                <span className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white truncate">
+                                <span data-testid="board-toolbar-name" className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white truncate">
                                     {editName || 'Untitled Board'}
                                 </span>
                             </div>

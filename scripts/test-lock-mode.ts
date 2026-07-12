@@ -7,43 +7,17 @@
  * Usage: npx tsx scripts/test-lock-mode.ts
  */
 import { chromium } from '@playwright/test';
-import { spawn, execSync } from 'child_process';
+import { startProdServer } from './lib/prod-server';
 
 const PORT = 4598;
 const BASE_URL = `http://localhost:${PORT}`;
 const BOARD_URL = `${BASE_URL}/board/starter-template`;
 
-async function waitForServer(url: string, timeoutMs = 30_000) {
-    const deadline = Date.now() + timeoutMs;
-    while (Date.now() < deadline) {
-        try {
-            const res = await fetch(url);
-            if (res.ok) return;
-        } catch {
-            // not up yet
-        }
-        await new Promise((r) => setTimeout(r, 500));
-    }
-    throw new Error(`server did not start at ${url}`);
-}
-
 async function main() {
     console.log('1. Starting production server ...');
-    const server = spawn('npx', ['next', 'start', '-p', String(PORT)], {
-        shell: true,
-        stdio: 'ignore',
-        detached: false,
-    });
-    const killServer = () => {
-        try {
-            execSync(`taskkill /PID ${server.pid} /T /F`, { stdio: 'ignore' });
-        } catch {
-            // already dead
-        }
-    };
+    const { kill: killServer } = await startProdServer(PORT);
 
     try {
-        await waitForServer(BASE_URL);
 
         const browser = await chromium.launch();
         const page = await (await browser.newContext()).newPage();

@@ -6,11 +6,19 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+  BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+  CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+  E2E_CLERK_USER_USERNAME: ${{ secrets.E2E_CLERK_USER_USERNAME }}
+  E2E_CLERK_USER_PASSWORD: ${{ secrets.E2E_CLERK_USER_PASSWORD }}
+
 jobs:
   e2e:
     name: Playwright E2E
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
 
     steps:
       - uses: actions/checkout@v4
@@ -26,15 +34,24 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
 
-      - name: Run E2E tests
+      # Tests run against the production server — dev-mode on-demand
+      # compilation is a major source of timeout flakes in CI.
+      - name: Build
+        run: npm run build
+
+      - name: Run Playwright suite
         run: npx playwright test
-        env:
-          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
-          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
-          E2E_CLERK_USER_USERNAME: ${{ secrets.E2E_CLERK_USER_USERNAME }}
-          E2E_CLERK_USER_PASSWORD: ${{ secrets.E2E_CLERK_USER_PASSWORD }}
+
+      # Script-based e2e tests for the PWA/kiosk features. These start their
+      # own production server from the build above and need no auth.
+      - name: Offline / service worker test
+        run: npm run test:offline
+
+      - name: Lock mode (kiosk) test
+        run: npm run test:lock-mode
+
+      - name: Sentence builder test
+        run: npm run test:sentence
 
       - name: Upload test report
         uses: actions/upload-artifact@v4

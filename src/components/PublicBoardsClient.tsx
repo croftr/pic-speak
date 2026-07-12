@@ -89,6 +89,7 @@ function PublicBoardsContent({ initialBoards }: { initialBoards: Board[] }) {
                     {displayedBoards.map((board) => (
                         <div
                             key={board.id}
+                            data-testid="public-board-card"
                             className="group relative flex flex-col bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
                         >
                             {/* Stretched link covers the whole card; interactive

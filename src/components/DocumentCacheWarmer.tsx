@@ -8,9 +8,12 @@ import { usePathname } from 'next/navigation';
  *
  * Next.js soft navigations fetch RSC payloads, not full HTML, so the service
  * worker's navigate handler never sees (or caches) a document for them. This
- * component refetches the current page as plain HTML after each route change;
- * the service worker stores it in the pages cache, so a cold offline launch
- * (e.g. the installed PWA with no connection) can serve the full page.
+ * component asks the service worker (via postMessage) to fetch the current
+ * page as plain HTML and store it in the pages cache, so a cold offline
+ * launch (e.g. the installed PWA with no connection) can serve the full page.
+ * The worker does the fetch itself — a page-side fetch would stream to two
+ * consumers (page + cache clone) and the browser can cancel the shared
+ * stream, silently aborting the cache write.
  */
 
 // Only the pages that matter offline — boards and the lists that lead to them.
@@ -29,18 +32,13 @@ export default function DocumentCacheWarmer() {
 
         let cancelled = false;
 
-        const warmPath = (path: string) => {
-            if (warmed.has(path)) return;
-            warmed.add(path);
-            fetch(path, { headers: { Accept: 'text/html' } }).catch(() => {
-                // Offline or transient failure — allow a retry on a later visit.
-                warmed.delete(path);
-            });
-        };
-
-        // Wait for the worker so the fetch is guaranteed to pass through it.
-        navigator.serviceWorker.ready.then(() => {
-            if (cancelled) return;
+        navigator.serviceWorker.ready.then((registration) => {
+            if (cancelled || !registration.active) return;
+            const warmPath = (path: string) => {
+                if (warmed.has(path)) return;
+                warmed.add(path);
+                registration.active?.postMessage({ type: 'warm-document', path });
+            };
             warmPath(pathname);
             // The landing page is the offline entry point — refresh its cached
             // copy every session, not only when the user happens to visit it,

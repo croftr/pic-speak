@@ -1,41 +1,19 @@
-import { setupClerkTestingToken, clerk } from '@clerk/testing/playwright'
 import { test, expect } from '@playwright/test'
+import { useSignedInSession, deleteBoardByName } from './helpers'
 
 // Used to track the board created during the test for cleanup in case of failure
 let createdBoardName: string | undefined
 
 test.afterEach(async ({ page }) => {
   if (createdBoardName) {
-    try {
-      const response = await page.request.get(`/api/boards?_=${Date.now()}`)
-      if (response.ok()) {
-        const boards = await response.json()
-        const board = boards.find((b: { name: string }) => b.name === createdBoardName)
-        if (board) {
-          console.log(`[Cleanup] Deleting board: ${createdBoardName} (${board.id})`)
-          await page.request.delete(`/api/boards/${board.id}`)
-        }
-      }
-    } catch (error) {
-      console.error('[Cleanup] Failed to clean up board:', error)
-    } finally {
-      createdBoardName = undefined
-    }
+    await deleteBoardByName(page, createdBoardName)
+    createdBoardName = undefined
   }
 })
 
-async function signIn(page: import('@playwright/test').Page) {
-  await setupClerkTestingToken({ page })
-  await page.goto('/')
-  await clerk.signIn({
-    page,
-    emailAddress: process.env.E2E_CLERK_USER_USERNAME!,
-  })
-}
-
 test('can add a card from a public board via the public card picker', async ({ page }) => {
   test.setTimeout(60000)
-  await signIn(page)
+  await useSignedInSession(page)
 
   await page.goto('/my-boards')
   await expect(page.getByRole('heading', { name: /my boards/i })).toBeVisible({ timeout: 10000 })
@@ -108,8 +86,7 @@ test('can add a card from a public board via the public card picker', async ({ p
   await expect(page.getByText('All cards from this board already exist on your board.')).toBeVisible()
 
   // ── Navigate back to board list ─────────────────────────────────────
-  const backButton = page.locator('button').filter({ has: page.locator('svg.lucide-chevron-left') })
-  await backButton.click()
+  await page.getByRole('button', { name: 'Back to board list' }).click()
 
   // Verify we're back at the board list
   await expect(page.getByRole('heading', { name: /copy cards from another board/i })).toBeVisible()

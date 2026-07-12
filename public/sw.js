@@ -192,7 +192,12 @@ async function networkFirst(request, cacheName, maxEntries, offlineFallback) {
         }
         return response;
     } catch (err) {
-        const cached = await caches.match(request);
+        // ignoreVary: Next.js documents carry `Vary: rsc, ..., Accept-Encoding`,
+        // which can never be satisfied for a navigation request (the cached
+        // request's Accept-Encoding isn't visible to the Cache API). Offline,
+        // any cached variant of the URL beats the offline page — documents and
+        // RSC payloads are already kept apart by the `_rsc` query param.
+        const cached = await caches.match(request, { ignoreVary: true });
         if (cached) return cached;
         if (offlineFallback) {
             const fallback = await caches.match(offlineFallback);
@@ -201,6 +206,28 @@ async function networkFirst(request, cacheName, maxEntries, offlineFallback) {
         throw err;
     }
 }
+
+// Document cache warming. Next.js soft navigations only fetch RSC payloads,
+// so DocumentCacheWarmer asks us to fetch and store the full HTML document
+// for offline cold launches. Doing the fetch HERE (not in the page) matters:
+// a page-side fetch's response streams to two consumers (the page and a
+// cache.put clone), and the browser may cancel the shared stream and abort
+// the put — this single-consumer fetch always completes.
+self.addEventListener('message', (event) => {
+    const data = event.data;
+    if (!data || data.type !== 'warm-document' || typeof data.path !== 'string') return;
+    event.waitUntil(
+        (async () => {
+            const response = await fetch(data.path, { headers: { Accept: 'text/html' } });
+            if (!response.ok) return;
+            const cache = await caches.open(PAGES_CACHE);
+            await cache.put(data.path, response);
+            await trimCache(PAGES_CACHE, PAGES_MAX_ENTRIES);
+        })().catch(() => {
+            // Offline or transient failure — the page retries on a later visit.
+        })
+    );
+});
 
 self.addEventListener('fetch', (event) => {
     const request = event.request;

@@ -80,7 +80,7 @@ export default function CommunicationCard({ card, isEditing, onDelete, onEdit, o
 
 
     return (
-        <div ref={setNodeRef} style={style} className="relative group/card">
+        <div ref={setNodeRef} style={style} data-testid="communication-card" className="relative group/card">
             {isEditing && (
                 <>
                     <div className={`absolute top-2 right-2 ${isMenuOpen ? 'z-[50]' : 'z-[5]'}`}>
@@ -187,6 +187,7 @@ export default function CommunicationCard({ card, isEditing, onDelete, onEdit, o
                 onClick={handlePlay}
                 onMouseEnter={onFocus}
                 data-card-id={card.id}
+                data-playing={isPlaying ? 'true' : 'false'}
                 className={clsx(
                     "relative flex flex-col items-center justify-between w-full aspect-[3/4] p-2.5 sm:p-3 md:p-4",
                     "bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl shadow-md hover:shadow-xl",

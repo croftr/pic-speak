@@ -1,42 +1,18 @@
-import { setupClerkTestingToken, clerk } from '@clerk/testing/playwright'
 import { test, expect } from '@playwright/test'
+import { useSignedInSession, deleteBoardByName } from './helpers'
 
 // Used to track the board created during the test for cleanup in case of failure
 let createdBoardName: string | undefined
 
 test.afterEach(async ({ page }) => {
   if (createdBoardName) {
-    try {
-      // Add timestamp to bypass potential caching
-      const response = await page.request.get(`/api/boards?_=${Date.now()}`)
-      if (response.ok()) {
-        const boards = await response.json()
-        const board = boards.find((b: { name: string }) => b.name === createdBoardName)
-        if (board) {
-          console.log(`[Cleanup] Deleting board: ${createdBoardName} (${board.id})`)
-          await page.request.delete(`/api/boards/${board.id}`)
-        }
-      }
-    } catch (error) {
-      console.error('[Cleanup] Failed to clean up board:', error)
-    } finally {
-      createdBoardName = undefined
-    }
+    await deleteBoardByName(page, createdBoardName)
+    createdBoardName = undefined
   }
 })
 
-async function signIn(page: import('@playwright/test').Page) {
-  // Sign in — the /board/* routes are protected by middleware
-  await setupClerkTestingToken({ page })
-  await page.goto('/')
-  await clerk.signIn({
-    page,
-    emailAddress: process.env.E2E_CLERK_USER_USERNAME!,
-  })
-}
-
 test('can browse public boards and open the Starter Template', async ({ page }) => {
-  await signIn(page)
+  await useSignedInSession(page)
 
   // Navigate to the public boards page
   await page.goto('/public-boards')
@@ -66,7 +42,7 @@ test('can browse public boards and open the Starter Template', async ({ page }) 
 
 test('creator can delete their own public board from public boards list', async ({ page }) => {
   test.setTimeout(60000)
-  await signIn(page)
+  await useSignedInSession(page)
 
   await page.goto('/my-boards')
   await expect(page.getByRole('heading', { name: /my boards/i })).toBeVisible({ timeout: 10000 })
@@ -99,7 +75,7 @@ test('creator can delete their own public board from public boards list', async 
   await expect(page.getByRole('heading', { name: /explore boards/i })).toBeVisible()
 
   // Find our board card
-  const boardCard = page.locator('.group').filter({ hasText: createdBoardName })
+  const boardCard = page.getByTestId('public-board-card').filter({ hasText: createdBoardName })
   await expect(boardCard).toBeVisible()
 
   // Delete button should be visible for our own board
@@ -107,13 +83,14 @@ test('creator can delete their own public board from public boards list', async 
   await expect(deleteBtn).toBeVisible()
 
   // Delete button should NOT be visible on Starter Template
-  const starterCard = page.locator('.group').filter({ hasText: /starter template/i })
+  const starterCard = page.getByTestId('public-board-card').filter({ hasText: /starter template/i })
   await expect(starterCard.getByRole('button', { name: /delete/i })).not.toBeVisible()
 
   // Click delete and confirm in dialog
   await deleteBtn.click()
-  const confirmDialog = page.locator('div.relative').filter({ hasText: /are you sure you want to delete/i })
+  const confirmDialog = page.getByTestId('confirm-dialog')
   await expect(confirmDialog).toBeVisible()
+  await expect(confirmDialog.getByText(/are you sure you want to delete/i)).toBeVisible()
   await confirmDialog.getByRole('button', { name: 'Delete', exact: true }).click()
 
   // Verify the board card is gone
@@ -122,4 +99,3 @@ test('creator can delete their own public board from public boards list', async 
   // Reset tracking variable since it was successfully deleted
   createdBoardName = undefined
 })
-
