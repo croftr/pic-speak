@@ -38,7 +38,6 @@
     "dotenv": "^17.2.3",
     "lucide-react": "^1.17.0",
     "next": "^16.2.10",
-    "next-navigation": "^1.0.6",
     "pg": "^8.16.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",

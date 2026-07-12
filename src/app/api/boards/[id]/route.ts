@@ -19,9 +19,12 @@ export async function GET(
 
     // Allow access if board is public or user is the owner or admin
     const { userId } = await auth();
-    const isAdmin = await checkIsAdmin();
-    if (!board.isPublic && board.userId !== userId && !isAdmin) {
-        return new NextResponse("Unauthorized", { status: 403 });
+    if (!board.isPublic && board.userId !== userId) {
+        // Only fall back to the admin check (a Clerk API call) when needed
+        const isAdmin = await checkIsAdmin();
+        if (!isAdmin) {
+            return new NextResponse("Unauthorized", { status: 403 });
+        }
     }
 
     // Cache public boards longer than private boards
@@ -48,8 +51,8 @@ export async function PUT(
     const { id } = await params;
     const existingBoard = await getBoard(id);
 
-    const isAdmin = await checkIsAdmin();
     const isOwner = existingBoard && existingBoard.userId === userId;
+    const isAdmin = existingBoard && !isOwner ? await checkIsAdmin() : false;
 
     if (!existingBoard || (!isOwner && !isAdmin)) {
         return new NextResponse("Unauthorized", { status: 403 });
@@ -151,8 +154,8 @@ export async function DELETE(
     const { id } = await params;
     const existingBoard = await getBoard(id);
 
-    const isAdmin = await checkIsAdmin();
     const isOwner = existingBoard && existingBoard.userId === userId;
+    const isAdmin = existingBoard && !isOwner ? await checkIsAdmin() : false;
 
     if (!existingBoard || (!isOwner && !isAdmin)) {
         return new NextResponse("Unauthorized", { status: 403 });

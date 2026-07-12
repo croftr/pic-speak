@@ -17,7 +17,9 @@ export function useAudioPreload(cards: Card[]) {
 
         const urls = cards
             .map((card) => card.audioUrl)
-            .filter((url): url is string => !!url && url.startsWith('http'))
+            // Blob audio is absolute (http); template/prebuilt audio is
+            // same-origin relative (/prebuilt/...) and needs warming too
+            .filter((url): url is string => !!url && (url.startsWith('http') || url.startsWith('/')))
             .filter((url) => !preloadedRef.current.has(url));
 
         if (urls.length === 0) return;

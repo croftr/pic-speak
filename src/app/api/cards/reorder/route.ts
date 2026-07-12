@@ -17,10 +17,10 @@ export async function PUT(request: Request) {
             return new NextResponse("Invalid request body", { status: 400 });
         }
 
-        // Verify user owns the board or is admin
+        // Verify user owns the board or is admin (admin check costs a Clerk API call)
         const board = await getBoard(boardId);
-        const isAdmin = await checkIsAdmin();
         const isOwner = board && board.userId === userId;
+        const isAdmin = board && !isOwner ? await checkIsAdmin() : false;
 
         if (!board || (!isOwner && !isAdmin)) {
             return new NextResponse("Unauthorized access to board", { status: 403 });

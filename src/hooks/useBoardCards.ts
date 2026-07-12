@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card } from '@/types';
 import { toast } from 'sonner';
 import { arrayMove } from '@dnd-kit/sortable';
@@ -12,6 +12,26 @@ const UNDO_WINDOW_MS = 5000;
 export function useBoardCards(initialCards: Card[], boardId: string) {
     const [cards, setCards] = useState<Card[]>(initialCards);
     const pendingDeletesRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+    // If the page is left while a delete is still inside its undo window, the
+    // deferred request would never fire and the card would reappear on next
+    // load. Flush pending deletes immediately; keepalive lets the request
+    // outlive the page.
+    useEffect(() => {
+        const flushPendingDeletes = () => {
+            for (const [cardId, timer] of pendingDeletesRef.current) {
+                clearTimeout(timer);
+                fetch(`/api/cards/${cardId}`, { method: 'DELETE', keepalive: true }).catch(() => {});
+            }
+            pendingDeletesRef.current.clear();
+        };
+        window.addEventListener('pagehide', flushPendingDeletes);
+        return () => {
+            window.removeEventListener('pagehide', flushPendingDeletes);
+            // Also flush on unmount (client-side navigation away from the board)
+            flushPendingDeletes();
+        };
+    }, []);
 
     const handleCardAdded = (newCard: Card) => {
         setCards(prev => [newCard, ...prev]);

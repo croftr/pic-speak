@@ -25,11 +25,11 @@ export async function PUT(
             return new NextResponse("Card not found", { status: 404 });
         }
 
-        const [board, isAdmin] = await Promise.all([
-            getBoard(existingCard.boardId),
-            checkIsAdmin()
-        ]);
+        const board = await getBoard(existingCard.boardId);
         const isOwner = board && board.userId === userId;
+
+        // Owners don't need the admin check — it costs a Clerk API call
+        const isAdmin = board && !isOwner ? await checkIsAdmin() : false;
 
         if (!board || (!isOwner && !isAdmin)) {
             return new NextResponse("Unauthorized Access to Board", { status: 403 });
@@ -87,11 +87,9 @@ export async function PUT(
 
         // If moving to a different board, verify user owns the destination board
         if (boardId && boardId !== existingCard.boardId) {
-            const [destinationBoard, isAdmin] = await Promise.all([
-                getBoard(boardId),
-                checkIsAdmin()
-            ]);
+            const destinationBoard = await getBoard(boardId);
             const isDestinationOwner = destinationBoard && destinationBoard.userId === userId;
+            const isAdmin = destinationBoard && !isDestinationOwner ? await checkIsAdmin() : false;
             if (!destinationBoard || (!isDestinationOwner && !isAdmin)) {
                 return new NextResponse("Unauthorized Access to Destination Board", { status: 403 });
             }
@@ -150,11 +148,9 @@ export async function DELETE(
             return new NextResponse("Card not found", { status: 404 });
         }
 
-        const [board, isAdmin] = await Promise.all([
-            getBoard(card.boardId),
-            checkIsAdmin()
-        ]);
+        const board = await getBoard(card.boardId);
         const isOwner = board && board.userId === userId;
+        const isAdmin = board && !isOwner ? await checkIsAdmin() : false;
 
         if (!board || (!isOwner && !isAdmin)) {
             return new NextResponse("Unauthorized Access to Board", { status: 403 });
