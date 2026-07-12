@@ -122,14 +122,14 @@ export async function POST(request: Request) {
                         fit: 'inside',
                         withoutEnlargement: true // Don't enlarge smaller images
                     })
-                    .jpeg({ quality: IMAGE_QUALITY }) // Convert to JPEG for better compression
+                    .webp({ quality: IMAGE_QUALITY }) // Convert to WebP for better compression
                     .toBuffer();
 
                 fileToUpload = compressedBuffer;
-                contentType = 'image/jpeg';
+                contentType = 'image/webp';
 
-                // Update filename to .jpg
-                fileName = fileName.replace(/\.[^/.]+$/, '.jpg');
+                // Update filename to .webp
+                fileName = fileName.replace(/\.[^/.]+$/, '.webp');
 
                 const originalSize = buffer.length;
                 const compressedSize = compressedBuffer.length;

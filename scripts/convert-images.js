@@ -10,8 +10,8 @@ if (!fs.existsSync(prebuiltDir)) {
 }
 
 const imagePrefixes = [
-    'push_me', 'higher', 'watch_me', 'ready_set_go', 'sandbox', 'seesaw',
-    'monkey_bars', 'bench', 'lets_play', 'fun', 'too_fast', 'hot', 'thirsty'
+    'i_dont_understand', 'i_need_a_break', 'repeat_that', 'im_done', 'tablet', 'backpack',
+    'desk', 'library', 'cafeteria', 'gym', 'listen', 'math', 'art'
 ];
 
 const files = fs.readdirSync(artifactDir);

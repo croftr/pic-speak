@@ -4,27 +4,15 @@ const { execSync } = require('child_process');
 
 const prebuiltDir = path.join(__dirname, '..', 'public', 'prebuilt');
 
-if (!fs.existsSync(prebuiltDir)) {
-    fs.mkdirSync(prebuiltDir, { recursive: true });
-}
-
 const audios = [
-    { name: "i_dont_understand", text: "I don't understand" },
-    { name: "i_need_a_break", text: "I need a break" },
-    { name: "repeat_that", text: "Can you repeat that?" },
-    { name: "im_done", text: "I'm done" },
-    { name: "tablet", text: "Tablet" },
-    { name: "backpack", text: "Backpack" },
-    { name: "desk", text: "Desk" },
-    { name: "library", text: "Library" },
-    { name: "cafeteria", text: "Cafeteria" },
-    { name: "gym", text: "Gym" },
-    { name: "listen", text: "Listen" },
-    { name: "math", text: "Math" },
-    { name: "art", text: "Art" }
+    { name: "ready_set_go", text: "Go" },
+    { name: "watch_me", text: "Watch" },
+    { name: "push_me", text: "Push" },
+    { name: "lets_play", text: "Play" },
+    { name: "too_fast", text: "Fast" }
 ];
 
-console.log('Generating audio files using PowerShell...');
+console.log('Generating updated audio files using PowerShell...');
 
 for (const audio of audios) {
     const filePath = path.join(prebuiltDir, `${audio.name}.wav`);
@@ -38,7 +26,7 @@ $synth.Speak('${audio.text.replace(/'/g, "''")}');
 $synth.Dispose();
 `;
     
-    const psFile = path.join(__dirname, 'temp.ps1');
+    const psFile = path.join(__dirname, 'temp2.ps1');
     fs.writeFileSync(psFile, psCommand);
     
     try {
