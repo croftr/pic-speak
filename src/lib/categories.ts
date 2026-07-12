@@ -11,6 +11,8 @@ export const PREDEFINED_CATEGORIES: PredefinedCategory[] = [
     { name: 'Activities', emoji: '🏃' },
     { name: 'Places', emoji: '🏠' },
     { name: 'Animals', emoji: '🐾' },
+    { name: 'Music', emoji: '🎵' },
+    { name: 'Health', emoji: '🩺' },
 ];
 
 /** Look up the emoji for a category name (case-insensitive). */

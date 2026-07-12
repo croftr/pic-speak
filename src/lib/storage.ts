@@ -347,6 +347,19 @@ const STARTER_CARDS: Record<string, Card[]> = {
         { id: 'sbp-park-10', boardId: 'starter-park-playground', label: 'Playground', imageUrl: '/prebuilt/playground.webp', audioUrl: '/prebuilt/playground.wav', category: 'Places', order: 9, templateKey: 'tpl-playground' },
         { id: 'sbp-park-11', boardId: 'starter-park-playground', label: 'My turn', imageUrl: '/prebuilt/my_turn.webp', audioUrl: '/prebuilt/my_turn.wav', category: 'Activities', order: 10, templateKey: 'tpl-my-turn' },
         { id: 'sbp-park-12', boardId: 'starter-park-playground', label: 'Your turn', imageUrl: '/prebuilt/your_turn.webp', audioUrl: '/prebuilt/your_turn.wav', category: 'Activities', order: 11, templateKey: 'tpl-your-turn' },
+        { id: 'sbp-park-13', boardId: 'starter-park-playground', label: 'Push me', imageUrl: '/prebuilt/push_me.webp', audioUrl: '/prebuilt/push_me.wav', category: 'Activities', order: 12, templateKey: 'tpl-push-me' },
+        { id: 'sbp-park-14', boardId: 'starter-park-playground', label: 'Higher', imageUrl: '/prebuilt/higher.webp', audioUrl: '/prebuilt/higher.wav', category: 'Descriptive', order: 13, templateKey: 'tpl-higher' },
+        { id: 'sbp-park-15', boardId: 'starter-park-playground', label: 'Watch me', imageUrl: '/prebuilt/watch_me.webp', audioUrl: '/prebuilt/watch_me.wav', category: 'Social', order: 14, templateKey: 'tpl-watch-me' },
+        { id: 'sbp-park-16', boardId: 'starter-park-playground', label: 'Ready set go', imageUrl: '/prebuilt/ready_set_go.webp', audioUrl: '/prebuilt/ready_set_go.wav', category: 'Activities', order: 15, templateKey: 'tpl-ready-set-go' },
+        { id: 'sbp-park-17', boardId: 'starter-park-playground', label: 'Sandbox', imageUrl: '/prebuilt/sandbox.webp', audioUrl: '/prebuilt/sandbox.wav', category: 'Places', order: 16, templateKey: 'tpl-sandbox' },
+        { id: 'sbp-park-18', boardId: 'starter-park-playground', label: 'Seesaw', imageUrl: '/prebuilt/seesaw.webp', audioUrl: '/prebuilt/seesaw.wav', category: 'Activities', order: 17, templateKey: 'tpl-seesaw' },
+        { id: 'sbp-park-19', boardId: 'starter-park-playground', label: 'Monkey bars', imageUrl: '/prebuilt/monkey_bars.webp', audioUrl: '/prebuilt/monkey_bars.wav', category: 'Activities', order: 18, templateKey: 'tpl-monkey-bars' },
+        { id: 'sbp-park-20', boardId: 'starter-park-playground', label: 'Bench', imageUrl: '/prebuilt/bench.webp', audioUrl: '/prebuilt/bench.wav', category: 'Places', order: 19, templateKey: 'tpl-bench' },
+        { id: 'sbp-park-21', boardId: 'starter-park-playground', label: 'Lets play', imageUrl: '/prebuilt/lets_play.webp', audioUrl: '/prebuilt/lets_play.wav', category: 'Social', order: 20, templateKey: 'tpl-lets-play' },
+        { id: 'sbp-park-22', boardId: 'starter-park-playground', label: 'Fun', imageUrl: '/prebuilt/fun.webp', audioUrl: '/prebuilt/fun.wav', category: 'Descriptive', order: 21, templateKey: 'tpl-fun' },
+        { id: 'sbp-park-23', boardId: 'starter-park-playground', label: 'Too fast', imageUrl: '/prebuilt/too_fast.webp', audioUrl: '/prebuilt/too_fast.wav', category: 'Descriptive', order: 22, templateKey: 'tpl-too-fast' },
+        { id: 'sbp-park-24', boardId: 'starter-park-playground', label: 'Hot', imageUrl: '/prebuilt/hot.webp', audioUrl: '/prebuilt/hot.wav', category: 'Descriptive', order: 23, templateKey: 'tpl-hot' },
+        { id: 'sbp-park-25', boardId: 'starter-park-playground', label: 'Thirsty', imageUrl: '/prebuilt/thirsty.webp', audioUrl: '/prebuilt/thirsty.wav', category: 'Feelings', order: 24, templateKey: 'tpl-thirsty' },
     ]
 };
 
