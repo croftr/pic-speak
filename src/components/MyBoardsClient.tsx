@@ -213,7 +213,7 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
                             My Boards
                         </h1>
                         <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 font-medium">
-                            Tap <span className="font-bold text-primary">Use</span> to start talking, or <span className="font-bold">Edit</span> to add cards.
+                            Tap a board to start talking, or <span className="font-bold">Edit Board</span> to add cards.
                         </p>
                     </div>
                     <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
