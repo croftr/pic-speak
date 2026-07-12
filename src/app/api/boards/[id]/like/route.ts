@@ -28,8 +28,10 @@ export async function POST(
         await likeBoardByUser(boardId, userId, userName);
         const likeCount = await getBoardLikeCount(boardId);
 
-        // Send email notification to board owner (async, don't await)
-        const board = await getBoard(boardId);
+        // Send email notification to board owner (async, don't await).
+        // Best-effort: the like already succeeded, so a failed board lookup
+        // should only skip the notification, not fail the request.
+        const board = await getBoard(boardId).catch(() => undefined);
         if (board && board.ownerEmail && board.emailNotificationsEnabled && board.userId !== userId) {
             // Don't notify if user likes their own board
             sendLikeNotification(

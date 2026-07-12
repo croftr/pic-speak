@@ -367,7 +367,7 @@ export async function getCardCount(boardId: string): Promise<number> {
         return parseInt(result.rows[0].count);
     } catch (error) {
         logger.error('Error counting cards', error, { boardId });
-        return 0;
+        throw error;
     } finally {
         client.release();
     }
@@ -413,8 +413,10 @@ export async function getCard(id: string): Promise<Card | undefined> {
             sourceBoardId: row.source_board_id || undefined
         };
     } catch (error) {
+        // Throw rather than return undefined — callers treat undefined as
+        // "card doesn't exist" (404), which is wrong during a DB outage
         logger.error('Error getting card', error, { cardId: id });
-        return undefined;
+        throw error;
     } finally {
         client.release();
     }
@@ -470,8 +472,9 @@ export async function getCards(boardId?: string): Promise<Card[]> {
             };
         });
     } catch (error) {
+        // Throw rather than return [] — an empty board looks like data loss
         logger.error('Error getting cards', error, { boardId });
-        return [];
+        throw error;
     } finally {
         client.release();
     }
@@ -597,14 +600,10 @@ export async function getBoardForCardCreation(boardId: string): Promise<BoardWit
             maxCardsSetting: row.max_cards_setting
         };
     } catch (error) {
+        // Throw so the route returns 500 — an empty fallback here would make
+        // the route misreport a DB outage as 403 Unauthorized
         logger.error('Error getting board for card creation', error, { boardId });
-        // Fallback to empty if critical failure, though route handler will handle missing board
-        return {
-            board: undefined,
-            cardCount: 0,
-            existingLabels: new Set(),
-            maxCardsSetting: null
-        };
+        throw error;
     } finally {
         client.release();
     }
@@ -895,7 +894,7 @@ export async function getBoardCount(userId: string): Promise<number> {
         return parseInt(result.rows[0].count);
     } catch (error) {
         logger.error('Error counting boards', error, { userId });
-        return 0;
+        throw error;
     } finally {
         client.release();
     }
@@ -938,8 +937,9 @@ export async function getBoards(userId: string): Promise<Board[]> {
             cardCount: parseInt(row.card_count || '0')
         }));
     } catch (error) {
+        // Throw rather than return [] — "no boards" looks like data loss
         logger.error('Error getting boards', error, { userId });
-        return [];
+        throw error;
     } finally {
         client.release();
     }
@@ -1022,9 +1022,11 @@ export async function getBoard(id: string, retryOnNotFound: boolean = false): Pr
             coverImageUrl: row.cover_image_url || undefined
         };
     } catch (error) {
+        // Throw rather than return undefined — callers treat undefined as
+        // "board doesn't exist" (404), which is wrong during a DB outage
         const totalTime = Date.now() - startTime;
         logger.error('Failed to get board', error, { boardId: id, duration_ms: totalTime });
-        return undefined;
+        throw error;
     } finally {
         client.release();
     }
@@ -1104,7 +1106,7 @@ export async function getPublicBoards(): Promise<Board[]> {
         return [...starterBoards, ...dbBoards];
     } catch (error) {
         logger.error('Error getting public boards', error);
-        return [];
+        throw error;
     } finally {
         client.release();
     }

@@ -28,11 +28,13 @@ async function fetchPublicBoards(): Promise<Board[]> {
 }
 
 export default async function MyBoardsPage() {
-    // Fetch data on server in parallel
+    // Fetch data on server in parallel. The user's own boards must load or the
+    // page errors (an empty list looks like data loss); templates and public
+    // boards are supplementary, so a failure there just hides those sections.
     const [userBoards, templateBoards, publicBoards] = await Promise.all([
         getUserBoards(),
-        getTemplateBoards(),
-        fetchPublicBoards()
+        getTemplateBoards().catch(() => []),
+        fetchPublicBoards().catch(() => [])
     ]);
 
     return <MyBoardsClient

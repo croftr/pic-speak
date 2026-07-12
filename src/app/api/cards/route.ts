@@ -21,49 +21,57 @@ export async function GET(request: Request) {
         return NextResponse.json([]);
     }
 
-    // Check board access (public or owned) - run auth and board lookup in parallel
-    const [board, authResult] = await Promise.all([
-        getBoard(boardId),
-        auth()
-    ]);
+    try {
+        // Check board access (public or owned) - run auth and board lookup in parallel
+        const [board, authResult] = await Promise.all([
+            getBoard(boardId),
+            auth()
+        ]);
 
-    if (!board) {
-        log.warn('Board not found', { boardId });
-        return new NextResponse("Board not found", { status: 404 });
-    }
-
-    // Allow access if board is public or user is the owner
-    const { userId } = authResult;
-    const userLog = log.withContext({ userId });
-
-    if (!board.isPublic && board.userId !== userId) {
-        userLog.warn('Unauthorized access attempt', {
-            boardId,
-            boardOwner: board.userId
-        });
-        return new NextResponse("Unauthorized Board Access", { status: 403 });
-    }
-
-    const cardsStart = Date.now();
-    const cards = await getCards(boardId);
-    const totalTime = Date.now() - startTime;
-
-    userLog.info('Cards retrieved', {
-        count: cards.length,
-        query_duration_ms: Date.now() - cardsStart,
-        total_duration_ms: totalTime
-    });
-
-    // Cache cards with stale-while-revalidate for better performance
-    const cacheControl = board.isPublic
-        ? 'public, max-age=300, stale-while-revalidate=600'
-        : 'no-store, no-cache, must-revalidate, proxy-revalidate';
-
-    return NextResponse.json(cards, {
-        headers: {
-            'Cache-Control': cacheControl
+        if (!board) {
+            log.warn('Board not found', { boardId });
+            return new NextResponse("Board not found", { status: 404 });
         }
-    });
+
+        // Allow access if board is public or user is the owner
+        const { userId } = authResult;
+        const userLog = log.withContext({ userId });
+
+        if (!board.isPublic && board.userId !== userId) {
+            userLog.warn('Unauthorized access attempt', {
+                boardId,
+                boardOwner: board.userId
+            });
+            return new NextResponse("Unauthorized Board Access", { status: 403 });
+        }
+
+        const cardsStart = Date.now();
+        const cards = await getCards(boardId);
+        const totalTime = Date.now() - startTime;
+
+        userLog.info('Cards retrieved', {
+            count: cards.length,
+            query_duration_ms: Date.now() - cardsStart,
+            total_duration_ms: totalTime
+        });
+
+        // Cache cards with stale-while-revalidate for better performance
+        const cacheControl = board.isPublic
+            ? 'public, max-age=300, stale-while-revalidate=600'
+            : 'no-store, no-cache, must-revalidate, proxy-revalidate';
+
+        return NextResponse.json(cards, {
+            headers: {
+                'Cache-Control': cacheControl
+            }
+        });
+    } catch (error) {
+        log.error('Failed to get cards', error, { boardId });
+        return NextResponse.json(
+            { error: 'Failed to load cards' },
+            { status: 500 }
+        );
+    }
 }
 
 export async function POST(request: Request) {

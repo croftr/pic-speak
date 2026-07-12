@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getBoard, updateBoard, deleteBoard, getBoardCardBlobUrls, isImageUrlUsedByAnyCard } from '@/lib/storage';
+import type { Board } from '@/types';
 import { del } from '@vercel/blob';
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { checkIsAdmin } from '@/lib/admin';
@@ -11,7 +12,12 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
     const { id } = await params;
-    const board = await getBoard(id);
+    let board: Board | undefined;
+    try {
+        board = await getBoard(id);
+    } catch {
+        return NextResponse.json({ error: 'Failed to load board' }, { status: 500 });
+    }
 
     if (!board) {
         return new NextResponse("Board not found", { status: 404 });
@@ -49,7 +55,12 @@ export async function PUT(
     }
 
     const { id } = await params;
-    const existingBoard = await getBoard(id);
+    let existingBoard: Board | undefined;
+    try {
+        existingBoard = await getBoard(id);
+    } catch {
+        return NextResponse.json({ error: 'Failed to update board' }, { status: 500 });
+    }
 
     const isOwner = existingBoard && existingBoard.userId === userId;
     const isAdmin = existingBoard && !isOwner ? await checkIsAdmin() : false;
@@ -152,7 +163,12 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const existingBoard = await getBoard(id);
+    let existingBoard: Board | undefined;
+    try {
+        existingBoard = await getBoard(id);
+    } catch {
+        return NextResponse.json({ error: 'Failed to delete board' }, { status: 500 });
+    }
 
     const isOwner = existingBoard && existingBoard.userId === userId;
     const isAdmin = existingBoard && !isOwner ? await checkIsAdmin() : false;

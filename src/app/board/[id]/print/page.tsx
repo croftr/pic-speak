@@ -10,7 +10,8 @@ interface PrintPageProps {
 
 export async function generateMetadata({ params }: PrintPageProps): Promise<Metadata> {
     const { id } = await params;
-    const board = await getBoard(id);
+    // Metadata is best-effort — a DB error here shouldn't fail the request
+    const board = await getBoard(id).catch(() => undefined);
 
     return {
         title: board ? `Print ${board.name} - My Voice Board` : 'Print Board - My Voice Board',

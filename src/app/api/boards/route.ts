@@ -12,12 +12,20 @@ export async function GET() {
         return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const boards = await getBoards(userId);
-    return NextResponse.json(boards, {
-        headers: {
-            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
-        }
-    });
+    try {
+        const boards = await getBoards(userId);
+        return NextResponse.json(boards, {
+            headers: {
+                'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
+            }
+        });
+    } catch (error) {
+        console.error('Error getting boards:', error);
+        return NextResponse.json(
+            { error: 'Failed to load boards' },
+            { status: 500 }
+        );
+    }
 }
 
 export async function POST(request: Request) {
