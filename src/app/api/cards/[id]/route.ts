@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCard, deleteCard, updateCard, getBoard, getCardLabels } from '@/lib/storage';
+import { getCard, deleteCard, updateCard, getBoard, getCardLabels, getBlobUrlsStillInUse } from '@/lib/storage';
 import { del } from '@vercel/blob';
 import { auth } from '@clerk/nextjs/server';
 import { checkIsAdmin } from '@/lib/admin';
@@ -162,14 +162,21 @@ export async function DELETE(
 
         await deleteCard(id);
 
-        // Clean up orphaned blobs in the background (don't block the response)
+        // Clean up orphaned blobs in the background (don't block the response).
+        // Copied/cloned cards share blob URLs, so only delete URLs no other
+        // card or board cover still references.
         const blobUrls: string[] = [];
         if (card.imageUrl?.includes('.blob.vercel-storage.com')) blobUrls.push(card.imageUrl);
         if (card.audioUrl?.includes('.blob.vercel-storage.com')) blobUrls.push(card.audioUrl);
         if (blobUrls.length > 0) {
-            del(blobUrls).catch(err => {
-                logger.error('Failed to clean up card blobs', err, { cardId: id, urls: blobUrls });
-            });
+            getBlobUrlsStillInUse(blobUrls)
+                .then(inUse => {
+                    const orphaned = blobUrls.filter(url => !inUse.has(url));
+                    return orphaned.length > 0 ? del(orphaned) : undefined;
+                })
+                .catch(err => {
+                    logger.error('Failed to clean up card blobs', err, { cardId: id, urls: blobUrls });
+                });
         }
 
         return new NextResponse(null, { status: 204 });

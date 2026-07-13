@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getBoard, updateBoard, deleteBoard, getBoardCardBlobUrls, isImageUrlUsedByAnyCard } from '@/lib/storage';
+import { getBoard, updateBoard, deleteBoard, getBoardCardBlobUrls, getBlobUrlsStillInUse } from '@/lib/storage';
 import type { Board } from '@/types';
 import { del } from '@vercel/blob';
 import { auth, clerkClient } from '@clerk/nextjs/server';
@@ -132,13 +132,14 @@ export async function PUT(
         await updateBoard(updatedBoard);
 
         // Clean up a replaced/cleared cover blob in the background — but only
-        // if no card still references it (the cover can be picked directly
-        // from a card's image, and cards can be copied across boards)
+        // if no card or other board's cover still references it (the cover can
+        // be picked directly from a card's image, and cards can be copied
+        // across boards)
         const oldCover = existingBoard.coverImageUrl;
         if (coverImageUrl !== undefined && oldCover && oldCover !== updatedBoard.coverImageUrl
             && oldCover.includes('.blob.vercel-storage.com')) {
-            isImageUrlUsedByAnyCard(oldCover)
-                .then(inUse => (inUse ? Promise.resolve() : del(oldCover)))
+            getBlobUrlsStillInUse([oldCover])
+                .then(inUse => (inUse.has(oldCover) ? Promise.resolve() : del(oldCover)))
                 .catch(err => {
                     logger.error('Failed to clean up replaced board cover blob', err, { boardId: id });
                 });
@@ -192,11 +193,18 @@ export async function DELETE(
 
         await deleteBoard(id);
 
-        // Clean up orphaned blobs in the background (don't block the response)
+        // Clean up orphaned blobs in the background (don't block the response).
+        // Cloned/merged/copied cards on other boards share these URLs — now that
+        // this board's cards are gone, only delete URLs nothing else references.
         if (uniqueBlobUrls.length > 0) {
-            del(uniqueBlobUrls).catch(err => {
-                logger.error('Failed to clean up board blobs', err, { boardId: id, urlCount: uniqueBlobUrls.length });
-            });
+            getBlobUrlsStillInUse(uniqueBlobUrls)
+                .then(inUse => {
+                    const orphaned = uniqueBlobUrls.filter(url => !inUse.has(url));
+                    return orphaned.length > 0 ? del(orphaned) : undefined;
+                })
+                .catch(err => {
+                    logger.error('Failed to clean up board blobs', err, { boardId: id, urlCount: uniqueBlobUrls.length });
+                });
         }
 
         return new NextResponse(null, { status: 204 });

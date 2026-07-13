@@ -859,22 +859,28 @@ export async function getBoardCardBlobUrls(boardId: string): Promise<string[]> {
 }
 
 /**
- * Check whether any card (in any board) still references an image URL.
- * Used before deleting a replaced board cover blob, since a cover can be
- * picked directly from a card's image. Returns true on error so callers
- * never delete a blob that might still be in use.
+ * Given a set of blob URLs, return the ones still referenced anywhere:
+ * any card's image or audio, or any board's cover. Cloning, merging and
+ * the card picker copy cards with the SAME blob URLs, so a URL owned by
+ * a deleted card/board may still be live elsewhere. On error, returns
+ * every URL so callers never delete a blob that might still be in use.
  */
-export async function isImageUrlUsedByAnyCard(url: string): Promise<boolean> {
+export async function getBlobUrlsStillInUse(urls: string[]): Promise<Set<string>> {
+    if (urls.length === 0) return new Set();
     const client = await getDbClient();
     try {
-        const result = await client.query(
-            'SELECT 1 FROM cards WHERE image_url = $1 LIMIT 1',
-            [url]
+        const result = await client.query<{ url: string }>(
+            `SELECT image_url AS url FROM cards WHERE image_url = ANY($1)
+             UNION
+             SELECT audio_url FROM cards WHERE audio_url = ANY($1)
+             UNION
+             SELECT cover_image_url FROM boards WHERE cover_image_url = ANY($1)`,
+            [urls]
         );
-        return result.rows.length > 0;
+        return new Set(result.rows.map(r => r.url));
     } catch (error) {
-        logger.error('Error checking card image URL usage', error, { url });
-        return true;
+        logger.error('Error checking blob URL usage', error, { urlCount: urls.length });
+        return new Set(urls);
     } finally {
         client.release();
     }
