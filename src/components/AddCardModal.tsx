@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { X, Check, Loader2, Mic, Upload, Music, Sparkles, Play, Pause, Camera, ChevronRight, ChevronLeft, Layers } from 'lucide-react';
+import { X, Check, Loader2, Mic, Upload, Music, Sparkles, Play, Pause, Camera, ChevronRight, ChevronLeft, Layers, ImageOff } from 'lucide-react';
 import AudioRecorder from './AudioRecorder';
 const ImageCropModal = dynamic(() => import('./ImageCropModal'), {
     loading: () => null
@@ -61,6 +61,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
     const [imageType, setImageType] = useState<'upload' | 'camera' | 'generate'>('upload');
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [imageError, setImageError] = useState(false);
     const [generationPrompt, setGenerationPrompt] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -208,6 +209,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
         setLabel('');
         setImageFile(null);
         setImagePreview(null);
+        setImageError(false);
         setGenerationPrompt('');
         setImageType('upload');
         setAudioBlob(null);
@@ -1120,7 +1122,7 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
 
                                             {/* Preview Area */}
                                             {(imagePreview || imageType === 'camera' || isGenerating) && (
-                                                <div className="relative w-full rounded-2xl overflow-hidden bg-gray-100 dark:bg-slate-800 border-2 border-gray-100 dark:border-slate-700 flex-1 min-h-[300px] flex flex-col">
+                                                <div className="relative w-full rounded-2xl overflow-hidden bg-gray-100 dark:bg-slate-800 border-2 border-gray-100 dark:border-slate-700 flex-1 min-h-[300px] flex flex-col items-center justify-center">
 
                                                     {imageType === 'camera' ? (
                                                         /* Camera View */
@@ -1161,21 +1163,36 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                                         </div>
                                                     ) : (
                                                         /* Image Preview */
-                                                        <div className="relative w-full h-full group">
-                                                            <img
-                                                                src={imagePreview || ''}
-                                                                alt="Card Preview"
-                                                                className="w-full h-full object-contain"
-                                                            />
-                                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                        <div className="relative w-full h-full flex-1 flex flex-col items-center justify-center group min-h-[300px]">
+                                                            {imageError ? (
+                                                                <div className="flex flex-col items-center justify-center p-6 text-center space-y-2 text-gray-500 dark:text-gray-400">
+                                                                    <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-slate-700 flex items-center justify-center text-gray-500 dark:text-gray-400 mb-1">
+                                                                        <ImageOff className="w-6 h-6" />
+                                                                    </div>
+                                                                    <p className="font-semibold text-gray-700 dark:text-gray-300 text-sm">Unable to load image preview</p>
+                                                                    <p className="text-xs text-gray-500 dark:text-gray-400">The image could not be retrieved</p>
+                                                                </div>
+                                                            ) : (
+                                                                <img
+                                                                    src={imagePreview || ''}
+                                                                    alt="Card Preview"
+                                                                    className="w-full h-full object-contain"
+                                                                    onError={() => setImageError(true)}
+                                                                />
+                                                            )}
+                                                            <div className={clsx(
+                                                                "absolute inset-0 transition-opacity flex items-center justify-center",
+                                                                imageError ? "bg-black/20 opacity-100" : "bg-black/40 opacity-0 group-hover:opacity-100"
+                                                            )}>
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => {
                                                                         setImagePreview(null);
                                                                         setImageType('upload');
                                                                         setHasCamera(true); // Re-check?
+                                                                        setImageError(false);
                                                                     }}
-                                                                    className="px-6 py-2 bg-white text-black rounded-full font-bold transform scale-95 group-hover:scale-100 transition-transform"
+                                                                    className="px-6 py-2 bg-white text-black rounded-full font-bold transform scale-95 group-hover:scale-100 transition-transform shadow-md hover:bg-gray-100"
                                                                 >
                                                                     Change Image
                                                                 </button>
