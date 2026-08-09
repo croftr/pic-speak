@@ -999,14 +999,29 @@ export async function getBoard(id: string, retryOnNotFound: boolean = false): Pr
 
     const starterBoard = STARTER_BOARDS.find(b => b.id === id);
     if (starterBoard) {
-        return starterBoard;
+        const firstCard = STARTER_CARDS[id]?.[0];
+        let fallbackCoverImageUrl = undefined;
+        if (firstCard) {
+            fallbackCoverImageUrl = resolveFirstCardImage(firstCard.imageUrl, firstCard.templateKey);
+        }
+        return { ...starterBoard, fallbackCoverImageUrl };
     }
 
     const client = await getDbClient();
     try {
         const queryStart = Date.now();
-        let result = await client.query<BoardRow>(
-            'SELECT * FROM boards WHERE id = $1 LIMIT 1',
+        let result = await client.query<BoardRow & { first_card_image_url?: string; first_card_template_key?: string }>(
+            `SELECT b.*,
+                    fc.image_url as first_card_image_url,
+                    fc.template_key as first_card_template_key
+             FROM boards b
+             LEFT JOIN LATERAL (
+                 SELECT image_url, template_key FROM cards
+                 WHERE board_id = b.id
+                 ORDER BY "order" ASC, created_at ASC
+                 LIMIT 1
+             ) fc ON true
+             WHERE b.id = $1 LIMIT 1`,
             [id]
         );
         let queryTime = Date.now() - queryStart;
@@ -1018,8 +1033,18 @@ export async function getBoard(id: string, retryOnNotFound: boolean = false): Pr
             await new Promise(resolve => setTimeout(resolve, 500));
 
             const retryStart = Date.now();
-            result = await client.query<BoardRow>(
-                'SELECT * FROM boards WHERE id = $1 LIMIT 1',
+            result = await client.query<BoardRow & { first_card_image_url?: string; first_card_template_key?: string }>(
+                `SELECT b.*,
+                        fc.image_url as first_card_image_url,
+                        fc.template_key as first_card_template_key
+                 FROM boards b
+                 LEFT JOIN LATERAL (
+                     SELECT image_url, template_key FROM cards
+                     WHERE board_id = b.id
+                     ORDER BY "order" ASC, created_at ASC
+                     LIMIT 1
+                 ) fc ON true
+                 WHERE b.id = $1 LIMIT 1`,
                 [id]
             );
             queryTime += Date.now() - retryStart;
@@ -1052,7 +1077,8 @@ export async function getBoard(id: string, retryOnNotFound: boolean = false): Pr
             creatorImageUrl: row.creator_image_url,
             ownerEmail: row.owner_email,
             emailNotificationsEnabled: row.email_notifications_enabled ?? true,
-            coverImageUrl: row.cover_image_url || undefined
+            coverImageUrl: row.cover_image_url || undefined,
+            fallbackCoverImageUrl: resolveFirstCardImage(row.first_card_image_url, row.first_card_template_key)
         };
     } catch (error) {
         // Throw rather than return undefined — callers treat undefined as

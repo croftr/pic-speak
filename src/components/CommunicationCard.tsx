@@ -1,7 +1,8 @@
 'use client';
 
 import { Card } from '@/types';
-import { useState, useRef, useEffect } from 'react';
+/* eslint-disable @next/next/no-img-element */
+import React, { useState, useRef, useEffect } from 'react';
 import { Volume2, Image as ImageIcon } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Trash2, Pencil, GripVertical, Copy, Sparkles, MoreVertical, Link } from 'lucide-react';
@@ -39,6 +40,7 @@ export default function CommunicationCard({ card, isEditing, onDelete, onEdit, o
     }, [card.audioUrl]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting error state when media changes is safe here
         setHasImageError(false);
     }, [card.imageUrl]);
 

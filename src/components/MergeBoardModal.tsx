@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+/* eslint-disable @next/next/no-img-element */
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { X, Loader2, Search, ChevronLeft, Check, Globe, User, AlertTriangle, CheckSquare, Square, Minus } from 'lucide-react';
 import { Card, Board } from '@/types';
 import { toast } from 'sonner';
@@ -38,25 +39,7 @@ export default function MergeBoardModal({ isOpen, onClose, onMergeComplete, boar
         return new Set(existingCards.map(c => c.label.trim().toLowerCase()));
     }, [existingCards]);
 
-    useEffect(() => {
-        if (isOpen) {
-            // eslint-disable-next-line react-hooks/immutability -- loadBoards is defined below; only invoked after mount
-            loadBoards();
-        } else {
-            // Reset all state when modal closes
-            /* eslint-disable react-hooks/set-state-in-effect -- intentional state reset when the modal closes */
-            setPhase('pick-board');
-            setBoardSource('mine');
-            setSelectedBoard(null);
-            setSourceCards([]);
-            setSelectedCardIds(new Set());
-            setConflictCardIds(new Set());
-            setSearchQuery('');
-            /* eslint-enable react-hooks/set-state-in-effect */
-        }
-    }, [isOpen]);
-
-    const loadBoards = async () => {
+    const loadBoards = useCallback(async () => {
         setIsLoadingBoards(true);
         try {
             const [myRes, publicRes] = await Promise.all([
@@ -78,7 +61,26 @@ export default function MergeBoardModal({ isOpen, onClose, onMergeComplete, boar
         } finally {
             setIsLoadingBoards(false);
         }
-    };
+    }, [boardId]);
+
+    useEffect(() => {
+        if (isOpen) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- loadBoards needs to set loading state
+            loadBoards();
+        } else {
+            // Reset all state when modal closes
+            /* eslint-disable react-hooks/set-state-in-effect -- intentional state reset when the modal closes */
+            setPhase('pick-board');
+            setBoardSource('mine');
+            setSelectedBoard(null);
+            setSourceCards([]);
+            setSelectedCardIds(new Set());
+            setConflictCardIds(new Set());
+            setSearchQuery('');
+            /* eslint-enable react-hooks/set-state-in-effect */
+        }
+    }, [isOpen, loadBoards]);
+
 
     const handleSelectBoard = async (board: Board) => {
         setSelectedBoard(board);

@@ -146,7 +146,7 @@ export async function PUT(
         }
 
         return NextResponse.json(updatedBoard);
-    } catch (error) {
+    } catch {
         return NextResponse.json(
             { error: 'Failed to update board' },
             { status: 500 }
@@ -208,7 +208,7 @@ export async function DELETE(
         }
 
         return new NextResponse(null, { status: 204 });
-    } catch (error) {
+    } catch {
         return NextResponse.json(
             { error: 'Failed to delete board' },
             { status: 500 }

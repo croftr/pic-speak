@@ -1,6 +1,8 @@
+/* eslint-disable jsx-a11y/alt-text */
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import CommunicationCard from '@/components/CommunicationCard';
 import { Card } from '@/types';
 import { useSwipeRef } from '@/hooks/useSwipe';

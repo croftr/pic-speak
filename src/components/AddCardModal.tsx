@@ -1,5 +1,6 @@
 'use client';
 
+/* eslint-disable @next/next/no-img-element */
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { X, Check, Loader2, Mic, Upload, Music, Sparkles, Play, Pause, Camera, ChevronRight, ChevronLeft, Layers, ImageOff } from 'lucide-react';
@@ -915,7 +916,6 @@ export default function AddCardModal({ isOpen, onClose, onCardAdded, onCardUpdat
                                             <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                                                 {batchItems.map((item, idx) => (
                                                     <div key={item.preview} className="flex items-center gap-3 p-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800">
-                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
                                                         <img
                                                             src={item.preview}
                                                             alt=""

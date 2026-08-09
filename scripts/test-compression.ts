@@ -5,8 +5,7 @@
  */
 
 import sharp from 'sharp';
-import fs from 'fs/promises';
-import path from 'path';
+
 
 const MAX_IMAGE_WIDTH = 800;
 const MAX_IMAGE_HEIGHT = 800;

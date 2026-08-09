@@ -22,6 +22,7 @@ export async function generateMetadata({ params }: BoardPageProps): Promise<Meta
 
     const title = `${board.name} - My Voice Board`;
     const description = board.description || `${board.name} - a communication board on My Voice Board`;
+    const ogImage = board.coverImageUrl || board.fallbackCoverImageUrl;
 
     return {
         title,
@@ -32,7 +33,14 @@ export async function generateMetadata({ params }: BoardPageProps): Promise<Meta
         openGraph: {
             title: board.name,
             description,
+            ...(ogImage ? { images: [ogImage] } : {}),
         },
+        twitter: {
+            card: 'summary_large_image',
+            title: board.name,
+            description,
+            ...(ogImage ? { images: [ogImage] } : {}),
+        }
     };
 }
 

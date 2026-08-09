@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+/* eslint-disable @next/next/no-img-element */
+import React, { useState, useEffect, useCallback } from 'react';
 import { X, Copy, ArrowRight, Loader2 } from 'lucide-react';
 import { Card, Board } from '@/types';
 import { toast } from 'sonner';
@@ -22,22 +23,7 @@ export default function MoveCopyCardModal({ isOpen, onClose, onSuccess, card, cu
     const [isLoading, setIsLoading] = useState(false);
     const [isLoadingBoards, setIsLoadingBoards] = useState(true);
 
-    useEffect(() => {
-        if (isOpen) {
-            // eslint-disable-next-line react-hooks/immutability -- loadBoards is defined below; only invoked after mount
-            loadBoards();
-        }
-    }, [isOpen]);
-
-    // Auto-select if only one board available
-    useEffect(() => {
-        if (boards.length === 1 && !selectedBoardId) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect -- auto-select the only available board
-            setSelectedBoardId(boards[0].id);
-        }
-    }, [boards, selectedBoardId]);
-
-    const loadBoards = async () => {
+    const loadBoards = useCallback(async () => {
         setIsLoadingBoards(true);
         try {
             const boardsRes = await fetch('/api/boards');
@@ -53,7 +39,23 @@ export default function MoveCopyCardModal({ isOpen, onClose, onSuccess, card, cu
         } finally {
             setIsLoadingBoards(false);
         }
-    };
+    }, [currentBoardId]);
+
+    useEffect(() => {
+        if (isOpen) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- loadBoards needs to set loading state
+            loadBoards();
+        }
+    }, [isOpen, loadBoards]);
+
+    // Auto-select if only one board available
+    useEffect(() => {
+        if (boards.length === 1 && !selectedBoardId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- auto-select the only available board
+            setSelectedBoardId(boards[0].id);
+        }
+    }, [boards, selectedBoardId]);
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
