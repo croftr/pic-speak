@@ -19,6 +19,28 @@ export const metadata: Metadata = {
 export default function StrokeRecoveryPage() {
   return (
     <main className="min-h-screen">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "MedicalWebPage",
+            "name": "Stroke & Aphasia Communication App | My Voice Board",
+            "description": "A free, dignified AAC app for stroke survivors and adults with aphasia. Custom boards from your own photos and familiar voices.",
+            "url": "https://www.myvoiceboard.com/use-cases/stroke-recovery",
+            "about": [
+              {
+                "@type": "MedicalCondition",
+                "name": "Stroke"
+              },
+              {
+                "@type": "MedicalCondition",
+                "name": "Aphasia"
+              }
+            ]
+          })
+        }}
+      />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden px-4 sm:px-6 pt-12 pb-14 sm:pt-20 sm:pb-20">

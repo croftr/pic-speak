@@ -94,6 +94,25 @@ export default function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} antialiased`}
         >
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "SoftwareApplication",
+                "name": "My Voice Board",
+                "applicationCategory": "HealthApplication",
+                "operatingSystem": "Web",
+                "offers": {
+                  "@type": "Offer",
+                  "price": "0",
+                  "priceCurrency": "USD"
+                },
+                "description": "Create personalized communication boards for non-verbal children and adults. An intuitive AAC app ideal for autism, PECS alternatives, stroke recovery, and aphasia.",
+                "url": "https://www.myvoiceboard.com"
+              })
+            }}
+          />
           <SettingsProvider>
             <LockModeProvider>
               <GlobalHeader />

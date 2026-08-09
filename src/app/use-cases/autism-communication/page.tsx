@@ -19,6 +19,28 @@ export const metadata: Metadata = {
 export default function AutismCommunicationPage() {
   return (
     <main className="min-h-screen">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "MedicalWebPage",
+            "name": "Digital PECS Alternative | Autism AAC Communication App",
+            "description": "A modern, digital alternative to PECS for autistic children. Create customized communication boards with familiar photos and voices to encourage language development.",
+            "url": "https://www.myvoiceboard.com/use-cases/autism-communication",
+            "about": [
+              {
+                "@type": "MedicalCondition",
+                "name": "Autism"
+              },
+              {
+                "@type": "MedicalCondition",
+                "name": "Autism Spectrum Disorder"
+              }
+            ]
+          })
+        }}
+      />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden px-4 sm:px-6 pt-12 pb-14 sm:pt-20 sm:pb-20">
