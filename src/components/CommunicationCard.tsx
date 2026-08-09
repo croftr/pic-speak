@@ -2,7 +2,7 @@
 
 import { Card } from '@/types';
 import { useState, useRef, useEffect } from 'react';
-import { Volume2 } from 'lucide-react';
+import { Volume2, Image as ImageIcon } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Trash2, Pencil, GripVertical, Copy, Sparkles, MoreVertical, Link } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
@@ -26,9 +26,10 @@ export default function CommunicationCard({ card, isEditing, onDelete, onEdit, o
     const [volume] = useState(1.0); // 0.0 to 1.0
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [hasImageError, setHasImageError] = useState(false);
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
-    // Reset audio ref when audioUrl changes (e.g. after editing card)
+    // Reset audio ref and image error when card media changes
     useEffect(() => {
         if (audioRef.current) {
             audioRef.current.pause();
@@ -36,6 +37,10 @@ export default function CommunicationCard({ card, isEditing, onDelete, onEdit, o
             setIsPlaying(false);
         }
     }, [card.audioUrl]);
+
+    useEffect(() => {
+        setHasImageError(false);
+    }, [card.imageUrl]);
 
     // Template cards and cards inherited from public boards cannot be edited
     const isTemplateCard = !!card.templateKey;
@@ -57,24 +62,54 @@ export default function CommunicationCard({ card, isEditing, onDelete, onEdit, o
         opacity: isDragging ? 0.5 : 1,
     };
 
+    const speakWithFallback = (text: string) => {
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window && text) {
+            try {
+                const utterance = new SpeechSynthesisUtterance(text);
+                setIsPlaying(true);
+                utterance.onend = () => setIsPlaying(false);
+                utterance.onerror = () => setIsPlaying(false);
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(utterance);
+            } catch {
+                setIsPlaying(false);
+            }
+        } else {
+            setIsPlaying(false);
+        }
+    };
+
     const handlePlay = () => {
         onActivate?.(card);
 
-        if (!card.audioUrl) return;
+        if (!card.audioUrl) {
+            if (card.label) {
+                speakWithFallback(card.label);
+            }
+            return;
+        }
 
         if (audioRef.current) {
             audioRef.current.pause();
             audioRef.current.currentTime = 0;
+            if (audioRef.current.src !== card.audioUrl) {
+                audioRef.current.src = card.audioUrl;
+            }
         } else {
             audioRef.current = new Audio(card.audioUrl);
             audioRef.current.volume = volume;
-            audioRef.current.onended = () => setIsPlaying(false);
         }
+
+        audioRef.current.onended = () => setIsPlaying(false);
+        audioRef.current.onerror = () => {
+            console.warn(`Audio loading error for "${card.label}" (${card.audioUrl}), falling back to Web Speech API.`);
+            speakWithFallback(card.label);
+        };
 
         setIsPlaying(true);
         audioRef.current.play().catch(err => {
-            console.error("Audio playback failed", err);
-            setIsPlaying(false);
+            console.warn(`Audio playback error for "${card.label}" (${card.audioUrl}), falling back to Web Speech API:`, err);
+            speakWithFallback(card.label);
         });
     };
 
@@ -207,8 +242,14 @@ export default function CommunicationCard({ card, isEditing, onDelete, onEdit, o
                 <div className="relative flex-1 w-full overflow-hidden rounded-xl sm:rounded-2xl bg-gray-50 dark:bg-gray-700 pointer-events-none">
                     {/* Helper layout for centering image */}
                     <div className="absolute inset-0 flex items-center justify-center">
-                        {/* Use Next.js Image for uploaded images (http/https), fallback to img for blob URLs */}
-                        {card.imageUrl.startsWith('http') ? (
+                        {hasImageError || !card.imageUrl ? (
+                            <div className="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 p-2">
+                                <ImageIcon className="w-10 h-10 mb-1 opacity-50" />
+                                <span className="text-xs font-bold text-center truncate max-w-full">
+                                    {card.label ? card.label.slice(0, 2).toUpperCase() : '?'}
+                                </span>
+                            </div>
+                        ) : card.imageUrl.startsWith('http') ? (
                             <Image
                                 src={card.imageUrl}
                                 alt={card.label}
@@ -216,6 +257,7 @@ export default function CommunicationCard({ card, isEditing, onDelete, onEdit, o
                                 sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
                                 className="object-contain transition-transform duration-500 group-hover:scale-110"
                                 priority={false}
+                                onError={() => setHasImageError(true)}
                             />
                         ) : (
                             <img
@@ -223,6 +265,7 @@ export default function CommunicationCard({ card, isEditing, onDelete, onEdit, o
                                 alt={card.label}
                                 loading="lazy"
                                 className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
+                                onError={() => setHasImageError(true)}
                             />
                         )}
                     </div>

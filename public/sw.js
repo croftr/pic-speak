@@ -120,17 +120,21 @@ async function rangeRequest(request) {
     // ignoreVary: the preload fetch (cors) and the audio element (no-cors)
     // present different headers; both must hit the same cached entry.
     const cached = await caches.match(request.url, { ignoreVary: true });
-    if (cached && cached.status === 200) {
+    if (cached && (cached.ok || cached.status === 200)) {
         return sliceResponse(cached, request.headers.get('range'));
     }
 
     try {
         const full = await fetch(request.url, { mode: 'cors' });
-        if (full.status === 200) {
+        if (full.ok || full.status === 200) {
             const cache = await caches.open(MEDIA_CACHE);
             cache.put(request.url, full.clone());
             trimCache(MEDIA_CACHE, MEDIA_MAX_ENTRIES);
             return sliceResponse(full, request.headers.get('range'));
+        }
+        if (full.status === 404 && cached) {
+            const cache = await caches.open(MEDIA_CACHE);
+            cache.delete(request.url);
         }
         return full;
     } catch {
@@ -142,7 +146,7 @@ async function rangeRequest(request) {
 /** Cache-first for immutable content (blob media, hashed build assets). */
 async function cacheFirst(request, cacheName, maxEntries) {
     const cached = await caches.match(request);
-    if (cached) return cached;
+    if (cached && (cached.ok || cached.status === 200)) return cached;
 
     // Blob media is requested no-cors by <img>/<audio>, which yields opaque
     // responses that inflate storage quota. Vercel Blob supports CORS, so
@@ -154,10 +158,13 @@ async function cacheFirst(request, cacheName, maxEntries) {
         response = await fetch(request);
     }
 
-    if (response.ok || response.type === 'opaque') {
+    if (response.ok || response.status === 200 || response.type === 'opaque') {
         const cache = await caches.open(cacheName);
         cache.put(request, response.clone());
         if (maxEntries) trimCache(cacheName, maxEntries);
+    } else if (response.status === 404 && cached) {
+        const cache = await caches.open(cacheName);
+        cache.delete(request);
     }
     return response;
 }

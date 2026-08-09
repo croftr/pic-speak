@@ -37,7 +37,11 @@ export function useAudioPreload(cards: Card[]) {
                 if (!url) return;
                 preloadedRef.current.add(url);
                 try {
-                    await fetch(url, { mode: 'cors' });
+                    const res = await fetch(url, { mode: 'cors' });
+                    if (!res.ok) {
+                        console.warn(`[useAudioPreload] Preload status ${res.status} for ${url}`);
+                        preloadedRef.current.delete(url);
+                    }
                 } catch {
                     // Offline or transient failure — allow a retry on next mount.
                     preloadedRef.current.delete(url);
