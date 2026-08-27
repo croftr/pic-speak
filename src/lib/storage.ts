@@ -978,6 +978,56 @@ export async function getBoards(userId: string): Promise<Board[]> {
     }
 }
 
+export async function getAllBoardsAdmin(): Promise<Board[]> {
+    const client = await getDbClient();
+    try {
+        const result = await client.query<BoardRow & { card_count: string; first_card_image_url?: string; first_card_template_key?: string; like_count: string; comment_count: string }>(
+            `SELECT b.*,
+                    COUNT(DISTINCT c.id) as card_count,
+                    COUNT(DISTINCT bl.id) as like_count,
+                    COUNT(DISTINCT bc.id) as comment_count,
+                    fc.image_url as first_card_image_url,
+                    fc.template_key as first_card_template_key
+             FROM boards b
+             LEFT JOIN cards c ON c.board_id = b.id
+             LEFT JOIN board_likes bl ON bl.board_id = b.id
+             LEFT JOIN board_comments bc ON bc.board_id = b.id
+             LEFT JOIN LATERAL (
+                 SELECT image_url, template_key FROM cards
+                 WHERE board_id = b.id
+                 ORDER BY "order" ASC, created_at ASC
+                 LIMIT 1
+             ) fc ON true
+             GROUP BY b.id, fc.image_url, fc.template_key
+             ORDER BY b.created_at DESC`
+        );
+
+        return result.rows.map(row => ({
+            id: row.id,
+            userId: row.user_id,
+            name: row.name,
+            description: row.description,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at,
+            isPublic: row.is_public || false,
+            creatorName: row.creator_name,
+            creatorImageUrl: row.creator_image_url,
+            ownerEmail: row.owner_email,
+            emailNotificationsEnabled: row.email_notifications_enabled ?? true,
+            coverImageUrl: row.cover_image_url || undefined,
+            fallbackCoverImageUrl: resolveFirstCardImage(row.first_card_image_url, row.first_card_template_key),
+            cardCount: parseInt(row.card_count || '0'),
+            likeCount: parseInt(row.like_count || '0'),
+            commentCount: parseInt(row.comment_count || '0')
+        }));
+    } catch (error) {
+        logger.error('Error getting all boards for admin', error);
+        throw error;
+    } finally {
+        client.release();
+    }
+}
+
 export async function addBoard(board: Board): Promise<void> {
     const client = await getDbClient();
     try {

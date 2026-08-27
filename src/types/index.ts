@@ -28,6 +28,7 @@ export interface Board {
   name: string;
   description?: string;
   createdAt: string;
+  updatedAt?: string;
   isPublic?: boolean;
   creatorName?: string;
   creatorImageUrl?: string;
