@@ -54,3 +54,6 @@ next-env.d.ts
 
 .vercel
 .env*.local
+
+# promo video raw production assets
+/promo-video/

@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { Heart, Shield, Smartphone, Smile, Mic, Grid, Lock, Globe, Users, ArrowRight, Gift, Play } from 'lucide-react';
 import type { Metadata } from 'next';
 import ExploreMoreLinks from '@/components/marketing/ExploreMoreLinks';
+import PromoVideoPlayer from '@/components/marketing/PromoVideoPlayer';
 
 export const metadata: Metadata = {
     title: 'About - My Voice Board | Custom Communication Boards',
@@ -94,6 +95,23 @@ export default function AboutPage() {
                             </p>
                         </div>
                     </div>
+                </div>
+
+                {/* Video Tour Section */}
+                <div className="space-y-6">
+                    <div className="text-center">
+                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 font-semibold text-xs uppercase tracking-wider mb-2">
+                            <span>Video Tour</span>
+                        </div>
+                        <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
+                            See It in Action
+                        </h2>
+                        <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-xl mx-auto">
+                            A 90-second tour showing how custom photos, familiar voices, and simple picture boards give non-verbal communicators a voice.
+                        </p>
+                    </div>
+
+                    <PromoVideoPlayer />
                 </div>
 
                 {/* How It Works */}

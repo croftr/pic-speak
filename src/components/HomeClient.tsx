@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { SignedOut, SignInButton, useAuth, useUser } from '@clerk/nextjs';
 import { Globe, Grid, LogIn, Play, Camera, Mic, Hand } from 'lucide-react';
 import { useOfflineAuth } from '@/hooks/useOfflineAuth';
 import { clsx } from 'clsx';
 import Image from 'next/image';
+import PromoVideoModal from '@/components/marketing/PromoVideoModal';
 
 // NavCard Component for consistent, big, friendly buttons
 interface NavCardProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -84,6 +86,7 @@ function Step({ icon, text }: { icon: React.ReactNode; text: string }) {
 }
 
 export default function HomeClient({ initialSignedIn }: { initialSignedIn: boolean }) {
+  const [isPromoOpen, setIsPromoOpen] = useState(false);
   const { isLoaded } = useAuth();
   // Offline-aware: keeps "My Boards" reachable with no connection, when
   // Clerk can't confirm the session but the user's boards are cached.
@@ -111,6 +114,16 @@ export default function HomeClient({ initialSignedIn }: { initialSignedIn: boole
             <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 font-medium max-w-md mx-auto">
               Pick a board and start talking.
             </p>
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={() => setIsPromoOpen(true)}
+                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors"
+              >
+                <Play size={12} className="fill-current" />
+                <span>Watch 90-sec tour</span>
+              </button>
+            </div>
           </div>
         ) : (
           <div className="text-center space-y-4 animate-in slide-in-from-top-10 duration-700">
@@ -128,6 +141,18 @@ export default function HomeClient({ initialSignedIn }: { initialSignedIn: boole
               <Step icon={<Camera className="w-4 h-4 text-violet-500" />} text="Add your photos" />
               <Step icon={<Mic className="w-4 h-4 text-rose-500" />} text="Record your voice" />
               <Step icon={<Hand className="w-4 h-4 text-teal-500" />} text="Tap to talk" />
+            </div>
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => setIsPromoOpen(true)}
+                className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-violet-600 hover:bg-violet-700 text-white font-bold text-sm shadow-md shadow-violet-600/25 hover:shadow-violet-600/40 hover:-translate-y-0.5 active:translate-y-0 transition-all touch-manipulation group"
+              >
+                <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Play size={11} className="fill-white text-white ml-0.5" />
+                </div>
+                <span>Watch 90-sec Tour</span>
+              </button>
             </div>
           </div>
         )}
@@ -255,6 +280,8 @@ export default function HomeClient({ initialSignedIn }: { initialSignedIn: boole
         </div>
 
       </div>
+
+      <PromoVideoModal isOpen={isPromoOpen} onClose={() => setIsPromoOpen(false)} />
     </main>
   );
 }
