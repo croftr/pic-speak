@@ -3,6 +3,7 @@ import { isAdmin } from '@/lib/admin';
 import { getAppSettings, getAllBoardsAdmin } from '@/lib/storage';
 import AdminClient from './AdminClient';
 import { clerkClient } from '@clerk/nextjs/server';
+import { AdminUserSummary } from '@/types';
 
 export default async function AdminPage() {
     const admin = await isAdmin();
@@ -12,19 +13,31 @@ export default async function AdminPage() {
 
     const settings = await getAppSettings();
     let boards = await getAllBoardsAdmin();
+    const clerkUsersSummary: AdminUserSummary[] = [];
+    let totalClerkUsers = 0;
 
     try {
         // Fetch users from Clerk to guarantee we have their emails and names,
-        // even if they only have private boards which lack this data in the DB.
+        // even if they only have private boards or haven't created a board yet.
         const client = await clerkClient();
-        const userListResponse = await client.users.getUserList();
+        const userListResponse = await client.users.getUserList({
+            limit: 500,
+            orderBy: '-created_at',
+        });
         const clerkUsers = userListResponse.data;
+        totalClerkUsers = userListResponse.totalCount ?? clerkUsers.length;
 
-        const userMap = new Map();
+        const userMap = new Map<string, { email: string | null; name: string | null }>();
         clerkUsers.forEach(u => {
-            userMap.set(u.id, {
-                email: u.emailAddresses[0]?.emailAddress || null,
-                name: [u.firstName, u.lastName].filter(Boolean).join(' ') || null
+            const email = u.emailAddresses[0]?.emailAddress || null;
+            const name = [u.firstName, u.lastName].filter(Boolean).join(' ') || u.username || null;
+            userMap.set(u.id, { email, name });
+            clerkUsersSummary.push({
+                id: u.id,
+                name: name || 'Unnamed User',
+                email: email || 'No Email',
+                createdAt: u.createdAt ? new Date(u.createdAt).toISOString() : undefined,
+                lastSignInAt: u.lastSignInAt ? new Date(u.lastSignInAt).toISOString() : undefined,
             });
         });
 
@@ -44,5 +57,12 @@ export default async function AdminPage() {
         console.error('Failed to sync users from Clerk in Admin:', error);
     }
 
-    return <AdminClient initialSettings={settings} boards={boards} />;
+    return (
+        <AdminClient
+            initialSettings={settings}
+            boards={boards}
+            clerkUsers={clerkUsersSummary}
+            totalClerkUsers={totalClerkUsers}
+        />
+    );
 }

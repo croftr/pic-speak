@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Settings, Save, Loader2, Shield, LayoutGrid, Users, Lock, Globe, Image as ImageIcon, Heart, MessageSquare, Calendar } from 'lucide-react';
+import { Settings, Save, Loader2, Shield, LayoutGrid, Users, Lock, Globe, Image as ImageIcon, Heart, MessageSquare, Calendar, TrendingUp, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
-import { Board } from '@/types';
+import { Board, AdminUserSummary } from '@/types';
 
 interface SettingConfig {
     key: string;
@@ -36,10 +36,18 @@ const SETTINGS_CONFIG: SettingConfig[] = [
 interface AdminClientProps {
     initialSettings: Record<string, string>;
     boards: Board[];
+    clerkUsers?: AdminUserSummary[];
+    totalClerkUsers?: number;
 }
 
-export default function AdminClient({ initialSettings, boards }: AdminClientProps) {
+export default function AdminClient({
+    initialSettings,
+    boards,
+    clerkUsers = [],
+    totalClerkUsers = 0,
+}: AdminClientProps) {
     const [activeTab, setActiveTab] = useState<'boards' | 'settings'>('boards');
+    const [userFilter, setUserFilter] = useState<'with-boards' | 'zero-boards' | 'all'>('with-boards');
     const [settings, setSettings] = useState<Record<string, string>>(initialSettings);
     const [saving, setSaving] = useState<string | null>(null);
 
@@ -86,6 +94,7 @@ export default function AdminClient({ initialSettings, boards }: AdminClientProp
                     ownerEmail: board.ownerEmail || 'No Email',
                     boards: [],
                     totalCards: 0,
+                    customCards: 0,
                 };
             } else {
                 if (board.ownerEmail && acc[userKey].ownerEmail === 'No Email') {
@@ -97,12 +106,39 @@ export default function AdminClient({ initialSettings, boards }: AdminClientProp
             }
             acc[userKey].boards.push(board);
             acc[userKey].totalCards += (board.cardCount || 0);
+            acc[userKey].customCards += (board.customCardCount || 0);
             return acc;
-        }, {} as Record<string, { creatorName: string; ownerEmail: string; boards: Board[]; totalCards: number }>);
+        }, {} as Record<string, { creatorName: string; ownerEmail: string; boards: Board[]; totalCards: number; customCards: number }>);
         return Object.entries(grouped);
     }, [boards]);
 
-    const totalUsers = boardsByUser.length;
+    // Real user groups (excluding system starter templates)
+    const nonSystemUserGroups = useMemo(
+        () => boardsByUser.filter(([userId]) => userId !== 'system'),
+        [boardsByUser]
+    );
+
+    const userIdsWithBoards = useMemo(
+        () => new Set(nonSystemUserGroups.map(([userId]) => userId)),
+        [nonSystemUserGroups]
+    );
+
+    const zeroBoardUsers = useMemo(
+        () => clerkUsers.filter(u => !userIdsWithBoards.has(u.id)),
+        [clerkUsers, userIdsWithBoards]
+    );
+
+    const totalSignedUpUsers = Math.max(totalClerkUsers, clerkUsers.length, nonSystemUserGroups.length);
+    const usersWithBoardsCount = nonSystemUserGroups.length;
+    const usersWithCardsCount = nonSystemUserGroups.filter(([, g]) => g.totalCards > 0).length;
+    const usersWithCustomCardsCount = nonSystemUserGroups.filter(([, g]) => g.customCards > 0).length;
+    const usersWithEmptyBoardsOnly = usersWithBoardsCount - usersWithCardsCount;
+    const usersWithZeroBoardsCount = Math.max(0, totalSignedUpUsers - usersWithBoardsCount);
+
+    const pct = (num: number, den: number) =>
+        den > 0 ? Math.round((num / den) * 100) : 0;
+
+    const totalUsers = totalSignedUpUsers;
     const totalBoards = boards.length;
     const totalCards = boards.reduce((sum, b) => sum + (b.cardCount || 0), 0);
     const publicBoards = boards.filter(b => b.isPublic).length;
@@ -190,7 +226,7 @@ export default function AdminClient({ initialSettings, boards }: AdminClientProp
                         {/* Summary Cards */}
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                             <div className="rounded-xl border border-muted bg-card p-4 flex flex-col">
-                                <span className="text-sm font-medium text-muted-foreground mb-1">Total Users</span>
+                                <span className="text-sm font-medium text-muted-foreground mb-1">Signed-Up Users</span>
                                 <span className="text-2xl font-bold text-foreground">{totalUsers}</span>
                             </div>
                             <div className="rounded-xl border border-muted bg-card p-4 flex flex-col">
@@ -207,29 +243,132 @@ export default function AdminClient({ initialSettings, boards }: AdminClientProp
                             </div>
                         </div>
 
+                        {/* Activation Funnel */}
+                        <div
+                            data-testid="admin-activation-funnel"
+                            className="rounded-xl border border-muted bg-card p-5 sm:p-6 space-y-5"
+                        >
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div>
+                                    <h2 className="text-base sm:text-lg font-semibold text-foreground flex items-center gap-2">
+                                        <TrendingUp className="w-5 h-5 text-primary" />
+                                        User Activation Funnel
+                                    </h2>
+                                    <p className="text-xs text-muted-foreground mt-0.5">
+                                        Tracks how many signed-up accounts create a board, populate cards, and upload their own custom cards.
+                                    </p>
+                                </div>
+                                {usersWithZeroBoardsCount > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setUserFilter('zero-boards')}
+                                        className="self-start sm:self-center text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-colors cursor-pointer"
+                                    >
+                                        {usersWithZeroBoardsCount} signed up with 0 boards →
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 sm:gap-4">
+                                <FunnelStep
+                                    step="1. Signed Up"
+                                    count={totalSignedUpUsers}
+                                    percent={100}
+                                    subtitle={`${usersWithZeroBoardsCount} with 0 boards`}
+                                    barClass="bg-slate-500"
+                                />
+                                <FunnelStep
+                                    step="2. Created a Board"
+                                    count={usersWithBoardsCount}
+                                    percent={pct(usersWithBoardsCount, totalSignedUpUsers)}
+                                    subtitle={
+                                        usersWithEmptyBoardsOnly > 0
+                                            ? `${usersWithEmptyBoardsOnly} with empty board only`
+                                            : 'All have ≥ 1 board'
+                                    }
+                                    barClass="bg-sky-500"
+                                />
+                                <FunnelStep
+                                    step="3. Board Has Cards"
+                                    count={usersWithCardsCount}
+                                    percent={pct(usersWithCardsCount, totalSignedUpUsers)}
+                                    subtitle={`${pct(usersWithCardsCount, usersWithBoardsCount)}% of board creators`}
+                                    barClass="bg-violet-500"
+                                />
+                                <FunnelStep
+                                    step="4. Custom Cards Added"
+                                    count={usersWithCustomCardsCount}
+                                    percent={pct(usersWithCustomCardsCount, totalSignedUpUsers)}
+                                    subtitle="Own photo / voice uploaded"
+                                    barClass="bg-emerald-500"
+                                />
+                            </div>
+                        </div>
+
                         {/* List of Users & Boards */}
                         <div className="space-y-6">
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                 <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
                                     <Users className="w-5 h-5 text-muted-foreground" />
                                     User Content Overview
                                 </h2>
+                                <div className="inline-flex items-center rounded-lg border border-muted bg-muted/30 p-1 text-xs font-medium self-start sm:self-auto">
+                                    <button
+                                        type="button"
+                                        onClick={() => setUserFilter('with-boards')}
+                                        className={`px-3 py-1.5 rounded-md transition-colors cursor-pointer ${
+                                            userFilter === 'with-boards'
+                                                ? 'bg-background text-foreground shadow-sm font-semibold'
+                                                : 'text-muted-foreground hover:text-foreground'
+                                        }`}
+                                    >
+                                        With Boards ({boardsByUser.length})
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setUserFilter('zero-boards')}
+                                        className={`px-3 py-1.5 rounded-md transition-colors cursor-pointer ${
+                                            userFilter === 'zero-boards'
+                                                ? 'bg-background text-foreground shadow-sm font-semibold'
+                                                : 'text-muted-foreground hover:text-foreground'
+                                        }`}
+                                    >
+                                        0 Boards ({zeroBoardUsers.length})
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setUserFilter('all')}
+                                        className={`px-3 py-1.5 rounded-md transition-colors cursor-pointer ${
+                                            userFilter === 'all'
+                                                ? 'bg-background text-foreground shadow-sm font-semibold'
+                                                : 'text-muted-foreground hover:text-foreground'
+                                        }`}
+                                    >
+                                        All ({boardsByUser.length + zeroBoardUsers.length})
+                                    </button>
+                                </div>
                             </div>
 
-                            {boardsByUser.map(([userId, userGroup]) => (
+                            {userFilter !== 'zero-boards' && boardsByUser.map(([userId, userGroup]) => (
                                 <div key={userId} className="rounded-xl border border-muted bg-card overflow-hidden">
                                     <div className="bg-muted/30 px-4 py-3 border-b border-muted flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                         <div>
                                             <h3 className="font-medium text-card-foreground">{userGroup.creatorName}</h3>
                                             <p className="text-xs text-muted-foreground">{userGroup.ownerEmail} • ID: {userId}</p>
                                         </div>
-                                        <div className="flex gap-2">
+                                        <div className="flex flex-wrap gap-2">
                                             <div className="text-xs font-medium bg-background px-3 py-1 rounded-full border border-muted w-fit">
                                                 {userGroup.boards.length} board{userGroup.boards.length !== 1 && 's'}
                                             </div>
                                             <div className="text-xs font-medium bg-background px-3 py-1 rounded-full border border-muted w-fit">
                                                 {userGroup.totalCards} card{userGroup.totalCards !== 1 && 's'}
                                             </div>
+                                            {userGroup.customCards > 0 && (
+                                                <div className="text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/20 w-fit flex items-center gap-1">
+                                                    <Sparkles className="w-3 h-3" />
+                                                    {userGroup.customCards} custom
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="divide-y divide-muted">
@@ -303,7 +442,44 @@ export default function AdminClient({ initialSettings, boards }: AdminClientProp
                                 </div>
                             ))}
 
-                            {boardsByUser.length === 0 && (
+                            {(userFilter === 'zero-boards' || userFilter === 'all') &&
+                                zeroBoardUsers.map((user) => (
+                                    <div key={user.id} className="rounded-xl border border-amber-500/20 bg-card overflow-hidden">
+                                        <div className="bg-amber-500/5 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                            <div>
+                                                <h3 className="font-medium text-card-foreground">{user.name}</h3>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {user.email} • ID: {user.id}
+                                                </p>
+                                                <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground mt-1">
+                                                    {user.createdAt && (
+                                                        <span className="flex items-center gap-1">
+                                                            <Calendar className="w-3 h-3" />
+                                                            Signed up: {formatDate(user.createdAt)}
+                                                        </span>
+                                                    )}
+                                                    {user.lastSignInAt && (
+                                                        <span className="flex items-center gap-1">
+                                                            <Calendar className="w-3 h-3" />
+                                                            Last active: {formatDate(user.lastSignInAt)}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 px-3 py-1 rounded-full border border-amber-500/20 w-fit">
+                                                0 boards
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+
+                            {userFilter === 'zero-boards' && zeroBoardUsers.length === 0 && (
+                                <div className="text-center py-12 text-muted-foreground border border-dashed border-muted rounded-xl">
+                                    Every signed-up user has created at least one board!
+                                </div>
+                            )}
+
+                            {userFilter === 'with-boards' && boardsByUser.length === 0 && (
                                 <div className="text-center py-12 text-muted-foreground border border-dashed border-muted rounded-xl">
                                     No boards found in the system.
                                 </div>
@@ -311,6 +487,43 @@ export default function AdminClient({ initialSettings, boards }: AdminClientProp
                         </div>
                     </div>
                 )}
+            </div>
+        </div>
+    );
+}
+
+function FunnelStep({
+    step,
+    count,
+    percent,
+    subtitle,
+    barClass,
+}: {
+    step: string;
+    count: number;
+    percent: number;
+    subtitle: string;
+    barClass: string;
+}) {
+    return (
+        <div className="rounded-xl border border-muted bg-background/60 p-3.5 flex flex-col justify-between gap-2">
+            <div>
+                <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className="text-xs font-semibold text-muted-foreground">{step}</span>
+                    <span className="text-xs font-bold text-foreground bg-muted px-2 py-0.5 rounded-full">
+                        {percent}%
+                    </span>
+                </div>
+                <div className="text-2xl font-bold text-foreground">{count}</div>
+            </div>
+            <div className="space-y-1.5">
+                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                    <div
+                        className={`h-full rounded-full transition-all duration-500 ${barClass}`}
+                        style={{ width: `${Math.min(100, Math.max(0, percent))}%` }}
+                    />
+                </div>
+                <p className="text-[11px] text-muted-foreground truncate">{subtitle}</p>
             </div>
         </div>
     );

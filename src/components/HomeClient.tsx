@@ -1,13 +1,49 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { SignedOut, SignInButton, useAuth, useUser } from '@clerk/nextjs';
-import { Globe, Grid, LogIn, Play, Camera, Mic, Hand } from 'lucide-react';
+import { Globe, Grid, Sparkles, Play, Camera, Mic, Hand, Volume2 } from 'lucide-react';
 import { useOfflineAuth } from '@/hooks/useOfflineAuth';
 import { clsx } from 'clsx';
 import Image from 'next/image';
 import PromoVideoModal from '@/components/marketing/PromoVideoModal';
+
+interface DemoCardItem {
+  id: string;
+  label: string;
+  imageUrl: string;
+  audioUrl: string;
+  accentClass: string;
+  playingRingClass: string;
+}
+
+const HERO_DEMO_CARDS: DemoCardItem[] = [
+  {
+    id: 'demo-hello',
+    label: 'Hello',
+    imageUrl: '/prebuilt/hello.webp',
+    audioUrl: '/prebuilt/hello.mp3',
+    accentClass: 'hover:border-amber-300 dark:hover:border-amber-600',
+    playingRingClass: 'ring-4 ring-amber-400/60 border-amber-400 scale-[1.03]',
+  },
+  {
+    id: 'demo-water',
+    label: 'Water',
+    imageUrl: '/prebuilt/water.webp',
+    audioUrl: '/prebuilt/water.wav',
+    accentClass: 'hover:border-sky-300 dark:hover:border-sky-600',
+    playingRingClass: 'ring-4 ring-sky-400/60 border-sky-400 scale-[1.03]',
+  },
+  {
+    id: 'demo-play',
+    label: 'Play',
+    imageUrl: '/prebuilt/play.webp',
+    audioUrl: '/prebuilt/play.wav',
+    accentClass: 'hover:border-emerald-300 dark:hover:border-emerald-600',
+    playingRingClass: 'ring-4 ring-emerald-400/60 border-emerald-400 scale-[1.03]',
+  },
+];
 
 // NavCard Component for consistent, big, friendly buttons
 interface NavCardProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -87,6 +123,10 @@ function Step({ icon, text }: { icon: React.ReactNode; text: string }) {
 
 export default function HomeClient({ initialSignedIn }: { initialSignedIn: boolean }) {
   const [isPromoOpen, setIsPromoOpen] = useState(false);
+  const [playingCardId, setPlayingCardId] = useState<string | null>(null);
+  const [hasTappedDemo, setHasTappedDemo] = useState(false);
+  const demoAudioRef = useRef<HTMLAudioElement | null>(null);
+
   const { isLoaded } = useAuth();
   // Offline-aware: keeps "My Boards" reachable with no connection, when
   // Clerk can't confirm the session but the user's boards are cached.
@@ -98,6 +138,26 @@ export default function HomeClient({ initialSignedIn }: { initialSignedIn: boole
   // May be null while Clerk loads or offline — greeting falls back to a
   // nameless "Welcome back" in that case.
   const { user } = useUser();
+
+  const handlePlayDemoCard = (card: DemoCardItem) => {
+    setHasTappedDemo(true);
+    if (demoAudioRef.current) {
+      demoAudioRef.current.pause();
+      demoAudioRef.current.currentTime = 0;
+    }
+    setPlayingCardId(card.id);
+    try {
+      const audio = new Audio(card.audioUrl);
+      demoAudioRef.current = audio;
+      audio.onended = () => setPlayingCardId((prev) => (prev === card.id ? null : prev));
+      audio.onerror = () => setPlayingCardId((prev) => (prev === card.id ? null : prev));
+      audio.play().catch(() => {
+        setTimeout(() => setPlayingCardId((prev) => (prev === card.id ? null : prev)), 700);
+      });
+    } catch {
+      setTimeout(() => setPlayingCardId((prev) => (prev === card.id ? null : prev)), 700);
+    }
+  };
 
   return (
     <main className="min-h-[calc(100vh-64px)] flex flex-col items-center justify-center p-4 py-10">
@@ -126,7 +186,7 @@ export default function HomeClient({ initialSignedIn }: { initialSignedIn: boole
             </div>
           </div>
         ) : (
-          <div className="text-center space-y-4 animate-in slide-in-from-top-10 duration-700">
+          <div className="text-center space-y-4 animate-in slide-in-from-top-10 duration-700 w-full">
             <div className="w-24 h-24 sm:w-32 sm:h-32 mx-auto bg-white dark:bg-slate-800 rounded-3xl shadow-lg shadow-violet-500/10 flex items-center justify-center p-4 transform -rotate-3 hover:rotate-0 transition-transform duration-500">
               <Image src="/logo.svg" alt="My Voice Board Logo" width={100} height={100} className="w-full h-full" priority />
             </div>
@@ -142,6 +202,77 @@ export default function HomeClient({ initialSignedIn }: { initialSignedIn: boole
               <Step icon={<Mic className="w-4 h-4 text-rose-500" />} text="Record your voice" />
               <Step icon={<Hand className="w-4 h-4 text-teal-500" />} text="Tap to talk" />
             </div>
+
+            {/* Live Interactive 3-Card Preview */}
+            <div
+              data-testid="hero-demo-strip"
+              className="pt-4 max-w-md mx-auto w-full"
+            >
+              <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400 mb-2.5 flex items-center justify-center gap-1.5">
+                <Volume2 className="w-4 h-4 animate-pulse" />
+                <span>Tap a card to hear it speak</span>
+              </p>
+              <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
+                {HERO_DEMO_CARDS.map((card) => {
+                  const isPlaying = playingCardId === card.id;
+                  return (
+                    <button
+                      key={card.id}
+                      type="button"
+                      data-testid="hero-demo-card"
+                      data-playing={isPlaying ? 'true' : 'false'}
+                      onClick={() => handlePlayDemoCard(card)}
+                      className={clsx(
+                        "group relative flex flex-col items-center bg-white dark:bg-slate-800/90 rounded-2xl p-2 sm:p-3 border-2 border-slate-200/80 dark:border-white/10 shadow-md hover:shadow-lg transition-all duration-200 touch-manipulation cursor-pointer active:scale-95",
+                        card.accentClass,
+                        isPlaying && card.playingRingClass
+                      )}
+                    >
+                      <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900 mb-1.5 sm:mb-2">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={card.imageUrl}
+                          alt={card.label}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <span
+                          className={clsx(
+                            "absolute top-1.5 right-1.5 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center shadow-sm transition-colors",
+                            isPlaying
+                              ? "bg-violet-600 text-white animate-bounce"
+                              : "bg-white/90 dark:bg-slate-800/90 text-slate-600 dark:text-slate-300 group-hover:bg-violet-600 group-hover:text-white"
+                          )}
+                        >
+                          <Volume2 className="w-3.5 h-3.5" />
+                        </span>
+                      </div>
+                      <span className="font-display font-extrabold text-sm sm:text-base text-slate-800 dark:text-white">
+                        {card.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {hasTappedDemo && (
+                <div className="mt-3 p-3 rounded-2xl bg-violet-50/90 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800/60 text-xs sm:text-sm text-slate-700 dark:text-slate-200 animate-in fade-in slide-in-from-top-2 duration-300 flex flex-col sm:flex-row items-center justify-between gap-2">
+                  <span className="font-medium text-center sm:text-left">
+                    Imagine this with <strong>your own photos</strong> &amp; <strong>your voice</strong>!
+                  </span>
+                  <SignedOut>
+                    <SignInButton mode="modal" forceRedirectUrl="/my-boards" signUpForceRedirectUrl="/my-boards">
+                      <button
+                        type="button"
+                        className="px-3.5 py-1.5 rounded-full bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs whitespace-nowrap shadow-sm transition-colors cursor-pointer touch-manipulation"
+                      >
+                        Make Yours Free →
+                      </button>
+                    </SignInButton>
+                  </SignedOut>
+                </div>
+              )}
+            </div>
+
             <div className="pt-2">
               <button
                 type="button"
@@ -195,13 +326,13 @@ export default function HomeClient({ initialSignedIn }: { initialSignedIn: boole
           />
 
           <SignedOut>
-            <SignInButton mode="modal">
+            <SignInButton mode="modal" forceRedirectUrl="/my-boards" signUpForceRedirectUrl="/my-boards">
               <NavCard
                 as="div"
-                icon={<LogIn size={40} className="text-emerald-600 dark:text-emerald-300" />}
+                icon={<Sparkles size={40} className="text-emerald-600 dark:text-emerald-300" />}
                 iconBgClass="bg-emerald-100 dark:bg-emerald-900/40"
-                label="Get Started"
-                description="Sign in to build your own boards"
+                label="Create Your Free Board"
+                description="Start from a template or add your own photos & voice"
                 colorClass="hover:border-emerald-300 dark:hover:border-emerald-700 hover:ring-4 ring-emerald-400/20"
                 delay={300}
                 className="sm:col-span-2 sm:aspect-auto cursor-pointer"

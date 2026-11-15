@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Pencil, X, Plus, Sparkles, Layers, Image as ImageIcon, Copy, Loader2, Upload } from 'lucide-react';
 import { Board } from '@/types';
@@ -48,6 +48,7 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
 
     // Template clone state
     const [isCloningTemplate, setIsCloningTemplate] = useState(false);
+    const [quickCloningTemplateId, setQuickCloningTemplateId] = useState<string | null>(null);
     const [showTemplateCloneForm, setShowTemplateCloneForm] = useState(false);
     const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
     const [cloneBoardName, setCloneBoardName] = useState('');
@@ -57,6 +58,73 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
         const data = await res.json().catch(() => null);
         return data?.error || fallback;
     };
+
+    const handleQuickCloneTemplate = async (
+        templateBoardId: string,
+        newBoardName: string,
+        newBoardDesc?: string,
+        coverImageUrl?: string
+    ) => {
+        if (quickCloningTemplateId || isCloningTemplate) return;
+        setQuickCloningTemplateId(templateBoardId);
+        try {
+            const res = await fetch('/api/boards/clone-template', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    templateBoardId,
+                    newBoardName,
+                    newBoardDesc: newBoardDesc || '',
+                    coverImageUrl: coverImageUrl || undefined,
+                }),
+            });
+
+            if (res.ok) {
+                const { board, cardCount } = await res.json();
+                if (board) setBoards((prev) => [...prev, { ...board, cardCount }]);
+                toast.success(`Created "${board.name}" with ${cardCount} cards!`);
+                router.push(`/board/${board.id}?edit=true`);
+                return;
+            } else {
+                toast.error(await getApiError(res, 'Failed to create board from template'));
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to create board from template');
+        } finally {
+            setQuickCloningTemplateId(null);
+        }
+    };
+
+    // If a visitor clicked "Copy & Customize Free" on a public/starter board and
+    // just finished signing in, automatically clone that board and open it.
+    useEffect(() => {
+        try {
+            const raw = sessionStorage.getItem('mvb:pending-clone');
+            if (!raw) return;
+            sessionStorage.removeItem('mvb:pending-clone');
+            const pending = JSON.parse(raw) as {
+                templateBoardId?: string;
+                newBoardName?: string;
+                newBoardDesc?: string;
+                coverImageUrl?: string;
+            };
+            if (pending?.templateBoardId && pending?.newBoardName) {
+                const { templateBoardId, newBoardName, newBoardDesc, coverImageUrl } = pending;
+                queueMicrotask(() => {
+                    handleQuickCloneTemplate(
+                        templateBoardId,
+                        newBoardName,
+                        newBoardDesc,
+                        coverImageUrl
+                    );
+                });
+            }
+        } catch {
+            // Ignore malformed or unavailable sessionStorage
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleDuplicateBoard = async (board: Board) => {
         if (duplicatingBoardId) return;
@@ -431,21 +499,54 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
                 {/* Boards Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {boards.length === 0 ? (
-                        <div className="col-span-full flex flex-col items-center justify-center py-20 text-center">
-                            <div className="w-24 h-24 bg-primary/10 rounded-3xl flex items-center justify-center mb-6 rotate-3">
-                                <Plus className="w-12 h-12 text-primary" />
+                        <div className="col-span-full rounded-3xl bg-white dark:bg-slate-900 border border-gray-200/80 dark:border-gray-800 shadow-sm p-6 sm:p-10 text-center">
+                            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-4 rotate-3">
+                                <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
                             </div>
-                            <h3 className="text-2xl font-display font-extrabold text-gray-900 dark:text-white mb-2">Let&apos;s make your first board</h3>
-                            <p className="text-gray-500 max-w-md mx-auto mb-8">
-                                A board is a set of picture cards that speak when tapped — start with a template or your own photos.
+                            <h3 className="text-2xl sm:text-3xl font-display font-extrabold text-gray-900 dark:text-white mb-2">Let&apos;s make your first board</h3>
+                            <p className="text-gray-500 dark:text-gray-400 max-w-lg mx-auto mb-6 text-sm sm:text-base">
+                                Start in one click with our ready-made Core Daily Words board (you can swap in your own photos &amp; voice anytime), or start with a blank board.
                             </p>
-                            <button
-                                onClick={() => setShowCreateForm(true)}
-                                className="px-8 py-4 bg-primary text-primary-foreground font-bold rounded-2xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 flex items-center gap-2 touch-manipulation"
-                            >
-                                <Plus className="w-5 h-5" />
-                                Create a Board
-                            </button>
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+                                {templateBoards.length > 0 && (
+                                    <button
+                                        type="button"
+                                        data-testid="quick-start-template-btn"
+                                        disabled={quickCloningTemplateId !== null}
+                                        onClick={() => {
+                                            const starter =
+                                                templateBoards.find((t) => t.id === 'starter-template') ??
+                                                templateBoards[0];
+                                            handleQuickCloneTemplate(
+                                                starter.id,
+                                                starter.id === 'starter-template' ? 'My First Board' : starter.name,
+                                                starter.description,
+                                                starter.coverImageUrl
+                                            );
+                                        }}
+                                        className="w-full sm:w-auto px-7 py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-2xl transition-all shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 touch-manipulation disabled:opacity-60 cursor-pointer"
+                                    >
+                                        {quickCloningTemplateId !== null ? (
+                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                        ) : (
+                                            <Sparkles className="w-5 h-5" />
+                                        )}
+                                        <span>
+                                            {quickCloningTemplateId !== null
+                                                ? 'Setting up your board...'
+                                                : 'Start with Starter Board (1-Click)'}
+                                        </span>
+                                    </button>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCreateForm(true)}
+                                    className="w-full sm:w-auto px-7 py-4 bg-primary text-primary-foreground font-bold rounded-2xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 flex items-center justify-center gap-2 touch-manipulation cursor-pointer"
+                                >
+                                    <Plus className="w-5 h-5" />
+                                    <span>Create a Board</span>
+                                </button>
+                            </div>
                         </div>
                     ) : (
                         boards.map((board) => (
@@ -557,15 +658,26 @@ export default function MyBoardsClient({ initialBoards, initialTemplateBoards, i
                                             </p>
                                         )}
                                         <button
+                                            type="button"
+                                            disabled={quickCloningTemplateId !== null}
                                             onClick={() => {
-                                                setSelectedTemplateId(template.id);
-                                                setCloneBoardName(template.name);
-                                                setShowTemplateCloneForm(true);
+                                                handleQuickCloneTemplate(
+                                                    template.id,
+                                                    template.id === 'starter-template' ? 'My First Board' : template.name,
+                                                    template.description,
+                                                    template.coverImageUrl
+                                                );
                                             }}
-                                            className="w-full mt-auto bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-3 rounded-xl font-bold shadow-md shadow-amber-500/20 hover:shadow-lg transition-all flex items-center justify-center gap-2 touch-manipulation min-h-[48px]"
+                                            className="w-full mt-auto bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-3 rounded-xl font-bold shadow-md shadow-amber-500/20 hover:shadow-lg transition-all flex items-center justify-center gap-2 touch-manipulation min-h-[48px] disabled:opacity-60 cursor-pointer"
                                         >
-                                            <Sparkles className="w-5 h-5" />
-                                            Use This Template
+                                            {quickCloningTemplateId === template.id ? (
+                                                <Loader2 className="w-5 h-5 animate-spin" />
+                                            ) : (
+                                                <Sparkles className="w-5 h-5" />
+                                            )}
+                                            <span>
+                                                {quickCloningTemplateId === template.id ? 'Creating...' : 'Use This Template'}
+                                            </span>
                                         </button>
                                     </div>
                                 </div>

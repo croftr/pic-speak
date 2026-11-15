@@ -6,7 +6,8 @@ import { Card, Board } from '@/types';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { useSettings } from '@/contexts/SettingsContext';
-import { Plus } from 'lucide-react';
+import { Plus, Sparkles, Loader2 } from 'lucide-react';
+import { SignInButton, useAuth } from '@clerk/nextjs';
 
 import { useBoardCards } from '@/hooks/useBoardCards';
 import { useAudioPreload } from '@/hooks/useAudioPreload';
@@ -133,11 +134,72 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
     // Export state
     const [isExporting, setIsExporting] = useState(false);
 
+    // Clone template / public board state
+    const { isSignedIn } = useAuth();
+    const [isCloningBoard, setIsCloningBoard] = useState(false);
+
     // Computed
     const isStarterBoard = boardId.startsWith('starter-');
     const isEditing = !isLocked && requestedEdit && (isOwner || isAdmin) && !isStarterBoard;
     const cardSize = isEditing ? 'large' : userCardSize;
     const sentenceActive = sentenceMode && !isEditing;
+
+    const handleCloneCurrentBoard = async () => {
+        if (isCloningBoard) return;
+        setIsCloningBoard(true);
+        const targetName = boardId === 'starter-template'
+            ? 'My First Board'
+            : isStarterBoard
+                ? board.name
+                : `${board.name} copy`;
+        try {
+            const res = await fetch('/api/boards/clone-template', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    templateBoardId: board.id,
+                    newBoardName: targetName,
+                    newBoardDesc: board.description || '',
+                    coverImageUrl: board.coverImageUrl || undefined,
+                }),
+            });
+
+            if (res.ok) {
+                const { board: newBoard, cardCount } = await res.json();
+                toast.success(`Created "${newBoard.name}" with ${cardCount} cards — make it your own!`);
+                router.push(`/board/${newBoard.id}?edit=true`);
+                return;
+            }
+            const errData = await res.json().catch(() => null);
+            toast.error(errData?.error || 'Failed to copy board');
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to copy board');
+        } finally {
+            setIsCloningBoard(false);
+        }
+    };
+
+    const handleRememberCloneBeforeSignIn = () => {
+        try {
+            const targetName = boardId === 'starter-template'
+                ? 'My First Board'
+                : isStarterBoard
+                    ? board.name
+                    : `${board.name} copy`;
+            sessionStorage.setItem(
+                'mvb:pending-clone',
+                JSON.stringify({
+                    templateBoardId: board.id,
+                    newBoardName: targetName,
+                    newBoardDesc: board.description || '',
+                    coverImageUrl: board.coverImageUrl || undefined,
+                })
+            );
+        } catch {
+            // sessionStorage unavailable
+        }
+    };
 
     // Entering edit mode clears the strip — avoids stale card copies after edits/deletes.
     useEffect(() => {
@@ -338,6 +400,54 @@ export default function BoardClient({ boardId, initialBoard, initialCards, initi
                     sentenceMode={sentenceMode}
                     onToggleSentenceMode={toggleSentenceMode}
                 />
+            )}
+
+            {!isLocked && !isEditing && (isStarterBoard || !isOwner) && (
+                <div
+                    data-testid="clone-board-banner"
+                    className="max-w-7xl mx-auto mb-4 px-3.5 py-3 sm:px-5 sm:py-3.5 rounded-2xl bg-gradient-to-r from-violet-50 via-purple-50 to-amber-50/70 dark:from-violet-950/50 dark:via-slate-900 dark:to-amber-950/30 border border-violet-200/80 dark:border-violet-800/50 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+                >
+                    <div className="flex items-start sm:items-center gap-2.5 min-w-0">
+                        <span className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0 mt-0.5 sm:mt-0">
+                            <Sparkles className="w-4 h-4" />
+                        </span>
+                        <p className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200 leading-snug">
+                            <strong className="font-extrabold text-slate-900 dark:text-white">
+                                {isStarterBoard ? 'Like this starter board?' : 'Want to use this board?'}
+                            </strong>{' '}
+                            Make your own free copy to add your photos, record your voice, or remove cards.
+                        </p>
+                    </div>
+
+                    {isSignedIn ? (
+                        <button
+                            type="button"
+                            data-testid="clone-board-cta"
+                            onClick={handleCloneCurrentBoard}
+                            disabled={isCloningBoard}
+                            className="w-full sm:w-auto flex-shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-violet-600/20 disabled:opacity-60 transition-all cursor-pointer touch-manipulation"
+                        >
+                            {isCloningBoard ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <Sparkles className="w-4 h-4" />
+                            )}
+                            <span>{isCloningBoard ? 'Copying...' : 'Copy & Customize Board'}</span>
+                        </button>
+                    ) : (
+                        <SignInButton mode="modal" forceRedirectUrl="/my-boards" signUpForceRedirectUrl="/my-boards">
+                            <button
+                                type="button"
+                                data-testid="clone-board-cta"
+                                onClick={handleRememberCloneBeforeSignIn}
+                                className="w-full sm:w-auto flex-shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-violet-600/20 transition-all cursor-pointer touch-manipulation"
+                            >
+                                <Sparkles className="w-4 h-4" />
+                                <span>Copy &amp; Customize Free</span>
+                            </button>
+                        </SignInButton>
+                    )}
+                </div>
             )}
 
             <BoardFilter

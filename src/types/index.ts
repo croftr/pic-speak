@@ -39,7 +39,16 @@ export interface Board {
   likeCount?: number;
   commentCount?: number;
   cardCount?: number;
+  customCardCount?: number;
   isLikedByUser?: boolean;
+}
+
+export interface AdminUserSummary {
+  id: string;
+  name: string;
+  email: string;
+  createdAt?: string;
+  lastSignInAt?: string;
 }
 
 export interface BoardLike {

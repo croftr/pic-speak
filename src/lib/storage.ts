@@ -981,9 +981,10 @@ export async function getBoards(userId: string): Promise<Board[]> {
 export async function getAllBoardsAdmin(): Promise<Board[]> {
     const client = await getDbClient();
     try {
-        const result = await client.query<BoardRow & { card_count: string; first_card_image_url?: string; first_card_template_key?: string; like_count: string; comment_count: string }>(
+        const result = await client.query<BoardRow & { card_count: string; custom_card_count: string; first_card_image_url?: string; first_card_template_key?: string; like_count: string; comment_count: string }>(
             `SELECT b.*,
                     COUNT(DISTINCT c.id) as card_count,
+                    COUNT(DISTINCT CASE WHEN c.template_key IS NULL AND c.source_board_id IS NULL THEN c.id END) as custom_card_count,
                     COUNT(DISTINCT bl.id) as like_count,
                     COUNT(DISTINCT bc.id) as comment_count,
                     fc.image_url as first_card_image_url,
@@ -1017,6 +1018,7 @@ export async function getAllBoardsAdmin(): Promise<Board[]> {
             coverImageUrl: row.cover_image_url || undefined,
             fallbackCoverImageUrl: resolveFirstCardImage(row.first_card_image_url, row.first_card_template_key),
             cardCount: parseInt(row.card_count || '0'),
+            customCardCount: parseInt(row.custom_card_count || '0'),
             likeCount: parseInt(row.like_count || '0'),
             commentCount: parseInt(row.comment_count || '0')
         }));

@@ -136,7 +136,7 @@ export default function GlobalHeader() {
                             </UserButton>
                         </SignedIn>
                         <SignedOut>
-                            <SignInButton mode="modal">
+                            <SignInButton mode="modal" forceRedirectUrl="/my-boards" signUpForceRedirectUrl="/my-boards">
                                 <button className="px-4 sm:px-5 py-2 font-bold text-sm bg-primary text-primary-foreground rounded-full shadow-md shadow-primary/20 hover:bg-primary/90 transition-all touch-manipulation">
                                     Log in
                                 </button>
